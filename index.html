@@ -130,8 +130,8 @@
             color: white;
             transition: transform 0.2s;
             flex: 1;
-            min-width: 200px;
-            max-width: 300px;
+            min-width: 180px;
+            max-width: 250px;
             margin: 0 auto;
         }
         
@@ -149,6 +149,28 @@
         
         .btn-twitter {
             background: #1da1f2;
+        }
+        
+        .btn-beincom {
+            background: linear-gradient(to right, #4CAF50, #2E7D32);
+        }
+        
+        /* PLATFORM BADGES */
+        .platforms {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .platform-badge {
+            background: #f0f7ff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #555;
+            border: 1px solid #ddd;
         }
         
         /* BENEFITS */
@@ -200,6 +222,22 @@
         .container {
             animation: fadeIn 0.5s ease-out;
         }
+        
+        /* BEINCOM SPECIAL */
+        .beincom-highlight {
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px solid #2E7D32;
+        }
+        
+        .beincom-highlight h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
     </style>
 </head>
 <body>
@@ -233,35 +271,62 @@
             </div>
         </div>
         
+        <!-- BEINCOM HIGHLIGHT -->
+        <div class="beincom-highlight">
+            <h3>🌐 New: Vietnamese Community on Beincom</h3>
+            <p>Join our exclusive Vietnamese-speaking Bitcoin community</p>
+        </div>
+        
         <!-- CHANNELS -->
         <div class="channels-container">
-            <h2 style="text-align: center; margin-bottom: 20px; color: #f7931a;">Join Our Community</h2>
+            <h2 style="text-align: center; margin-bottom: 20px; color: #f7931a;">Join Our Global Community</h2>
             <p style="text-align: center; margin-bottom: 30px; color: #666;">Get free Bitcoin signals on your preferred platform</p>
             
+            <!-- Platform Badges -->
+            <div class="platforms">
+                <div class="platform-badge">📱 Telegram</div>
+                <div class="platform-badge">🎮 Discord</div>
+                <div class="platform-badge">🐦 Twitter/X</div>
+                <div class="platform-badge">🇻🇳 Beincom</div>
+            </div>
+            
+            <!-- Channel Buttons -->
             <div class="channels">
                 <a href="https://t.me/bitcoinpeakdip" class="btn btn-telegram">📢 Telegram Group</a>
                 <a href="https://discord.gg/58akuxegwK" class="btn btn-discord">🎮 Discord Community</a>
                 <a href="https://twitter.com/bitcoinpeakdip" class="btn btn-twitter">🐦 Twitter/X Updates</a>
+                <a href="https://group.beincom.com/ref/KkA8rZ" class="btn btn-beincom">🌐 Beincom Vietnam</a>
             </div>
             
+            <!-- Community Description -->
+            <div style="text-align: center; margin: 25px 0; padding: 15px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4CAF50;">
+                <h4 style="color: #2E7D32; margin-bottom: 10px;">🇻🇳 Vietnamese Community</h4>
+                <p style="color: #555; font-size: 0.95em;">Join our Beincom group for Bitcoin discussions in Vietnamese language, market analysis, and local crypto insights.</p>
+            </div>
+            
+            <!-- Benefits -->
             <div class="benefits">
-                <h3 style="text-align: center; margin: 30px 0 20px 0; color: #333;">🎯 Why Join?</h3>
+                <h3 style="text-align: center; margin: 30px 0 20px 0; color: #333;">🎯 Why Join Our Communities?</h3>
                 
                 <div class="benefit-item">
                     <span>✓</span>
-                    <div>Free daily Bitcoin signals</div>
+                    <div>Free daily Bitcoin peak and dip signals</div>
                 </div>
                 <div class="benefit-item">
                     <span>✓</span>
-                    <div>Live market discussions</div>
+                    <div>Multi-language support (English & Vietnamese)</div>
                 </div>
                 <div class="benefit-item">
                     <span>✓</span>
-                    <div>Trading insights from experts</div>
+                    <div>Live market discussions with global traders</div>
                 </div>
                 <div class="benefit-item">
                     <span>✓</span>
-                    <div>Direct access to analysts</div>
+                    <div>Direct access to experienced analysts</div>
+                </div>
+                <div class="benefit-item">
+                    <span>✓</span>
+                    <div>Regional insights for Vietnamese market</div>
                 </div>
             </div>
         </div>
@@ -276,9 +341,20 @@
             <p>© 2024 Bitcoin PeakDip. All rights reserved.</p>
             <p style="margin-top: 10px;"><strong>bitcoinpeakdip.com</strong></p>
             <div style="margin-top: 15px; font-size: 0.85em;">
-                <a href="#" style="color: #666; margin: 0 10px;">Privacy</a> | 
-                <a href="#" style="color: #666; margin: 0 10px;">Terms</a> | 
-                <a href="#" style="color: #666; margin: 0 10px;">Disclaimer</a>
+                <a href="#" style="color: #666; margin: 0 10px; text-decoration: none;">Privacy Policy</a> | 
+                <a href="#" style="color: #666; margin: 0 10px; text-decoration: none;">Terms of Service</a> | 
+                <a href="#" style="color: #666; margin: 0 10px; text-decoration: none;">Risk Disclaimer</a>
+            </div>
+            
+            <!-- Social Media Links -->
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
+                <p style="color: #888; font-size: 0.9em; margin-bottom: 10px;">Connect with us on:</p>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <a href="https://t.me/bitcoinpeakdip" style="color: #0088cc; text-decoration: none;">Telegram</a>
+                    <a href="https://discord.gg/58akuxegwK" style="color: #7289da; text-decoration: none;">Discord</a>
+                    <a href="https://twitter.com/bitcoinpeakdip" style="color: #1da1f2; text-decoration: none;">Twitter/X</a>
+                    <a href="https://group.beincom.com/ref/KkA8rZ" style="color: #4CAF50; text-decoration: none;">Beincom</a>
+                </div>
             </div>
         </footer>
     </div>
