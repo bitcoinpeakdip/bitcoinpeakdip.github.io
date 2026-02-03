@@ -988,7 +988,7 @@
             
             let wavePhase = 0; // 0-1 representing position in wave cycle
             let lastUpdate = 0;
-            const waveFrequency = 0.125; // Giảm một nửa tần số: từ 0.25 xuống 0.125
+            const waveFrequency = 0.125/3; // Giảm một nửa tần số: từ 0.25 xuống 0.125
             const updateInterval = 1000 / 60; // 60fps
             
             // Mobile menu toggle
@@ -1157,13 +1157,13 @@
                 const absoluteWavePosition = Math.abs(wavePosition);
                 
                 // Peak phase - chỉ hiển thị khi giá trị rất cao
-                if (wavePosition > 0.85) {
+                if (wavePosition > 0.95) {
                     // Show peak detection
                     peakMessage.style.opacity = '1';
                     dipMessage.style.opacity = '0';
                     
                     // Add pulse animation to peak message
-                    peakMessage.style.animation = 'detectionPulse 3s infinite alternate';
+                    peakMessage.style.animation = 'detectionPulse 9s infinite alternate';
                     dipMessage.style.animation = 'none';
                     
                     // Update status indicator
@@ -1189,13 +1189,13 @@
                         '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(255, 46, 99, 0.15)';
                 } 
                 // Dip phase - chỉ hiển thị khi giá trị rất thấp
-                else if (wavePosition < -0.85) {
+                else if (wavePosition < -0.95) {
                     // Show dip detection
                     peakMessage.style.opacity = '0';
                     dipMessage.style.opacity = '1';
                     
                     // Add pulse animation to dip message
-                    dipMessage.style.animation = 'detectionPulse 3s infinite alternate';
+                    dipMessage.style.animation = 'detectionPulse 9s infinite alternate';
                     peakMessage.style.animation = 'none';
                     
                     // Update status indicator
@@ -1228,7 +1228,7 @@
                     dipMessage.style.opacity = `${fadeAmount}`;
                     
                     // Gentle pulse animation for both
-                    const pulseSpeed = 4 + absoluteWavePosition * 2; // Chậm hơn
+                    const pulseSpeed = 12 + absoluteWavePosition * 6; // Chậm hơn
                     peakMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
                     dipMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
                     
