@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin PeakDip - EWS Signals Log</title>
+    <meta name="description" content="Real-time Bitcoin peak and dip signals log from Early Warning System with chart visualization">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/signals.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+    <!-- Interactive Background -->
+    <div class="interactive-background" id="interactiveBackground"></div>
+    
+    <!-- Sensor Alert Container -->
+    <div class="sensor-alert" id="sensorAlert"></div>
+    
+    <!-- Navigation Menu -->
+    <nav class="navigation" id="navigation">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <i class="fas fa-wave-square"></i>
+                Bitcoin PeakDip
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="about.html" class="nav-link">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="product.html" class="nav-link">Product</a>
+                </li>
+                <li class="nav-item">
+                    <a href="signals.html" class="nav-link active">EWS Signals</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#learn" class="nav-link">Learn</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link">Contact</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- Sensor Network Background -->
+    <div class="sensor-network">
+        <!-- Sensor Rings -->
+        <div class="sensor-ring ring-1"></div>
+        <div class="sensor-ring ring-2"></div>
+        <div class="sensor-ring ring-3"></div>
+        <div class="sensor-ring ring-4"></div>
+        
+        <!-- Bitcoin Waves -->
+        <div class="bitcoin-waves">
+            <div class="bitcoin-wave wave-1"></div>
+            <div class="bitcoin-wave wave-2"></div>
+            <div class="bitcoin-wave wave-3"></div>
+        </div>
+        
+        <!-- Energy Particles Container -->
+        <div class="energy-particles" id="energyParticles"></div>
+        
+        <!-- Bitcoin Visualization -->
+        <div class="bitcoin-visualization">
+            <div class="bitcoin-wave"></div>
+        </div>
+    </div>
+    
+    <!-- Status Indicator -->
+    <div class="status-indicator" id="statusIndicator">
+        <div class="status-light status-peak" id="statusLight"></div>
+        <div class="status-text" id="statusText">ANALYSING SIGNALS LOG</div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="content-container">
+        <!-- Signals Header -->
+        <div class="signals-header">
+            <h1 class="signals-title">EWS Signals Log</h1>
+            <p class="signals-subtitle">Real-time Bitcoin Peak and Dip Detection Records</p>
+            <div class="signals-badge">
+                <i class="fas fa-satellite-dish"></i> LIVE SIGNAL MONITORING
+            </div>
+        </div>
+        
+        <!-- Real-time Stats -->
+        <div class="signals-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-mountain"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Peak Signals</h3>
+                    <div class="stat-value" id="peakCount">0</div>
+                    <div class="stat-label">Local Peaks Detected</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-water"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Dip Signals</h3>
+                    <div class="stat-value" id="dipCount">0</div>
+                    <div class="stat-label">Local Dips Detected</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Total Signals</h3>
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">All Signals Recorded</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>Accuracy</h3>
+                    <div class="stat-value" id="accuracyRate">0%</div>
+                    <div class="stat-label">Signal Precision</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bitcoin Price Chart with Signals -->
+        <section class="chart-section">
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> Bitcoin Price Chart with EWS Signals</h2>
+                <div class="chart-controls">
+                    <button class="control-btn active" data-timeframe="1d">1D</button>
+                    <button class="control-btn" data-timeframe="7d">7D</button>
+                    <button class="control-btn" data-timeframe="30d">30D</button>
+                    <button class="control-btn" data-timeframe="90d">90D</button>
+                    <div class="chart-legend">
+                        <span class="legend-item peak">
+                            <i class="fas fa-circle"></i> Peak Signal
+                        </span>
+                        <span class="legend-item dip">
+                            <i class="fas fa-circle"></i> Dip Signal
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="bitcoinChart"></canvas>
+            </div>
+            
+            <div class="chart-info">
+                <div class="info-item">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Red markers indicate local peak detection zones. Blue markers indicate local dip detection zones.</p>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-database"></i>
+                    <p>Data loaded from CSV file and mapped to Bitcoin price chart in real-time.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Signals Log Table -->
+        <section class="signals-log-section">
+            <div class="section-header">
+                <h2><i class="fas fa-list-alt"></i> Signals Log</h2>
+                <div class="log-controls">
+                    <div class="filter-controls">
+                        <button class="filter-btn active" data-filter="all">All Signals</button>
+                        <button class="filter-btn" data-filter="peak">Peak Only</button>
+                        <button class="filter-btn" data-filter="dip">Dip Only</button>
+                        <button class="filter-btn" data-filter="high-confidence">High Confidence</button>
+                    </div>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="signalSearch" placeholder="Search signals...">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="log-container">
+                <table class="signals-table" id="signalsTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <i class="fas fa-calendar"></i>
+                                Date & Time
+                            </th>
+                            <th>
+                                <i class="fas fa-bullseye"></i>
+                                Signal Type
+                            </th>
+                            <th>
+                                <i class="fas fa-chart-bar"></i>
+                                Price
+                            </th>
+                            <th>
+                                <i class="fas fa-tachometer-alt"></i>
+                                Confidence
+                            </th>
+                            <th>
+                                <i class="fas fa-ruler-combined"></i>
+                                Distance
+                            </th>
+                            <th>
+                                <i class="fas fa-check-circle"></i>
+                                Validation
+                            </th>
+                            <th>
+                                <i class="fas fa-tags"></i>
+                                Strategy
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="signalsTableBody">
+                        <!-- Data will be loaded from CSV -->
+                        <tr class="loading-row">
+                            <td colspan="7">
+                                <div class="loading-spinner">
+                                    <i class="fas fa-sync fa-spin"></i>
+                                    Loading EWS signals from CSV...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="pagination">
+                    <button class="page-btn" id="prevPage" disabled>
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <div class="page-info">
+                        Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                    </div>
+                    <button class="page-btn" id="nextPage" disabled>
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="data-source-info">
+                <i class="fas fa-file-csv"></i>
+                <p>Data source: <code>data/signals.csv</code> • Last updated: <span id="lastUpdated">Loading...</span></p>
+                <button class="refresh-btn" id="refreshData">
+                    <i class="fas fa-sync-alt"></i> Refresh Data
+                </button>
+            </div>
+        </section>
+        
+        <!-- Signal Details Panel -->
+        <section class="details-section">
+            <h2><i class="fas fa-search"></i> Signal Details</h2>
+            <div class="details-container" id="signalDetails">
+                <div class="no-selection">
+                    <i class="fas fa-mouse-pointer"></i>
+                    <h3>Select a signal from the table</h3>
+                    <p>Click on any signal in the log table to view detailed analysis and chart position.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Signal Analysis -->
+        <section class="analysis-section">
+            <h2><i class="fas fa-chart-pie"></i> Signal Analysis</h2>
+            
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <h3><i class="fas fa-chart-bar"></i> Distribution by Type</h3>
+                    <div class="chart-small">
+                        <canvas id="typeDistributionChart"></canvas>
+                    </div>
+                    <div class="analysis-stats">
+                        <div class="analysis-stat">
+                            <span class="stat-label">Peak Signals:</span>
+                            <span class="stat-value" id="peakPercentage">0%</span>
+                        </div>
+                        <div class="analysis-stat">
+                            <span class="stat-label">Dip Signals:</span>
+                            <span class="stat-value" id="dipPercentage">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-card">
+                    <h3><i class="fas fa-tachometer-alt"></i> Confidence Levels</h3>
+                    <div class="chart-small">
+                        <canvas id="confidenceChart"></canvas>
+                    </div>
+                    <div class="analysis-stats">
+                        <div class="analysis-stat">
+                            <span class="stat-label">High Confidence:</span>
+                            <span class="stat-value" id="highConfidence">0</span>
+                        </div>
+                        <div class="analysis-stat">
+                            <span class="stat-label">Medium Confidence:</span>
+                            <span class="stat-value" id="mediumConfidence">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-card">
+                    <h3><i class="fas fa-clock"></i> Time Distribution</h3>
+                    <div class="chart-small">
+                        <canvas id="timeDistributionChart"></canvas>
+                    </div>
+                    <div class="analysis-stats">
+                        <div class="analysis-stat">
+                            <span class="stat-label">Signals Today:</span>
+                            <span class="stat-value" id="signalsToday">0</span>
+                        </div>
+                        <div class="analysis-stat">
+                            <span class="stat-label">This Week:</span>
+                            <span class="stat-value" id="signalsWeek">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- CSV Data Format Info -->
+        <section class="csv-info-section">
+            <h2><i class="fas fa-file-code"></i> CSV Data Format</h2>
+            <div class="csv-format">
+                <div class="format-example">
+                    <h3><i class="fas fa-table"></i> Example CSV Structure</h3>
+                    <pre><code>timestamp,signal_type,price,confidence,distance,validation,strategy
+2024-01-15T08:30:00,PEAK,45000.50,85,2.5,VALIDATED,RECLAIM_FAILURE
+2024-01-15T12:45:00,DIP,44200.75,92,1.8,VALIDATED,DISTRIBUTION_FADE
+2024-01-16T09:15:00,PEAK,45500.25,78,3.2,PENDING,HEDGE_FLIP</code></pre>
+                </div>
+                
+                <div class="format-details">
+                    <h3><i class="fas fa-info-circle"></i> Field Descriptions</h3>
+                    <ul>
+                        <li><strong>timestamp:</strong> ISO 8601 format (YYYY-MM-DDTHH:MM:SS)</li>
+                        <li><strong>signal_type:</strong> PEAK or DIP</li>
+                        <li><strong>price:</strong> Bitcoin price at signal detection</li>
+                        <li><strong>confidence:</strong> 0-100 score (higher = more confident)</li>
+                        <li><strong>distance:</strong> Distance from ideal entry (%)</li>
+                        <li><strong>validation:</strong> VALIDATED, PENDING, or INVALID</li>
+                        <li><strong>strategy:</strong> Which strategy triggered the signal</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="csv-actions">
+                <a href="data/signals.csv" class="csv-btn" download>
+                    <i class="fas fa-download"></i> Download Sample CSV
+                </a>
+                <button class="csv-btn" id="uploadCsv">
+                    <i class="fas fa-upload"></i> Upload CSV File
+                </button>
+                <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+            </div>
+        </section>
+        
+        <!-- Back to Home -->
+        <div class="back-home">
+            <a href="index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+        
+        <!-- Footer -->
+        <footer id="pageFooter">
+            <p>© 2024 Bitcoin PeakDip Early Warning System. All rights reserved.</p>
+            
+            <div class="footer-links">
+                <a href="index.html" class="footer-link">Home</a>
+                <a href="about.html" class="footer-link">About</a>
+                <a href="product.html" class="footer-link">Product</a>
+                <a href="signals.html" class="footer-link active">EWS Signals</a>
+                <a href="#learn" class="footer-link">Learn</a>
+                <a href="#contact" class="footer-link">Contact</a>
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">Risk Disclosure</a>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- CSV Data -->
+    <script id="csvData" type="application/json">
+        {
+            "signals": [
+                {
+                    "timestamp": "2024-01-15T08:30:00",
+                    "signal_type": "PEAK",
+                    "price": 45000.50,
+                    "confidence": 85,
+                    "distance": 2.5,
+                    "validation": "VALIDATED",
+                    "strategy": "RECLAIM_FAILURE"
+                },
+                {
+                    "timestamp": "2024-01-15T12:45:00",
+                    "signal_type": "DIP",
+                    "price": 44200.75,
+                    "confidence": 92,
+                    "distance": 1.8,
+                    "validation": "VALIDATED",
+                    "strategy": "DISTRIBUTION_FADE"
+                },
+                {
+                    "timestamp": "2024-01-15T16:20:00",
+                    "signal_type": "PEAK",
+                    "price": 45200.25,
+                    "confidence": 78,
+                    "distance": 3.2,
+                    "validation": "PENDING",
+                    "strategy": "HEDGE_FLIP"
+                },
+                {
+                    "timestamp": "2024-01-16T09:15:00",
+                    "signal_type": "DIP",
+                    "price": 43800.50,
+                    "confidence": 88,
+                    "distance": 2.1,
+                    "validation": "VALIDATED",
+                    "strategy": "CONTINUATION"
+                },
+                {
+                    "timestamp": "2024-01-16T14:30:00",
+                    "signal_type": "PEAK",
+                    "price": 45700.75,
+                    "confidence": 91,
+                    "distance": 1.5,
+                    "validation": "VALIDATED",
+                    "strategy": "MOMENTUM_BREAKDOWN"
+                },
+                {
+                    "timestamp": "2024-01-17T10:45:00",
+                    "signal_type": "DIP",
+                    "price": 43200.25,
+                    "confidence": 76,
+                    "distance": 3.8,
+                    "validation": "VALIDATED",
+                    "strategy": "MULTI_TF_CONFLUENCE"
+                },
+                {
+                    "timestamp": "2024-01-17T18:20:00",
+                    "signal_type": "PEAK",
+                    "price": 45900.50,
+                    "confidence": 82,
+                    "distance": 2.3,
+                    "validation": "PENDING",
+                    "strategy": "VOLATILITY_EXPANSION"
+                },
+                {
+                    "timestamp": "2024-01-18T11:30:00",
+                    "signal_type": "DIP",
+                    "price": 42800.75,
+                    "confidence": 95,
+                    "distance": 1.2,
+                    "validation": "VALIDATED",
+                    "strategy": "DERIVATIVES_DIVERGENCE"
+                },
+                {
+                    "timestamp": "2024-01-18T15:45:00",
+                    "signal_type": "PEAK",
+                    "price": 46100.25,
+                    "confidence": 79,
+                    "distance": 2.9,
+                    "validation": "VALIDATED",
+                    "strategy": "RECLAIM_FAILURE"
+                },
+                {
+                    "timestamp": "2024-01-19T09:20:00",
+                    "signal_type": "DIP",
+                    "price": 42500.50,
+                    "confidence": 87,
+                    "distance": 2.0,
+                    "validation": "PENDING",
+                    "strategy": "DISTRIBUTION_FADE"
+                },
+                {
+                    "timestamp": "2024-01-19T13:55:00",
+                    "signal_type": "PEAK",
+                    "price": 46300.75,
+                    "confidence": 84,
+                    "distance": 2.1,
+                    "validation": "VALIDATED",
+                    "strategy": "HEDGE_FLIP"
+                },
+                {
+                    "timestamp": "2024-01-20T10:10:00",
+                    "signal_type": "DIP",
+                    "price": 42200.25,
+                    "confidence": 90,
+                    "distance": 1.7,
+                    "validation": "VALIDATED",
+                    "strategy": "CONTINUATION"
+                },
+                {
+                    "timestamp": "2024-01-20T16:40:00",
+                    "signal_type": "PEAK",
+                    "price": 46500.50,
+                    "confidence": 86,
+                    "distance": 2.4,
+                    "validation": "VALIDATED",
+                    "strategy": "MOMENTUM_BREAKDOWN"
+                },
+                {
+                    "timestamp": "2024-01-21T08:25:00",
+                    "signal_type": "DIP",
+                    "price": 41800.75,
+                    "confidence": 93,
+                    "distance": 1.3,
+                    "validation": "PENDING",
+                    "strategy": "MULTI_TF_CONFLUENCE"
+                },
+                {
+                    "timestamp": "2024-01-21T14:15:00",
+                    "signal_type": "PEAK",
+                    "price": 46700.25,
+                    "confidence": 80,
+                    "distance": 3.1,
+                    "validation": "VALIDATED",
+                    "strategy": "VOLATILITY_EXPANSION"
+                }
+            ]
+        }
+    </script>
+    
+    <script src="js/main.js"></script>
+    <script src="js/signals.js"></script>
+</body>
+</html>
