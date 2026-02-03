@@ -201,8 +201,14 @@
             min-height: 280px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
+        }
+        
+        .logo-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
         }
         
         .logo {
@@ -214,64 +220,66 @@
             background-clip: text;
             color: transparent;
             letter-spacing: 2px;
-            position: relative;
-            z-index: 2;
         }
         
         .tagline {
             font-size: 1.5em;
             color: var(--text-glow);
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             font-weight: 300;
-            position: relative;
-            z-index: 2;
         }
         
         .ai-badge {
             display: inline-block;
             background: linear-gradient(to right, var(--wave-trough), var(--wave-mid));
             color: white;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 0.9em;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 1em;
             font-weight: bold;
             letter-spacing: 1px;
-            margin-top: 5px;
+            margin-bottom: 25px;
             position: relative;
             z-index: 2;
+            transition: all 0.8s ease;
         }
         
-        /* Detection Messages Inside Logo Container */
-        .detection-container {
-            position: absolute;
-            top: 0;
-            left: 0;
+        /* Detection Messages Below Logo Content */
+        .detection-messages {
             width: 100%;
-            height: 100%;
+            margin-top: 20px;
+            position: relative;
+            z-index: 2;
+            min-height: 80px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 1;
         }
         
         .detection-message {
-            font-size: 2.2em;
+            font-size: 1.8em;
             font-weight: 900;
             text-align: center;
-            text-shadow: 0 0 20px currentColor;
+            text-shadow: 0 0 15px currentColor;
             opacity: 0;
             transition: opacity 1.5s ease;
             position: absolute;
             width: 100%;
-            padding: 0 20px;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
         }
         
         .peak-detection {
             color: var(--wave-peak);
+            border: 1px solid rgba(255, 46, 99, 0.3);
         }
         
         .dip-detection {
             color: var(--wave-trough);
+            border: 1px solid rgba(0, 212, 255, 0.3);
         }
         
         /* Wave Status Indicator */
@@ -482,7 +490,7 @@
             }
             
             .detection-message {
-                font-size: 1.5em;
+                font-size: 1.4em;
             }
             
             .features {
@@ -498,47 +506,14 @@
             }
             
             .logo-container {
-                min-height: 240px;
+                min-height: 260px;
                 padding: 20px 30px;
             }
-        }
-        
-        /* Wave Color Legend */
-        .wave-legend {
-            position: fixed;
-            top: 30px;
-            right: 30px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 10;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-        }
-        
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-        }
-        
-        .color-peak {
-            background: var(--wave-peak);
-        }
-        
-        .color-dip {
-            background: var(--wave-trough);
-        }
-        
-        .color-mid {
-            background: var(--wave-mid);
+            
+            .ai-badge {
+                font-size: 0.9em;
+                padding: 8px 20px;
+            }
         }
         
         /* Bitcoin Visualization */
@@ -585,10 +560,12 @@
             0%, 100% {
                 text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
                 transform: scale(1);
+                box-shadow: 0 0 15px currentColor;
             }
             50% {
                 text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
-                transform: scale(1.05);
+                transform: scale(1.03);
+                box-shadow: 0 0 25px currentColor;
             }
         }
         
@@ -623,6 +600,23 @@
                 transform: translateX(-25%) translateY(5px);
             }
         }
+        
+        /* Logo container wave sync */
+        .logo-wave-sync {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, 
+                var(--wave-trough) 0%, 
+                var(--wave-mid) 25%, 
+                var(--wave-peak) 50%, 
+                var(--wave-mid) 75%, 
+                var(--wave-trough) 100%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
     </style>
 </head>
 <body>
@@ -656,31 +650,24 @@
         <div class="status-text" id="statusText">ANALYZING BITCOIN WAVES</div>
     </div>
     
-    <!-- Wave Color Legend -->
-    <div class="wave-legend">
-        <h4 style="margin-bottom: 15px; color: var(--text-light);">GRAVITATIONAL WAVES</h4>
-        <div class="legend-item">
-            <div class="legend-color color-dip"></div>
-            <span>Dip Detection Zone</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color color-mid"></div>
-            <span>Neutral Zone</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color color-peak"></div>
-            <span>Peak Detection Zone</span>
-        </div>
-    </div>
-    
     <!-- Main Content -->
     <div class="content-container">
         <div class="logo-container">
             <!-- Logo Wave Effect -->
             <div class="logo-wave-effect"></div>
             
-            <!-- Detection Messages Inside Logo Container -->
-            <div class="detection-container">
+            <!-- Logo Wave Sync Indicator -->
+            <div class="logo-wave-sync" id="logoWaveSync"></div>
+            
+            <!-- Main Logo Content -->
+            <div class="logo-content">
+                <div class="logo">₿ BITCOIN PEAKDIP</div>
+                <div class="tagline">Gravitational Wave Analysis of Bitcoin</div>
+                <div class="ai-badge" id="aiBadge">SLOW MOTION WAVE DETECTION</div>
+            </div>
+            
+            <!-- Detection Messages Below Logo Content -->
+            <div class="detection-messages">
                 <div class="detection-message peak-detection" id="peakMessage">
                     🚀 PEAK DETECTION - BITCOIN
                 </div>
@@ -689,11 +676,6 @@
                     📉 DIP DETECTION - BITCOIN
                 </div>
             </div>
-            
-            <!-- Main Logo Content -->
-            <div class="logo">₿ BITCOIN PEAKDIP</div>
-            <div class="tagline">Gravitational Wave Analysis of Bitcoin</div>
-            <div class="ai-badge" id="aiBadge">SLOW MOTION WAVE DETECTION</div>
         </div>
         
         <div class="features">
@@ -779,6 +761,7 @@
             const energyParticles = document.getElementById('energyParticles');
             const aiBadge = document.getElementById('aiBadge');
             const logoContainer = document.querySelector('.logo-container');
+            const logoWaveSync = document.getElementById('logoWaveSync');
             
             let wavePhase = 0; // 0-1 representing position in wave cycle
             let lastUpdate = 0;
@@ -876,7 +859,7 @@
                 // Peak phase (0.25-0.75 of wave)
                 if (wavePosition > 0.7) {
                     // Show peak detection
-                    peakMessage.style.opacity = '0.9';
+                    peakMessage.style.opacity = '1';
                     dipMessage.style.opacity = '0';
                     
                     // Add pulse animation to peak message
@@ -889,22 +872,27 @@
                     statusText.style.color = 'var(--wave-peak)';
                     
                     // Update logo container border color
-                    logoContainer.style.borderColor = 'rgba(255, 46, 99, 0.3)';
+                    logoContainer.style.borderColor = 'rgba(255, 46, 99, 0.4)';
                     
                     // Update badge text and color
                     aiBadge.textContent = 'PEAK DETECTED - SELL SIGNAL';
                     aiBadge.style.background = 'linear-gradient(to right, var(--wave-peak), #ff6b00)';
-                    aiBadge.style.boxShadow = '0 0 20px rgba(255, 46, 99, 0.5)';
+                    aiBadge.style.boxShadow = '0 0 25px rgba(255, 46, 99, 0.6)';
+                    aiBadge.style.color = '#ffffff';
+                    
+                    // Update logo wave sync
+                    logoWaveSync.style.opacity = '0.8';
+                    logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-mid), var(--wave-peak))';
                     
                     // Add gentle background glow to logo container
                     logoContainer.style.boxShadow = 
-                        '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 50px rgba(255, 46, 99, 0.1)';
+                        '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(255, 46, 99, 0.15)';
                 } 
                 // Dip phase (0-0.25 and 0.75-1 of wave)
                 else if (wavePosition < -0.7) {
                     // Show dip detection
                     peakMessage.style.opacity = '0';
-                    dipMessage.style.opacity = '0.9';
+                    dipMessage.style.opacity = '1';
                     
                     // Add pulse animation to dip message
                     dipMessage.style.animation = 'detectionPulse 2s infinite alternate';
@@ -916,27 +904,33 @@
                     statusText.style.color = 'var(--wave-trough)';
                     
                     // Update logo container border color
-                    logoContainer.style.borderColor = 'rgba(0, 212, 255, 0.3)';
+                    logoContainer.style.borderColor = 'rgba(0, 212, 255, 0.4)';
                     
                     // Update badge text and color
                     aiBadge.textContent = 'DIP DETECTED - BUY SIGNAL';
                     aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), #0088cc)';
-                    aiBadge.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.5)';
+                    aiBadge.style.boxShadow = '0 0 25px rgba(0, 212, 255, 0.6)';
+                    aiBadge.style.color = '#ffffff';
+                    
+                    // Update logo wave sync
+                    logoWaveSync.style.opacity = '0.8';
+                    logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid))';
                     
                     // Add gentle background glow to logo container
                     logoContainer.style.boxShadow = 
-                        '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 50px rgba(0, 212, 255, 0.1)';
+                        '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 212, 255, 0.15)';
                 }
                 // Transition phase
                 else {
                     // Fade out both messages based on wave position
-                    const fadeAmount = absoluteWavePosition * 0.7;
+                    const fadeAmount = absoluteWavePosition * 0.8;
                     peakMessage.style.opacity = `${fadeAmount}`;
                     dipMessage.style.opacity = `${fadeAmount}`;
                     
                     // Gentle pulse animation for both
-                    peakMessage.style.animation = `detectionPulse ${3 + absoluteWavePosition * 2}s infinite alternate`;
-                    dipMessage.style.animation = `detectionPulse ${3 + absoluteWavePosition * 2}s infinite alternate`;
+                    const pulseSpeed = 3 + absoluteWavePosition * 2;
+                    peakMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
+                    dipMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
                     
                     // Update status indicator
                     statusIndicator.className = 'status-indicator';
@@ -945,12 +939,18 @@
                     statusText.style.color = 'var(--wave-mid)';
                     
                     // Update logo container border color
-                    logoContainer.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    logoContainer.style.borderColor = 'rgba(255, 255, 255, 0.2)';
                     
                     // Update badge text and color
                     aiBadge.textContent = 'SLOW MOTION WAVE DETECTION';
                     aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), var(--wave-mid))';
-                    aiBadge.style.boxShadow = '0 0 10px rgba(0, 212, 255, 0.3)';
+                    aiBadge.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.4)';
+                    aiBadge.style.color = '#ffffff';
+                    
+                    // Update logo wave sync
+                    const syncOpacity = 0.3 + absoluteWavePosition * 0.3;
+                    logoWaveSync.style.opacity = `${syncOpacity}`;
+                    logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid), var(--wave-peak))';
                     
                     // Reset logo container shadow
                     logoContainer.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.5)';
@@ -963,6 +963,10 @@
                     logoWave.style.transform = `translateX(${-waveOffset}%) translateY(${Math.sin(wavePhase * Math.PI * 4) * 5}px)`;
                     logoWave.style.opacity = `${0.03 + absoluteWavePosition * 0.07}`;
                 }
+                
+                // Move wave sync indicator
+                const syncPosition = wavePhase * 100;
+                logoWaveSync.style.transform = `translateX(${syncPosition}%)`;
                 
                 // Log wave state for debugging (less frequent)
                 if (Math.round(wavePhase * 100) % 25 === 0) {
