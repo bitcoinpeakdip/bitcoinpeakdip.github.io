@@ -23,6 +23,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
         }
         
         body {
@@ -33,6 +34,7 @@
             position: relative;
             overflow-x: hidden;
             cursor: crosshair;
+            touch-action: manipulation; /* Better touch handling */
         }
         
         /* Navigation Menu */
@@ -686,6 +688,11 @@
                 font-size: 1em;
                 letter-spacing: 1px;
             }
+            
+            /* Better touch area for mobile */
+            .interactive-background {
+                min-height: 100vh;
+            }
         }
         
         /* Bitcoin Visualization */
@@ -845,6 +852,16 @@
             height: 100%;
             z-index: 1;
             cursor: crosshair;
+            touch-action: manipulation;
+        }
+        
+        /* Mobile touch feedback */
+        @media (hover: none) and (pointer: coarse) {
+            .interactive-background:active {
+                background: radial-gradient(circle at var(--touch-x, 50%) var(--touch-y, 50%), 
+                    rgba(255, 255, 255, 0.05) 0%, 
+                    transparent 50%);
+            }
         }
     </style>
 </head>
@@ -930,7 +947,8 @@
             <div class="logo-content">
                 <div class="logo">₿ BITCOIN PEAKDIP</div>
                 <div class="tagline">Gravitational Wave Analysis of Bitcoin</div>
-                <div class="ai-badge" id="aiBadge">SLOW MOTION WAVE DETECTION</div>
+                <!-- Đổi từ SLOW MOTION WAVE DETECTION thành BITCOIN WAVE ANALYSING -->
+                <div class="ai-badge" id="aiBadge">BITCOIN WAVE ANALYSING</div>
             </div>
             
             <!-- Detection Messages Below Logo Content -->
@@ -1050,7 +1068,7 @@
             const waveFrequency = 0.125/3; // Giảm một nửa tần số: từ 0.25 xuống 0.125
             const updateInterval = 1000 / 60; // 60fps
             let lastInteractionTime = 0;
-            const interactionCooldown = 500; // 500ms cooldown between interactions
+            const interactionCooldown = 300; // 300ms cooldown between interactions for mobile
             
             // Mobile menu toggle
             mobileMenuBtn.addEventListener('click', function() {
@@ -1163,47 +1181,21 @@
                     
                     energyParticles.appendChild(particle);
                 }
-                
-                // Add CSS for particle animations
-                const style = document.createElement('style');
-                style.textContent = `
-                    @keyframes particleFloat {
-                        0%, 100% {
-                            transform: translate(0, 0);
-                        }
-                        25% {
-                            transform: translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px);
-                        }
-                        50% {
-                            transform: translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px);
-                        }
-                        75% {
-                            transform: translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px);
-                        }
-                    }
-                    
-                    @keyframes particleFade {
-                        0%, 100% {
-                            opacity: 0;
-                        }
-                        50% {
-                            opacity: ${0.3 + Math.random() * 0.4};
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
             }
             
-            // Create strong gravitational wave effect
+            // Create strong gravitational wave effect - FIXED FOR MOBILE
             function createStrongGravitationalWave(x, y, intensity = 1) {
                 const currentTime = Date.now();
                 
-                // Check cooldown
-                if (currentTime - lastInteractionTime < interactionCooldown) {
+                // Check cooldown - shorter for mobile
+                const mobileCooldown = window.innerWidth <= 768 ? 200 : 500;
+                if (currentTime - lastInteractionTime < mobileCooldown) {
                     return;
                 }
                 
                 lastInteractionTime = currentTime;
+                
+                console.log(`Creating wave at x: ${x}, y: ${y}, intensity: ${intensity}`);
                 
                 // Create multiple rings for stronger effect
                 const ringCount = 3;
@@ -1260,11 +1252,23 @@
                     statusText.style.color = '';
                     statusText.style.textShadow = '';
                 }, 2000);
+                
+                // Update ai-badge to show interaction
+                const originalBadgeText = aiBadge.textContent;
+                aiBadge.textContent = 'WAVE GENERATED!';
+                aiBadge.style.background = 'linear-gradient(to right, var(--wave-peak), var(--wave-mid))';
+                aiBadge.style.boxShadow = '0 0 25px rgba(255, 46, 99, 0.8)';
+                
+                setTimeout(() => {
+                    aiBadge.textContent = originalBadgeText;
+                    aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), var(--wave-mid))';
+                    aiBadge.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.4)';
+                }, 1500);
             }
             
             // Create particle burst at interaction point
             function createParticleBurst(x, y, intensity) {
-                const particleCount = 30 * intensity;
+                const particleCount = Math.floor(30 * intensity);
                 const burstContainer = document.createElement('div');
                 burstContainer.style.position = 'fixed';
                 burstContainer.style.left = `${x}px`;
@@ -1278,8 +1282,9 @@
                 for (let i = 0; i < particleCount; i++) {
                     const particle = document.createElement('div');
                     particle.style.position = 'absolute';
-                    particle.style.width = `${2 + Math.random() * 4}px`;
-                    particle.style.height = particle.style.width;
+                    const size = 2 + Math.random() * 4;
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
                     particle.style.borderRadius = '50%';
                     particle.style.backgroundColor = Math.random() > 0.5 ? 'var(--wave-peak)' : 'var(--wave-trough)';
                     particle.style.opacity = '0.8';
@@ -1369,28 +1374,56 @@
                 }
             }
             
-            // Add interaction event listeners
+            // FIXED: Add interaction event listeners for both desktop and mobile
+            function handleInteraction(x, y, intensity = 1) {
+                createStrongGravitationalWave(x, y, intensity);
+            }
+            
+            // Desktop click
             interactiveBackground.addEventListener('click', function(e) {
-                createStrongGravitationalWave(e.clientX, e.clientY, 1);
+                handleInteraction(e.clientX, e.clientY, 1);
             });
             
-            // For touch devices
+            // Mobile touch - FIXED VERSION
             interactiveBackground.addEventListener('touchstart', function(e) {
+                // Prevent default to avoid scrolling issues
                 e.preventDefault();
+                
+                // Get the first touch point
                 const touch = e.touches[0];
-                createStrongGravitationalWave(touch.clientX, touch.clientY, 0.8);
+                if (touch) {
+                    handleInteraction(touch.clientX, touch.clientY, 0.8);
+                }
+                
+                // Add visual feedback for mobile
+                interactiveBackground.style.setProperty('--touch-x', `${touch.clientX}px`);
+                interactiveBackground.style.setProperty('--touch-y', `${touch.clientY}px`);
+                interactiveBackground.classList.add('touch-active');
+                
+                setTimeout(() => {
+                    interactiveBackground.classList.remove('touch-active');
+                }, 300);
             }, { passive: false });
             
-            // For mouse drag (continuous waves while dragging)
+            // For mobile touch move (continuous waves while moving finger)
+            interactiveBackground.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                if (touch) {
+                    handleInteraction(touch.clientX, touch.clientY, 0.3);
+                }
+            }, { passive: false });
+            
+            // For desktop mouse drag (continuous waves while dragging)
             let isDragging = false;
             interactiveBackground.addEventListener('mousedown', function(e) {
                 isDragging = true;
-                createStrongGravitationalWave(e.clientX, e.clientY, 0.5);
+                handleInteraction(e.clientX, e.clientY, 0.5);
             });
             
             interactiveBackground.addEventListener('mousemove', function(e) {
                 if (isDragging) {
-                    createStrongGravitationalWave(e.clientX, e.clientY, 0.3);
+                    handleInteraction(e.clientX, e.clientY, 0.3);
                 }
             });
             
@@ -1443,7 +1476,7 @@
                     // Update logo container border color
                     logoContainer.style.borderColor = 'rgba(255, 46, 99, 0.4)';
                     
-                    // Update badge text and color
+                    // Update badge text and color - ĐÃ ĐỔI THÀNH BITCOIN WAVE ANALYSING
                     aiBadge.textContent = 'PEAK DETECTED - SELL SIGNAL';
                     aiBadge.style.background = 'linear-gradient(to right, var(--wave-peak), #ff6b00)';
                     aiBadge.style.boxShadow = '0 0 25px rgba(255, 46, 99, 0.6)';
@@ -1475,7 +1508,7 @@
                     // Update logo container border color
                     logoContainer.style.borderColor = 'rgba(0, 212, 255, 0.4)';
                     
-                    // Update badge text and color
+                    // Update badge text and color - ĐÃ ĐỔI THÀNH BITCOIN WAVE ANALYSING
                     aiBadge.textContent = 'DIP DETECTED - BUY SIGNAL';
                     aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), #0088cc)';
                     aiBadge.style.boxShadow = '0 0 25px rgba(0, 212, 255, 0.6)';
@@ -1510,8 +1543,8 @@
                     // Update logo container border color
                     logoContainer.style.borderColor = 'rgba(255, 255, 255, 0.2)';
                     
-                    // Update badge text and color
-                    aiBadge.textContent = 'SLOW MOTION WAVE DETECTION';
+                    // Update badge text and color - ĐÃ ĐỔI THÀNH BITCOIN WAVE ANALYSING
+                    aiBadge.textContent = 'BITCOIN WAVE ANALYSING';
                     aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), var(--wave-mid))';
                     aiBadge.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.4)';
                     aiBadge.style.color = '#ffffff';
@@ -1543,27 +1576,6 @@
                 }
             }
             
-            // Add gentle mouse interaction
-            document.addEventListener('mousemove', function(e) {
-                const x = e.clientX / window.innerWidth;
-                const y = e.clientY / window.innerHeight;
-                
-                // Very subtle parallax effect on waves
-                const waves = document.querySelectorAll('.gentle-wave');
-                waves.forEach((wave, index) => {
-                    const intensity = (index + 1) * 0.02;
-                    wave.style.transform = `translateX(${wavePhase * -25}%) translateY(${y * 3 - 1.5}px)`; // Giảm cường độ
-                });
-                
-                // Move gravitational rings slightly
-                const rings = document.querySelectorAll('.gravitational-ring');
-                rings.forEach((ring, index) => {
-                    const ringIntensity = (index + 1) * 0.001;
-                    const currentTransform = ring.style.transform || 'translate(-50%, -50%)';
-                    ring.style.transform = `${currentTransform.split('translate')[0]} translate(${-50 + (x - 0.5) * 3}%, ${-50 + (y - 0.5) * 3}%)`; // Giảm cường độ
-                });
-            });
-            
             // Start animation loop
             requestAnimationFrame(animate);
             
@@ -1571,6 +1583,7 @@
             console.log('%c🌌 GRAVITATIONAL WAVE ANALYSIS SYSTEM ACTIVE', 'color: #00d4ff; font-size: 16px; font-weight: bold;');
             console.log('%cMonitoring Bitcoin gravitational waves in slow motion...', 'color: #f7931a;');
             console.log('%cInteractive gravitational waves enabled - Click/Touch to create waves!', 'color: #ff2e63;');
+            console.log('%cText updated: "SLOW MOTION WAVE DETECTION" → "BITCOIN WAVE ANALYSING"', 'color: #4CAF50;');
             
             // Feature cards animation on scroll
             const observerOptions = {
@@ -1622,7 +1635,24 @@
             // Instructions for user
             setTimeout(() => {
                 console.log('%c💡 TIP: Click or touch anywhere on the background to create powerful gravitational waves!', 'color: #00d4ff; font-size: 14px;');
+                
+                // Show mobile-specific instructions
+                if ('ontouchstart' in window || navigator.maxTouchPoints) {
+                    console.log('%c📱 MOBILE: Touch and drag to create continuous waves!', 'color: #f7931a; font-size: 14px;');
+                }
             }, 3000);
+            
+            // Test mobile touch immediately
+            if ('ontouchstart' in window || navigator.maxTouchPoints) {
+                console.log('Mobile touch support detected');
+                
+                // Add a test wave after page load to confirm functionality
+                setTimeout(() => {
+                    console.log('Testing mobile wave creation...');
+                    // Create a test wave at center
+                    createStrongGravitationalWave(window.innerWidth / 2, window.innerHeight / 2, 0.5);
+                }, 1000);
+            }
         });
     </script>
 </body>
