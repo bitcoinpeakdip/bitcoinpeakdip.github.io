@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bitcoin PeakDip - AI-Powered Peak & Dip Detection</title>
-    <meta name="description" content="Real-time Bitcoin peak and dip detection using AI algorithms.">
+    <title>Bitcoin PeakDip - AI-Powered Early Warning System</title>
+    <meta name="description" content="Real-time Bitcoin peak and dip detection using Early Warning System with AI algorithms.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -15,15 +15,15 @@
             --bg-darker: #050811;
             --text-light: #ffffff;
             --text-glow: rgba(255, 255, 255, 0.8);
-            --gravitational-blue: #0a1a2a;
-            --gravitational-purple: #1a0a2a;
+            --sensor-blue: #0a1a2a;
+            --sensor-purple: #1a0a2a;
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -34,7 +34,7 @@
             position: relative;
             overflow-x: hidden;
             cursor: crosshair;
-            touch-action: manipulation; /* Better touch handling */
+            touch-action: manipulation;
         }
         
         /* Navigation Menu */
@@ -137,8 +137,8 @@
             padding: 5px;
         }
         
-        /* Gravitational Wave Background */
-        .gravitational-waves {
+        /* Sensor Network Background */
+        .sensor-network {
             position: fixed;
             top: 0;
             left: 0;
@@ -147,13 +147,13 @@
             z-index: -1;
             overflow: hidden;
             background: 
-                radial-gradient(circle at 20% 50%, var(--gravitational-blue) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, var(--gravitational-purple) 0%, transparent 50%),
+                radial-gradient(circle at 20% 50%, var(--sensor-blue) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, var(--sensor-purple) 0%, transparent 50%),
                 linear-gradient(to bottom, var(--bg-darker), var(--bg-dark));
         }
         
-        /* Gravitational Wave Rings - Slow Motion */
-        .gravitational-ring {
+        /* Sensor Rings */
+        .sensor-ring {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -161,7 +161,7 @@
             border-radius: 50%;
             border: 1px solid;
             opacity: 0;
-            animation: gravitationalWave 8s linear infinite;
+            animation: sensorPulse 8s linear infinite;
         }
         
         .ring-1 {
@@ -192,7 +192,7 @@
             animation-delay: 6s;
         }
         
-        @keyframes gravitationalWave {
+        @keyframes sensorPulse {
             0% {
                 width: 0;
                 height: 0;
@@ -210,8 +210,8 @@
             }
         }
         
-        /* Gentle Wave Pattern */
-        .gentle-waves {
+        /* Bitcoin Wave Pattern */
+        .bitcoin-waves {
             position: absolute;
             top: 0;
             left: 0;
@@ -220,7 +220,7 @@
             opacity: 0.4;
         }
         
-        .gentle-wave {
+        .bitcoin-wave {
             position: absolute;
             bottom: 0;
             left: 0;
@@ -242,22 +242,22 @@
         }
         
         .wave-1 {
-            animation: gentleWaveMove 20s linear infinite;
+            animation: waveMove 20s linear infinite;
         }
         
         .wave-2 {
-            animation: gentleWaveMove 25s linear infinite;
+            animation: waveMove 25s linear infinite;
             opacity: 0.07;
             height: 95%;
         }
         
         .wave-3 {
-            animation: gentleWaveMove 30s linear infinite;
+            animation: waveMove 30s linear infinite;
             opacity: 0.05;
             height: 90%;
         }
         
-        @keyframes gentleWaveMove {
+        @keyframes waveMove {
             0% {
                 transform: translateX(0) translateY(0);
             }
@@ -289,7 +289,7 @@
             background: var(--wave-peak);
         }
         
-        /* Logo Container với Peak/Dip Detection */
+        /* Logo Container */
         .logo-container {
             text-align: center;
             margin-bottom: 50px;
@@ -348,7 +348,7 @@
             transition: all 0.8s ease;
         }
         
-        /* Detection Messages Below Logo Content */
+        /* Detection Messages */
         .detection-messages {
             width: 100%;
             margin-top: 20px;
@@ -386,8 +386,8 @@
             border: 1px solid rgba(0, 212, 255, 0.3);
         }
         
-        /* Wave Status Indicator - Updated for better positioning */
-        .wave-status {
+        /* Status Indicator */
+        .status-indicator {
             position: fixed;
             bottom: 30px;
             left: 50%;
@@ -405,17 +405,17 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
         
-        .wave-status.hidden {
+        .status-indicator.hidden {
             opacity: 0;
             visibility: hidden;
             transform: translateX(-50%) translateY(20px);
         }
         
-        .status-indicator {
+        .status-light {
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            animation: gentleStatusPulse 4s infinite alternate;
+            animation: statusPulse 4s infinite alternate;
         }
         
         .status-peak {
@@ -433,7 +433,7 @@
             transition: all 1s ease;
         }
         
-        @keyframes gentleStatusPulse {
+        @keyframes statusPulse {
             0%, 100% {
                 box-shadow: 0 0 10px currentColor;
                 transform: scale(1);
@@ -678,7 +678,7 @@
                 padding: 8px 20px;
             }
             
-            .wave-status {
+            .status-indicator {
                 padding: 12px 20px;
                 gap: 15px;
                 bottom: 20px;
@@ -689,7 +689,6 @@
                 letter-spacing: 1px;
             }
             
-            /* Better touch area for mobile */
             .interactive-background {
                 min-height: 100vh;
             }
@@ -720,10 +719,10 @@
                 var(--wave-peak) 70%,
                 transparent 100%);
             border-radius: 50% 50% 0 0;
-            animation: bitcoinWave 8s infinite ease-in-out;
+            animation: bitcoinPulse 8s infinite ease-in-out;
         }
         
-        @keyframes bitcoinWave {
+        @keyframes bitcoinPulse {
             0%, 100% {
                 height: 30%;
                 filter: blur(5px);
@@ -804,8 +803,8 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        /* Strong Gravitational Wave Effect */
-        .strong-gravitational-wave {
+        /* Sensor Alert Effect */
+        .sensor-alert {
             position: fixed;
             top: 0;
             left: 0;
@@ -815,16 +814,16 @@
             z-index: 2;
         }
         
-        .strong-wave-ring {
+        .alert-ring {
             position: absolute;
             border-radius: 50%;
             border: 2px solid;
             opacity: 0;
             transform: translate(-50%, -50%);
-            animation: strongWaveExpand 1.5s ease-out forwards;
+            animation: alertExpand 1.5s ease-out forwards;
         }
         
-        @keyframes strongWaveExpand {
+        @keyframes alertExpand {
             0% {
                 width: 0;
                 height: 0;
@@ -863,21 +862,43 @@
                     transparent 50%);
             }
         }
+        
+        /* Particle floating animation */
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(0) translateX(0);
+            }
+            100% {
+                transform: translateY(-100vh) translateX(var(--particle-x, 100px));
+            }
+        }
+        
+        @keyframes particleFade {
+            0%, 100% {
+                opacity: 0;
+            }
+            10%, 90% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Interactive Background for Click/Touch Events -->
     <div class="interactive-background" id="interactiveBackground"></div>
     
-    <!-- Strong Gravitational Wave Container -->
-    <div class="strong-gravitational-wave" id="strongGravitationalWave"></div>
+    <!-- Sensor Alert Container -->
+    <div class="sensor-alert" id="sensorAlert"></div>
     
     <!-- Navigation Menu -->
     <nav class="navigation" id="navigation">
         <div class="nav-container">
             <a href="#" class="nav-logo">
                 <i class="fas fa-wave-square"></i>
-                Bitcoin PeakDip
+                Bitcoin PeakDip EWS
             </a>
             
             <button class="mobile-menu-btn" id="mobileMenuBtn">
@@ -904,19 +925,19 @@
         </div>
     </nav>
     
-    <!-- Gravitational Wave Background -->
-    <div class="gravitational-waves">
-        <!-- Gravitational Rings -->
-        <div class="gravitational-ring ring-1"></div>
-        <div class="gravitational-ring ring-2"></div>
-        <div class="gravitational-ring ring-3"></div>
-        <div class="gravitational-ring ring-4"></div>
+    <!-- Sensor Network Background -->
+    <div class="sensor-network">
+        <!-- Sensor Rings -->
+        <div class="sensor-ring ring-1"></div>
+        <div class="sensor-ring ring-2"></div>
+        <div class="sensor-ring ring-3"></div>
+        <div class="sensor-ring ring-4"></div>
         
-        <!-- Gentle Waves -->
-        <div class="gentle-waves">
-            <div class="gentle-wave wave-1"></div>
-            <div class="gentle-wave wave-2"></div>
-            <div class="gentle-wave wave-3"></div>
+        <!-- Bitcoin Waves -->
+        <div class="bitcoin-waves">
+            <div class="bitcoin-wave wave-1"></div>
+            <div class="bitcoin-wave wave-2"></div>
+            <div class="bitcoin-wave wave-3"></div>
         </div>
         
         <!-- Energy Particles Container -->
@@ -928,10 +949,10 @@
         </div>
     </div>
     
-    <!-- Wave Status Indicator -->
-    <div class="wave-status" id="waveStatus">
-        <div class="status-indicator status-peak" id="statusIndicator"></div>
-        <div class="status-text" id="statusText">ANALYZING BITCOIN WAVES</div>
+    <!-- Status Indicator -->
+    <div class="status-indicator" id="statusIndicator">
+        <div class="status-light status-peak" id="statusLight"></div>
+        <div class="status-text" id="statusText">EARLY WARNING SYSTEM ACTIVE</div>
     </div>
     
     <!-- Main Content -->
@@ -945,20 +966,19 @@
             
             <!-- Main Logo Content -->
             <div class="logo-content">
-                <div class="logo">₿ BITCOIN PEAKDIP</div>
-                <div class="tagline">Gravitational Wave Analysis of Bitcoin</div>
-                <!-- Đổi từ SLOW MOTION WAVE DETECTION thành BITCOIN WAVE ANALYSING -->
-                <div class="ai-badge" id="aiBadge">BITCOIN WAVE ANALYSING</div>
+                <div class="logo">₿ BITCOIN PEAKDIP EWS</div>
+                <div class="tagline">Early Warning System for Bitcoin Patterns</div>
+                <div class="ai-badge" id="aiBadge">EARLY WARNING SYSTEM ACTIVE</div>
             </div>
             
             <!-- Detection Messages Below Logo Content -->
             <div class="detection-messages">
                 <div class="detection-message peak-detection" id="peakMessage">
-                    🚀 PEAK DETECTION - BITCOIN
+                    🚨 PEAK ALERT - EARLY WARNING SYSTEM
                 </div>
                 
                 <div class="detection-message dip-detection" id="dipMessage">
-                    📉 DIP DETECTION - BITCOIN
+                    📉 DIP ALERT - EARLY WARNING SYSTEM
                 </div>
             </div>
         </div>
@@ -966,33 +986,33 @@
         <div class="features">
             <div class="feature-card">
                 <div class="feature-icon">
-                    <i class="fas fa-water"></i>
+                    <i class="fas fa-satellite-dish"></i>
                 </div>
-                <h3 class="feature-title">Gravitational Wave Analysis</h3>
-                <p class="feature-desc">Slow-motion wave analysis inspired by gravitational waves for precise Bitcoin pattern detection.</p>
+                <h3 class="feature-title">Early Warning System</h3>
+                <p class="feature-desc">Advanced sensor network analyzes Bitcoin patterns similar to earthquake detection systems.</p>
             </div>
             
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-brain"></i>
                 </div>
-                <h3 class="feature-title">AI Pattern Recognition</h3>
-                <p class="feature-desc">Neural networks analyze gravitational-like wave patterns to predict market movements.</p>
+                <h3 class="feature-title">AI Signal Processing</h3>
+                <p class="feature-desc">Neural networks filter noise and extract features to identify local peaks and dips.</p>
             </div>
             
             <div class="feature-card">
                 <div class="feature-icon">
                     <i class="fas fa-bell"></i>
                 </div>
-                <h3 class="feature-title">Gentle Alerts</h3>
-                <p class="feature-desc">Smooth, non-intrusive notifications when Bitcoin reaches peak (red) or dip (blue) zones.</p>
+                <h3 class="feature-title">Precision Alerts</h3>
+                <p class="feature-desc">Accurate notifications when Bitcoin reaches peak (red) or dip (blue) zones.</p>
             </div>
         </div>
         
         <div class="channels">
-            <h2 class="section-title">Join Our Gravitational Wave Community</h2>
+            <h2 class="section-title">Join Our Early Warning Community</h2>
             <p style="color: var(--text-glow); margin-bottom: 30px; font-size: 1.2em;">
-                Connect with our slow-motion wave analysis system across platforms
+                Connect with our advanced early warning system across platforms
             </p>
             
             <div class="channels-grid">
@@ -1018,14 +1038,14 @@
             </div>
             
             <div class="disclaimer">
-                <strong>⚠️ Gravitational Wave Analysis Advisory:</strong> Our slow-motion wave detection system analyzes market patterns, not financial advice. 
-                Cryptocurrency trading involves substantial risk. Wave patterns are based on technical analysis and do not guarantee future results.
+                <strong>⚠️ Early Warning System Advisory:</strong> Our system uses advanced sensors and AI algorithms to analyze Bitcoin patterns, not financial advice. 
+                Cryptocurrency trading involves substantial risk. Pattern detection is based on technical analysis and does not guarantee future results.
             </div>
         </div>
         
         <!-- Footer with Navigation Links -->
         <footer id="pageFooter">
-            <p>© 2024 Bitcoin PeakDip Gravitational Wave Analysis. All rights reserved.</p>
+            <p>© 2024 Bitcoin PeakDip Early Warning System. All rights reserved.</p>
             
             <div class="footer-links">
                 <a href="#" class="footer-link">Home</a>
@@ -1041,14 +1061,14 @@
     </div>
     
     <script>
-        // Gravitational Wave Analysis System
+        // Early Warning System
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Bitcoin PeakDip Gravitational Wave System Initialized');
-            console.log('Slow Motion Wave Detection Active');
+            console.log('Bitcoin PeakDip Early Warning System Initialized');
+            console.log('Sensor Network Active');
             
             const peakMessage = document.getElementById('peakMessage');
             const dipMessage = document.getElementById('dipMessage');
-            const statusIndicator = document.getElementById('statusIndicator');
+            const statusLight = document.getElementById('statusLight');
             const statusText = document.getElementById('statusText');
             const energyParticles = document.getElementById('energyParticles');
             const aiBadge = document.getElementById('aiBadge');
@@ -1058,17 +1078,17 @@
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const navMenu = document.getElementById('navMenu');
             const navLinks = document.querySelectorAll('.nav-link');
-            const waveStatus = document.getElementById('waveStatus');
+            const statusIndicator = document.getElementById('statusIndicator');
             const pageFooter = document.getElementById('pageFooter');
             const interactiveBackground = document.getElementById('interactiveBackground');
-            const strongGravitationalWave = document.getElementById('strongGravitationalWave');
+            const sensorAlert = document.getElementById('sensorAlert');
             
-            let wavePhase = 0; // 0-1 representing position in wave cycle
+            let wavePhase = 0;
             let lastUpdate = 0;
-            const waveFrequency = 0.125/3; // Giảm một nửa tần số: từ 0.25 xuống 0.125
-            const updateInterval = 1000 / 60; // 60fps
+            const waveFrequency = 0.125/3;
+            const updateInterval = 1000 / 60;
             let lastInteractionTime = 0;
-            const interactionCooldown = 300; // 300ms cooldown between interactions for mobile
+            const interactionCooldown = 300;
             
             // Mobile menu toggle
             mobileMenuBtn.addEventListener('click', function() {
@@ -1104,26 +1124,26 @@
                     navigation.classList.remove('scrolled');
                 }
                 
-                // Hide wave status when near footer
-                updateWaveStatusVisibility();
+                // Hide status indicator when near footer
+                updateStatusVisibility();
             });
             
-            // Function to update wave status visibility
-            function updateWaveStatusVisibility() {
+            // Function to update status visibility
+            function updateStatusVisibility() {
                 const scrollPosition = window.scrollY + window.innerHeight;
                 const footerPosition = pageFooter.offsetTop;
                 const distanceToFooter = footerPosition - scrollPosition;
                 
-                // If we're within 200px of the footer, hide the wave status
+                // If we're within 200px of the footer, hide the status indicator
                 if (distanceToFooter < 200) {
-                    waveStatus.classList.add('hidden');
+                    statusIndicator.classList.add('hidden');
                 } else {
-                    waveStatus.classList.remove('hidden');
+                    statusIndicator.classList.remove('hidden');
                 }
                 
                 // On mobile, also hide when scrolling
                 if (window.innerWidth <= 768) {
-                    waveStatus.style.transition = 'all 0.3s ease';
+                    statusIndicator.style.transition = 'all 0.3s ease';
                 }
             }
             
@@ -1173,6 +1193,8 @@
                     // Random animation
                     const duration = 3 + Math.random() * 5;
                     const delay = Math.random() * 5;
+                    const particleX = -50 + Math.random() * 100;
+                    particle.style.setProperty('--particle-x', `${particleX}px`);
                     
                     particle.style.animation = `
                         particleFloat ${duration}s infinite ${delay}s,
@@ -1183,11 +1205,11 @@
                 }
             }
             
-            // Create strong gravitational wave effect - FIXED FOR MOBILE
-            function createStrongGravitationalWave(x, y, intensity = 1) {
+            // Create sensor alert effect
+            function createSensorAlert(x, y, intensity = 1) {
                 const currentTime = Date.now();
                 
-                // Check cooldown - shorter for mobile
+                // Check cooldown
                 const mobileCooldown = window.innerWidth <= 768 ? 200 : 500;
                 if (currentTime - lastInteractionTime < mobileCooldown) {
                     return;
@@ -1195,7 +1217,7 @@
                 
                 lastInteractionTime = currentTime;
                 
-                console.log(`Creating wave at x: ${x}, y: ${y}, intensity: ${intensity}`);
+                console.log(`Sensor alert at x: ${x}, y: ${y}, intensity: ${intensity}`);
                 
                 // Create multiple rings for stronger effect
                 const ringCount = 3;
@@ -1207,7 +1229,7 @@
                 
                 for (let i = 0; i < ringCount; i++) {
                     const ring = document.createElement('div');
-                    ring.className = 'strong-wave-ring';
+                    ring.className = 'alert-ring';
                     
                     // Position at click/touch point
                     ring.style.left = `${x}px`;
@@ -1220,17 +1242,17 @@
                     const delay = i * 0.2;
                     const sizeMultiplier = 1 + (i * 0.3) * intensity;
                     
-                    ring.style.animation = `strongWaveExpand ${1.5 * sizeMultiplier}s ease-out ${delay}s forwards`;
+                    ring.style.animation = `alertExpand ${1.5 * sizeMultiplier}s ease-out ${delay}s forwards`;
                     
                     // Add glow effect
                     ring.style.boxShadow = `0 0 30px ${colors[i % colors.length]}`;
                     
-                    strongGravitationalWave.appendChild(ring);
+                    sensorAlert.appendChild(ring);
                     
                     // Remove element after animation completes
                     setTimeout(() => {
-                        if (ring.parentNode === strongGravitationalWave) {
-                            strongGravitationalWave.removeChild(ring);
+                        if (ring.parentNode === sensorAlert) {
+                            sensorAlert.removeChild(ring);
                         }
                     }, (1.5 * sizeMultiplier + delay) * 1000);
                 }
@@ -1241,9 +1263,9 @@
                 // Intensify existing background waves
                 intensifyBackgroundWaves(x, y, intensity);
                 
-                // Update wave status text temporarily
+                // Update status text temporarily
                 const originalText = statusText.textContent;
-                statusText.textContent = 'STRONG WAVE DETECTED!';
+                statusText.textContent = 'SENSOR TRIGGERED!';
                 statusText.style.color = colors[0];
                 statusText.style.textShadow = `0 0 20px ${colors[0]}`;
                 
@@ -1255,7 +1277,7 @@
                 
                 // Update ai-badge to show interaction
                 const originalBadgeText = aiBadge.textContent;
-                aiBadge.textContent = 'WAVE GENERATED!';
+                aiBadge.textContent = 'SENSOR ACTIVATED!';
                 aiBadge.style.background = 'linear-gradient(to right, var(--wave-peak), var(--wave-mid))';
                 aiBadge.style.boxShadow = '0 0 25px rgba(255, 46, 99, 0.8)';
                 
@@ -1329,10 +1351,10 @@
             
             // Intensify existing background waves
             function intensifyBackgroundWaves(x, y, intensity) {
-                const waves = document.querySelectorAll('.gentle-wave');
-                const rings = document.querySelectorAll('.gravitational-ring');
+                const waves = document.querySelectorAll('.bitcoin-wave');
+                const rings = document.querySelectorAll('.sensor-ring');
                 
-                // Intensify gentle waves
+                // Intensify waves
                 waves.forEach((wave, index) => {
                     const originalOpacity = wave.style.opacity;
                     wave.style.opacity = (parseFloat(wave.style.opacity || 0.1) * (1 + intensity * 2)).toString();
@@ -1345,7 +1367,7 @@
                     }, 1000 * intensity);
                 });
                 
-                // Intensify gravitational rings
+                // Intensify sensor rings
                 rings.forEach((ring, index) => {
                     const originalBorderColor = ring.style.borderColor;
                     ring.style.borderColor = 'rgba(255, 255, 255, 0.3)';
@@ -1374,9 +1396,9 @@
                 }
             }
             
-            // FIXED: Add interaction event listeners for both desktop and mobile
+            // Handle interaction events
             function handleInteraction(x, y, intensity = 1) {
-                createStrongGravitationalWave(x, y, intensity);
+                createSensorAlert(x, y, intensity);
             }
             
             // Desktop click
@@ -1384,9 +1406,8 @@
                 handleInteraction(e.clientX, e.clientY, 1);
             });
             
-            // Mobile touch - FIXED VERSION
+            // Mobile touch
             interactiveBackground.addEventListener('touchstart', function(e) {
-                // Prevent default to avoid scrolling issues
                 e.preventDefault();
                 
                 // Get the first touch point
@@ -1405,7 +1426,7 @@
                 }, 300);
             }, { passive: false });
             
-            // For mobile touch move (continuous waves while moving finger)
+            // For mobile touch move (continuous alerts while moving finger)
             interactiveBackground.addEventListener('touchmove', function(e) {
                 e.preventDefault();
                 const touch = e.touches[0];
@@ -1414,7 +1435,7 @@
                 }
             }, { passive: false });
             
-            // For desktop mouse drag (continuous waves while dragging)
+            // For desktop mouse drag (continuous alerts while dragging)
             let isDragging = false;
             interactiveBackground.addEventListener('mousedown', function(e) {
                 isDragging = true;
@@ -1443,7 +1464,7 @@
                 
                 if (deltaTime >= updateInterval) {
                     wavePhase += (deltaTime / 1000) * waveFrequency;
-                    wavePhase %= 1; // Keep between 0-1
+                    wavePhase %= 1;
                     
                     updateWaveState();
                     lastUpdate = currentTime;
@@ -1452,13 +1473,13 @@
                 requestAnimationFrame(animate);
             }
             
-            // Update wave visual state based on phase (with reduced frequency)
+            // Update wave visual state based on phase
             function updateWaveState() {
-                // Calculate wave position (sine wave) - giảm tốc độ xuống một nửa
-                const wavePosition = Math.sin(wavePhase * Math.PI * 4); // Tăng hệ số từ 2 lên 4 để giảm chu kỳ
+                // Calculate wave position
+                const wavePosition = Math.sin(wavePhase * Math.PI * 4);
                 const absoluteWavePosition = Math.abs(wavePosition);
                 
-                // Peak phase - chỉ hiển thị khi giá trị rất cao
+                // Peak phase
                 if (wavePosition > 0.95) {
                     // Show peak detection
                     peakMessage.style.opacity = '1';
@@ -1469,14 +1490,14 @@
                     dipMessage.style.animation = 'none';
                     
                     // Update status indicator
-                    statusIndicator.className = 'status-indicator status-peak';
+                    statusLight.className = 'status-light status-peak';
                     statusText.textContent = 'BITCOIN PEAK DETECTED';
                     statusText.style.color = 'var(--wave-peak)';
                     
                     // Update logo container border color
                     logoContainer.style.borderColor = 'rgba(255, 46, 99, 0.4)';
                     
-                    // Update badge text and color - ĐÃ ĐỔI THÀNH BITCOIN WAVE ANALYSING
+                    // Update badge text and color
                     aiBadge.textContent = 'PEAK DETECTED - SELL SIGNAL';
                     aiBadge.style.background = 'linear-gradient(to right, var(--wave-peak), #ff6b00)';
                     aiBadge.style.boxShadow = '0 0 25px rgba(255, 46, 99, 0.6)';
@@ -1490,7 +1511,7 @@
                     logoContainer.style.boxShadow = 
                         '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(255, 46, 99, 0.15)';
                 } 
-                // Dip phase - chỉ hiển thị khi giá trị rất thấp
+                // Dip phase
                 else if (wavePosition < -0.95) {
                     // Show dip detection
                     peakMessage.style.opacity = '0';
@@ -1501,14 +1522,14 @@
                     peakMessage.style.animation = 'none';
                     
                     // Update status indicator
-                    statusIndicator.className = 'status-indicator status-dip';
+                    statusLight.className = 'status-light status-dip';
                     statusText.textContent = 'BITCOIN DIP DETECTED';
                     statusText.style.color = 'var(--wave-trough)';
                     
                     // Update logo container border color
                     logoContainer.style.borderColor = 'rgba(0, 212, 255, 0.4)';
                     
-                    // Update badge text and color - ĐÃ ĐỔI THÀNH BITCOIN WAVE ANALYSING
+                    // Update badge text and color
                     aiBadge.textContent = 'DIP DETECTED - BUY SIGNAL';
                     aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), #0088cc)';
                     aiBadge.style.boxShadow = '0 0 25px rgba(0, 212, 255, 0.6)';
@@ -1522,35 +1543,35 @@
                     logoContainer.style.boxShadow = 
                         '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 212, 255, 0.15)';
                 }
-                // Transition phase - chiếm phần lớn thời gian hơn
+                // Transition phase
                 else {
                     // Fade out both messages based on wave position
-                    const fadeAmount = absoluteWavePosition * 0.5; // Giảm độ mờ
+                    const fadeAmount = absoluteWavePosition * 0.5;
                     peakMessage.style.opacity = `${fadeAmount}`;
                     dipMessage.style.opacity = `${fadeAmount}`;
                     
                     // Gentle pulse animation for both
-                    const pulseSpeed = 12 + absoluteWavePosition * 6; // Chậm hơn
+                    const pulseSpeed = 12 + absoluteWavePosition * 6;
                     peakMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
                     dipMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
                     
                     // Update status indicator
-                    statusIndicator.className = 'status-indicator';
-                    statusIndicator.style.background = 'var(--wave-mid)';
-                    statusText.textContent = 'ANALYZING BITCOIN WAVES';
+                    statusLight.className = 'status-light';
+                    statusLight.style.background = 'var(--wave-mid)';
+                    statusText.textContent = 'EARLY WARNING SYSTEM ACTIVE';
                     statusText.style.color = 'var(--wave-mid)';
                     
                     // Update logo container border color
                     logoContainer.style.borderColor = 'rgba(255, 255, 255, 0.2)';
                     
-                    // Update badge text and color - ĐÃ ĐỔI THÀNH BITCOIN WAVE ANALYSING
-                    aiBadge.textContent = 'BITCOIN WAVE ANALYSING';
+                    // Update badge text and color
+                    aiBadge.textContent = 'EARLY WARNING SYSTEM ACTIVE';
                     aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), var(--wave-mid))';
                     aiBadge.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.4)';
                     aiBadge.style.color = '#ffffff';
                     
                     // Update logo wave sync
-                    const syncOpacity = 0.2 + absoluteWavePosition * 0.2; // Giảm độ mờ
+                    const syncOpacity = 0.2 + absoluteWavePosition * 0.2;
                     logoWaveSync.style.opacity = `${syncOpacity}`;
                     logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid), var(--wave-peak))';
                     
@@ -1561,29 +1582,23 @@
                 // Sync logo wave effect with background waves
                 const logoWave = document.querySelector('.logo-wave-effect');
                 if (logoWave) {
-                    const waveOffset = wavePhase * 50; // Giảm chuyển động xuống một nửa
+                    const waveOffset = wavePhase * 50;
                     logoWave.style.transform = `translateX(${-waveOffset}%) translateY(${Math.sin(wavePhase * Math.PI * 8) * 3}px)`;
-                    logoWave.style.opacity = `${0.02 + absoluteWavePosition * 0.04}`; // Giảm độ mờ
+                    logoWave.style.opacity = `${0.02 + absoluteWavePosition * 0.04}`;
                 }
                 
                 // Move wave sync indicator
-                const syncPosition = wavePhase * 50; // Giảm chuyển động xuống một nửa
+                const syncPosition = wavePhase * 50;
                 logoWaveSync.style.transform = `translateX(${syncPosition}%)`;
-                
-                // Log wave state for debugging (less frequent)
-                if (Math.round(wavePhase * 100) % 25 === 0) {
-                    console.log(`Gravitational Wave Phase: ${wavePhase.toFixed(3)}, Position: ${wavePosition.toFixed(3)}`);
-                }
             }
             
             // Start animation loop
             requestAnimationFrame(animate);
             
-            // Console logging for wave analysis
-            console.log('%c🌌 GRAVITATIONAL WAVE ANALYSIS SYSTEM ACTIVE', 'color: #00d4ff; font-size: 16px; font-weight: bold;');
-            console.log('%cMonitoring Bitcoin gravitational waves in slow motion...', 'color: #f7931a;');
-            console.log('%cInteractive gravitational waves enabled - Click/Touch to create waves!', 'color: #ff2e63;');
-            console.log('%cText updated: "SLOW MOTION WAVE DETECTION" → "BITCOIN WAVE ANALYSING"', 'color: #4CAF50;');
+            // Console logging for system status
+            console.log('%c🚨 EARLY WARNING SYSTEM ACTIVE', 'color: #00d4ff; font-size: 16px; font-weight: bold;');
+            console.log('%cMonitoring Bitcoin patterns with advanced sensors...', 'color: #f7931a;');
+            console.log('%cEarly Warning System enabled - Click/Touch to test sensors!', 'color: #ff2e63;');
             
             // Feature cards animation on scroll
             const observerOptions = {
@@ -1608,37 +1623,37 @@
                 observer.observe(card);
             });
             
-            // Update wave status periodically (less frequent)
+            // Update status text periodically
             setInterval(() => {
                 const statusMessages = [
-                    'ANALYZING GRAVITATIONAL WAVES',
+                    'EARLY WARNING SYSTEM ACTIVE',
                     'MONITORING BITCOIN PATTERNS',
-                    'CALCULATING WAVE FREQUENCIES',
-                    'DETECTING MARKET RHYTHMS',
-                    'ANALYZING BITCOIN WAVES',
-                    'CLICK TO CREATE WAVES!'
+                    'ANALYZING SENSOR DATA',
+                    'FILTERING MARKET NOISE',
+                    'DETECTING LOCAL EXTREMES',
+                    'CLICK TO TEST SYSTEM!'
                 ];
                 
                 const randomStatus = statusMessages[Math.floor(Math.random() * statusMessages.length)];
                 statusText.textContent = randomStatus;
-            }, 12000); // Tăng từ 8 giây lên 12 giây
+            }, 12000);
             
-            // Add wave sync effect to badge (less frequent)
+            // Add wave sync effect to badge
             setInterval(() => {
                 const waveIntensity = Math.abs(Math.sin(wavePhase * Math.PI * 2));
-                aiBadge.style.transform = `translateY(${Math.sin(wavePhase * Math.PI * 8) * 1}px)`; // Giảm cường độ
-            }, 100); // Giảm tần số cập nhật
+                aiBadge.style.transform = `translateY(${Math.sin(wavePhase * Math.PI * 8) * 1}px)`;
+            }, 100);
             
-            // Initial update of wave status visibility
-            updateWaveStatusVisibility();
+            // Initial update of status visibility
+            updateStatusVisibility();
             
             // Instructions for user
             setTimeout(() => {
-                console.log('%c💡 TIP: Click or touch anywhere on the background to create powerful gravitational waves!', 'color: #00d4ff; font-size: 14px;');
+                console.log('%c💡 TIP: Click or touch anywhere to test the Early Warning System sensors!', 'color: #00d4ff; font-size: 14px;');
                 
                 // Show mobile-specific instructions
                 if ('ontouchstart' in window || navigator.maxTouchPoints) {
-                    console.log('%c📱 MOBILE: Touch and drag to create continuous waves!', 'color: #f7931a; font-size: 14px;');
+                    console.log('%c📱 MOBILE: Touch and drag to simulate sensor network activity!', 'color: #f7931a; font-size: 14px;');
                 }
             }, 3000);
             
@@ -1646,11 +1661,11 @@
             if ('ontouchstart' in window || navigator.maxTouchPoints) {
                 console.log('Mobile touch support detected');
                 
-                // Add a test wave after page load to confirm functionality
+                // Add a test alert after page load to confirm functionality
                 setTimeout(() => {
-                    console.log('Testing mobile wave creation...');
-                    // Create a test wave at center
-                    createStrongGravitationalWave(window.innerWidth / 2, window.innerHeight / 2, 0.5);
+                    console.log('Testing sensor network...');
+                    // Create a test alert at center
+                    createSensorAlert(window.innerWidth / 2, window.innerHeight / 2, 0.5);
                 }, 1000);
             }
         });
