@@ -32,6 +32,7 @@
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
+            cursor: crosshair;
         }
         
         /* Navigation Menu */
@@ -795,9 +796,65 @@
             background: rgba(0, 0, 0, 0.9);
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
+        
+        /* Strong Gravitational Wave Effect */
+        .strong-gravitational-wave {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        .strong-wave-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid;
+            opacity: 0;
+            transform: translate(-50%, -50%);
+            animation: strongWaveExpand 1.5s ease-out forwards;
+        }
+        
+        @keyframes strongWaveExpand {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 0.9;
+                border-width: 3px;
+            }
+            50% {
+                opacity: 0.6;
+                border-width: 2px;
+            }
+            100% {
+                width: 150vmax;
+                height: 150vmax;
+                opacity: 0;
+                border-width: 1px;
+            }
+        }
+        
+        /* Interactive Background */
+        .interactive-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            cursor: crosshair;
+        }
     </style>
 </head>
 <body>
+    <!-- Interactive Background for Click/Touch Events -->
+    <div class="interactive-background" id="interactiveBackground"></div>
+    
+    <!-- Strong Gravitational Wave Container -->
+    <div class="strong-gravitational-wave" id="strongGravitationalWave"></div>
+    
     <!-- Navigation Menu -->
     <nav class="navigation" id="navigation">
         <div class="nav-container">
@@ -985,11 +1042,15 @@
             const navLinks = document.querySelectorAll('.nav-link');
             const waveStatus = document.getElementById('waveStatus');
             const pageFooter = document.getElementById('pageFooter');
+            const interactiveBackground = document.getElementById('interactiveBackground');
+            const strongGravitationalWave = document.getElementById('strongGravitationalWave');
             
             let wavePhase = 0; // 0-1 representing position in wave cycle
             let lastUpdate = 0;
             const waveFrequency = 0.125/3; // Giảm một nửa tần số: từ 0.25 xuống 0.125
             const updateInterval = 1000 / 60; // 60fps
+            let lastInteractionTime = 0;
+            const interactionCooldown = 500; // 500ms cooldown between interactions
             
             // Mobile menu toggle
             mobileMenuBtn.addEventListener('click', function() {
@@ -1132,6 +1193,214 @@
                 `;
                 document.head.appendChild(style);
             }
+            
+            // Create strong gravitational wave effect
+            function createStrongGravitationalWave(x, y, intensity = 1) {
+                const currentTime = Date.now();
+                
+                // Check cooldown
+                if (currentTime - lastInteractionTime < interactionCooldown) {
+                    return;
+                }
+                
+                lastInteractionTime = currentTime;
+                
+                // Create multiple rings for stronger effect
+                const ringCount = 3;
+                const colors = [
+                    'rgba(255, 46, 99, 0.8)',    // Red
+                    'rgba(0, 212, 255, 0.8)',    // Blue
+                    'rgba(247, 147, 26, 0.8)'    // Orange
+                ];
+                
+                for (let i = 0; i < ringCount; i++) {
+                    const ring = document.createElement('div');
+                    ring.className = 'strong-wave-ring';
+                    
+                    // Position at click/touch point
+                    ring.style.left = `${x}px`;
+                    ring.style.top = `${y}px`;
+                    
+                    // Color based on index
+                    ring.style.borderColor = colors[i % colors.length];
+                    
+                    // Size and delay based on intensity and index
+                    const delay = i * 0.2;
+                    const sizeMultiplier = 1 + (i * 0.3) * intensity;
+                    
+                    ring.style.animation = `strongWaveExpand ${1.5 * sizeMultiplier}s ease-out ${delay}s forwards`;
+                    
+                    // Add glow effect
+                    ring.style.boxShadow = `0 0 30px ${colors[i % colors.length]}`;
+                    
+                    strongGravitationalWave.appendChild(ring);
+                    
+                    // Remove element after animation completes
+                    setTimeout(() => {
+                        if (ring.parentNode === strongGravitationalWave) {
+                            strongGravitationalWave.removeChild(ring);
+                        }
+                    }, (1.5 * sizeMultiplier + delay) * 1000);
+                }
+                
+                // Create particle burst effect
+                createParticleBurst(x, y, intensity);
+                
+                // Intensify existing background waves
+                intensifyBackgroundWaves(x, y, intensity);
+                
+                // Update wave status text temporarily
+                const originalText = statusText.textContent;
+                statusText.textContent = 'STRONG WAVE DETECTED!';
+                statusText.style.color = colors[0];
+                statusText.style.textShadow = `0 0 20px ${colors[0]}`;
+                
+                setTimeout(() => {
+                    statusText.textContent = originalText;
+                    statusText.style.color = '';
+                    statusText.style.textShadow = '';
+                }, 2000);
+            }
+            
+            // Create particle burst at interaction point
+            function createParticleBurst(x, y, intensity) {
+                const particleCount = 30 * intensity;
+                const burstContainer = document.createElement('div');
+                burstContainer.style.position = 'fixed';
+                burstContainer.style.left = `${x}px`;
+                burstContainer.style.top = `${y}px`;
+                burstContainer.style.transform = 'translate(-50%, -50%)';
+                burstContainer.style.pointerEvents = 'none';
+                burstContainer.style.zIndex = '3';
+                
+                document.body.appendChild(burstContainer);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'absolute';
+                    particle.style.width = `${2 + Math.random() * 4}px`;
+                    particle.style.height = particle.style.width;
+                    particle.style.borderRadius = '50%';
+                    particle.style.backgroundColor = Math.random() > 0.5 ? 'var(--wave-peak)' : 'var(--wave-trough)';
+                    particle.style.opacity = '0.8';
+                    
+                    // Random direction and speed
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 50 + Math.random() * 100;
+                    const distance = speed * (1 + intensity);
+                    
+                    // Animation
+                    const animation = particle.animate([
+                        {
+                            transform: 'translate(0, 0) scale(1)',
+                            opacity: 0.8
+                        },
+                        {
+                            transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0)`,
+                            opacity: 0
+                        }
+                    ], {
+                        duration: 800 + Math.random() * 400,
+                        easing: 'cubic-bezier(0.215, 0.610, 0.355, 1)'
+                    });
+                    
+                    burstContainer.appendChild(particle);
+                    
+                    // Remove after animation
+                    animation.onfinish = () => {
+                        if (particle.parentNode === burstContainer) {
+                            burstContainer.removeChild(particle);
+                        }
+                    };
+                }
+                
+                // Remove container after all particles are gone
+                setTimeout(() => {
+                    if (burstContainer.parentNode === document.body) {
+                        document.body.removeChild(burstContainer);
+                    }
+                }, 2000);
+            }
+            
+            // Intensify existing background waves
+            function intensifyBackgroundWaves(x, y, intensity) {
+                const waves = document.querySelectorAll('.gentle-wave');
+                const rings = document.querySelectorAll('.gravitational-ring');
+                
+                // Intensify gentle waves
+                waves.forEach((wave, index) => {
+                    const originalOpacity = wave.style.opacity;
+                    wave.style.opacity = (parseFloat(wave.style.opacity || 0.1) * (1 + intensity * 2)).toString();
+                    wave.style.filter = `blur(${intensity * 5}px) brightness(${1 + intensity})`;
+                    
+                    // Reset after delay
+                    setTimeout(() => {
+                        wave.style.opacity = originalOpacity || '0.1';
+                        wave.style.filter = '';
+                    }, 1000 * intensity);
+                });
+                
+                // Intensify gravitational rings
+                rings.forEach((ring, index) => {
+                    const originalBorderColor = ring.style.borderColor;
+                    ring.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    ring.style.borderWidth = '2px';
+                    ring.style.filter = `blur(${intensity}px) brightness(${1 + intensity})`;
+                    
+                    // Reset after delay
+                    setTimeout(() => {
+                        ring.style.borderColor = originalBorderColor;
+                        ring.style.borderWidth = '';
+                        ring.style.filter = '';
+                    }, 1500 * intensity);
+                });
+                
+                // Intensify logo wave effect
+                const logoWave = document.querySelector('.logo-wave-effect');
+                if (logoWave) {
+                    const originalOpacity = logoWave.style.opacity;
+                    logoWave.style.opacity = (parseFloat(logoWave.style.opacity || 0.05) * 3).toString();
+                    logoWave.style.filter = `blur(${intensity * 2}px) brightness(${1 + intensity})`;
+                    
+                    setTimeout(() => {
+                        logoWave.style.opacity = originalOpacity || '0.05';
+                        logoWave.style.filter = '';
+                    }, 1000 * intensity);
+                }
+            }
+            
+            // Add interaction event listeners
+            interactiveBackground.addEventListener('click', function(e) {
+                createStrongGravitationalWave(e.clientX, e.clientY, 1);
+            });
+            
+            // For touch devices
+            interactiveBackground.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                createStrongGravitationalWave(touch.clientX, touch.clientY, 0.8);
+            }, { passive: false });
+            
+            // For mouse drag (continuous waves while dragging)
+            let isDragging = false;
+            interactiveBackground.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                createStrongGravitationalWave(e.clientX, e.clientY, 0.5);
+            });
+            
+            interactiveBackground.addEventListener('mousemove', function(e) {
+                if (isDragging) {
+                    createStrongGravitationalWave(e.clientX, e.clientY, 0.3);
+                }
+            });
+            
+            interactiveBackground.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+            
+            interactiveBackground.addEventListener('mouseleave', function() {
+                isDragging = false;
+            });
             
             // Animation loop for smooth wave updates
             function animate(currentTime) {
@@ -1295,59 +1564,13 @@
                 });
             });
             
-            // Add gentle click effect
-            document.addEventListener('click', function(e) {
-                // Create gentle ripple effect at click position
-                createGentleRipple(e.clientX, e.clientY);
-            });
-            
-            // Create gentle ripple effect
-            function createGentleRipple(x, y) {
-                const ripple = document.createElement('div');
-                ripple.style.position = 'fixed';
-                ripple.style.left = `${x}px`;
-                ripple.style.top = `${y}px`;
-                ripple.style.width = '0';
-                ripple.style.height = '0';
-                ripple.style.borderRadius = '50%';
-                ripple.style.background = 'radial-gradient(circle, rgba(255,255,255,0.1), transparent)';
-                ripple.style.transform = 'translate(-50%, -50%)';
-                ripple.style.pointerEvents = 'none';
-                ripple.style.zIndex = '100';
-                document.body.appendChild(ripple);
-                
-                // Animate ripple
-                const duration = 2000;
-                const startTime = Date.now();
-                
-                function animateRipple() {
-                    const elapsed = Date.now() - startTime;
-                    const progress = elapsed / duration;
-                    
-                    if (progress < 1) {
-                        const size = progress * 200; // Giảm kích thước
-                        const opacity = 0.3 * (1 - progress); // Giảm độ mờ
-                        
-                        ripple.style.width = `${size}px`;
-                        ripple.style.height = `${size}px`;
-                        ripple.style.opacity = opacity.toString();
-                        
-                        requestAnimationFrame(animateRipple);
-                    } else {
-                        ripple.remove();
-                    }
-                }
-                
-                animateRipple();
-            }
-            
             // Start animation loop
             requestAnimationFrame(animate);
             
             // Console logging for wave analysis
             console.log('%c🌌 GRAVITATIONAL WAVE ANALYSIS SYSTEM ACTIVE', 'color: #00d4ff; font-size: 16px; font-weight: bold;');
             console.log('%cMonitoring Bitcoin gravitational waves in slow motion...', 'color: #f7931a;');
-            console.log('%cWave frequency reduced by 50% for better visibility', 'color: #ff2e63;');
+            console.log('%cInteractive gravitational waves enabled - Click/Touch to create waves!', 'color: #ff2e63;');
             
             // Feature cards animation on scroll
             const observerOptions = {
@@ -1379,7 +1602,8 @@
                     'MONITORING BITCOIN PATTERNS',
                     'CALCULATING WAVE FREQUENCIES',
                     'DETECTING MARKET RHYTHMS',
-                    'ANALYZING BITCOIN WAVES'
+                    'ANALYZING BITCOIN WAVES',
+                    'CLICK TO CREATE WAVES!'
                 ];
                 
                 const randomStatus = statusMessages[Math.floor(Math.random() * statusMessages.length)];
@@ -1394,6 +1618,11 @@
             
             // Initial update of wave status visibility
             updateWaveStatusVisibility();
+            
+            // Instructions for user
+            setTimeout(() => {
+                console.log('%c💡 TIP: Click or touch anywhere on the background to create powerful gravitational waves!', 'color: #00d4ff; font-size: 14px;');
+            }, 3000);
         });
     </script>
 </body>
