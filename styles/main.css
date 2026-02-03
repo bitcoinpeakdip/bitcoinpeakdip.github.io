@@ -930,3 +930,42 @@ footer {
         gap: 15px;
     }
 }
+/* Product Preview Styles */
+.product-preview {
+    width: 100%;
+    margin: 50px 0;
+}
+
+.strategy-preview-card {
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.strategy-preview-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+.strategy-preview-card:hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    animation: slideShine 1.5s ease;
+}
+
+@keyframes slideShine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.explore-product-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(to right, #9c27b0, var(--wave-peak));
+}
