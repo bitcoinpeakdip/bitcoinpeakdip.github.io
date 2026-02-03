@@ -34,6 +34,106 @@
             overflow-x: hidden;
         }
         
+        /* Navigation Menu */
+        .navigation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            padding: 20px 0;
+            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.7);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.5s ease;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            font-size: 1.8em;
+            font-weight: 900;
+            background: linear-gradient(to right, var(--wave-trough), var(--wave-peak));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-decoration: none;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-logo i {
+            font-size: 1.2em;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            color: var(--text-glow);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            padding: 10px 0;
+            position: relative;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-link:hover {
+            color: var(--wave-trough);
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(to right, var(--wave-trough), var(--wave-peak));
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .nav-link.active {
+            color: var(--wave-peak);
+        }
+        
+        .nav-link.active::after {
+            width: 100%;
+            background: var(--wave-peak);
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
         /* Gravitational Wave Background */
         .gravitational-waves {
             position: fixed;
@@ -203,6 +303,7 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
+            margin-top: 100px;
         }
         
         .logo-content {
@@ -474,6 +575,25 @@
             color: var(--text-glow);
         }
         
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .footer-link {
+            color: var(--wave-trough);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .footer-link:hover {
+            color: var(--wave-peak);
+        }
+        
         .disclaimer {
             background: rgba(255, 255, 255, 0.1);
             padding: 20px;
@@ -485,6 +605,38 @@
         
         /* Responsive */
         @media (max-width: 768px) {
+            .navigation {
+                padding: 15px 0;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .nav-menu {
+                position: fixed;
+                top: 70px;
+                left: 0;
+                width: 100%;
+                background: rgba(0, 0, 0, 0.95);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                padding: 20px;
+                gap: 15px;
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.5s ease;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                z-index: 999;
+            }
+            
+            .nav-menu.active {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+            
             .logo {
                 font-size: 2.5em;
             }
@@ -508,6 +660,7 @@
             .logo-container {
                 min-height: 260px;
                 padding: 20px 30px;
+                margin-top: 80px;
             }
             
             .ai-badge {
@@ -617,9 +770,48 @@
             opacity: 0;
             transition: opacity 0.5s ease;
         }
+        
+        /* Navigation scroll effect */
+        .navigation.scrolled {
+            padding: 15px 0;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
 <body>
+    <!-- Navigation Menu -->
+    <nav class="navigation" id="navigation">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <i class="fas fa-wave-square"></i>
+                Bitcoin PeakDip
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#about" class="nav-link">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#product" class="nav-link">Product</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#learn" class="nav-link">Learn</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link">Contact</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
     <!-- Gravitational Wave Background -->
     <div class="gravitational-waves">
         <!-- Gravitational Rings -->
@@ -738,13 +930,20 @@
             </div>
         </div>
         
+        <!-- Footer with Navigation Links -->
         <footer>
             <p>© 2024 Bitcoin PeakDip Gravitational Wave Analysis. All rights reserved.</p>
-            <p style="margin-top: 20px; font-size: 0.9em;">
-                <a href="#" style="color: var(--wave-trough); margin: 0 15px; text-decoration: none;">Privacy Policy</a> • 
-                <a href="#" style="color: var(--wave-trough); margin: 0 15px; text-decoration: none;">Terms of Service</a> • 
-                <a href="#" style="color: var(--wave-trough); margin: 0 15px; text-decoration: none;">Risk Disclosure</a>
-            </p>
+            
+            <div class="footer-links">
+                <a href="#" class="footer-link">Home</a>
+                <a href="#about" class="footer-link">About</a>
+                <a href="#product" class="footer-link">Product</a>
+                <a href="#learn" class="footer-link">Learn</a>
+                <a href="#contact" class="footer-link">Contact</a>
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">Risk Disclosure</a>
+            </div>
         </footer>
     </div>
     
@@ -762,11 +961,70 @@
             const aiBadge = document.getElementById('aiBadge');
             const logoContainer = document.querySelector('.logo-container');
             const logoWaveSync = document.getElementById('logoWaveSync');
+            const navigation = document.getElementById('navigation');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const navMenu = document.getElementById('navMenu');
+            const navLinks = document.querySelectorAll('.nav-link');
             
             let wavePhase = 0; // 0-1 representing position in wave cycle
             let lastUpdate = 0;
             const waveFrequency = 0.25; // Much slower frequency for gravitational waves
             const updateInterval = 1000 / 60; // 60fps
+            
+            // Mobile menu toggle
+            mobileMenuBtn.addEventListener('click', function() {
+                navMenu.classList.toggle('active');
+                const icon = this.querySelector('i');
+                if (navMenu.classList.contains('active')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-times');
+                } else {
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+            });
+            
+            // Close mobile menu when clicking a link
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    navMenu.classList.remove('active');
+                    mobileMenuBtn.querySelector('i').classList.remove('fa-times');
+                    mobileMenuBtn.querySelector('i').classList.add('fa-bars');
+                    
+                    // Update active state
+                    navLinks.forEach(navLink => navLink.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // Navigation scroll effect
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 50) {
+                    navigation.classList.add('scrolled');
+                } else {
+                    navigation.classList.remove('scrolled');
+                }
+            });
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    
+                    // Skip if it's just "#"
+                    if (href === '#') return;
+                    
+                    e.preventDefault();
+                    
+                    const targetElement = document.querySelector(href);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
             
             // Create energy particles
             createEnergyParticles();
