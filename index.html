@@ -383,7 +383,7 @@
             border: 1px solid rgba(0, 212, 255, 0.3);
         }
         
-        /* Wave Status Indicator */
+        /* Wave Status Indicator - Updated for better positioning */
         .wave-status {
             position: fixed;
             bottom: 30px;
@@ -392,13 +392,20 @@
             display: flex;
             align-items: center;
             gap: 20px;
-            z-index: 10;
-            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
             padding: 15px 30px;
             border-radius: 50px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 1s ease;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .wave-status.hidden {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-50%) translateY(20px);
         }
         
         .status-indicator {
@@ -667,6 +674,17 @@
                 font-size: 0.9em;
                 padding: 8px 20px;
             }
+            
+            .wave-status {
+                padding: 12px 20px;
+                gap: 15px;
+                bottom: 20px;
+            }
+            
+            .status-text {
+                font-size: 1em;
+                letter-spacing: 1px;
+            }
         }
         
         /* Bitcoin Visualization */
@@ -931,7 +949,7 @@
         </div>
         
         <!-- Footer with Navigation Links -->
-        <footer>
+        <footer id="pageFooter">
             <p>© 2024 Bitcoin PeakDip Gravitational Wave Analysis. All rights reserved.</p>
             
             <div class="footer-links">
@@ -965,10 +983,12 @@
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const navMenu = document.getElementById('navMenu');
             const navLinks = document.querySelectorAll('.nav-link');
+            const waveStatus = document.getElementById('waveStatus');
+            const pageFooter = document.getElementById('pageFooter');
             
             let wavePhase = 0; // 0-1 representing position in wave cycle
             let lastUpdate = 0;
-            const waveFrequency = 0.25; // Much slower frequency for gravitational waves
+            const waveFrequency = 0.125; // Giảm một nửa tần số: từ 0.25 xuống 0.125
             const updateInterval = 1000 / 60; // 60fps
             
             // Mobile menu toggle
@@ -1004,7 +1024,29 @@
                 } else {
                     navigation.classList.remove('scrolled');
                 }
+                
+                // Hide wave status when near footer
+                updateWaveStatusVisibility();
             });
+            
+            // Function to update wave status visibility
+            function updateWaveStatusVisibility() {
+                const scrollPosition = window.scrollY + window.innerHeight;
+                const footerPosition = pageFooter.offsetTop;
+                const distanceToFooter = footerPosition - scrollPosition;
+                
+                // If we're within 200px of the footer, hide the wave status
+                if (distanceToFooter < 200) {
+                    waveStatus.classList.add('hidden');
+                } else {
+                    waveStatus.classList.remove('hidden');
+                }
+                
+                // On mobile, also hide when scrolling
+                if (window.innerWidth <= 768) {
+                    waveStatus.style.transition = 'all 0.3s ease';
+                }
+            }
             
             // Smooth scrolling for anchor links
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -1108,20 +1150,20 @@
                 requestAnimationFrame(animate);
             }
             
-            // Update wave visual state based on phase
+            // Update wave visual state based on phase (with reduced frequency)
             function updateWaveState() {
-                // Calculate wave position (sine wave)
-                const wavePosition = Math.sin(wavePhase * Math.PI * 2);
+                // Calculate wave position (sine wave) - giảm tốc độ xuống một nửa
+                const wavePosition = Math.sin(wavePhase * Math.PI * 4); // Tăng hệ số từ 2 lên 4 để giảm chu kỳ
                 const absoluteWavePosition = Math.abs(wavePosition);
                 
-                // Peak phase (0.25-0.75 of wave)
-                if (wavePosition > 0.7) {
+                // Peak phase - chỉ hiển thị khi giá trị rất cao
+                if (wavePosition > 0.85) {
                     // Show peak detection
                     peakMessage.style.opacity = '1';
                     dipMessage.style.opacity = '0';
                     
                     // Add pulse animation to peak message
-                    peakMessage.style.animation = 'detectionPulse 2s infinite alternate';
+                    peakMessage.style.animation = 'detectionPulse 3s infinite alternate';
                     dipMessage.style.animation = 'none';
                     
                     // Update status indicator
@@ -1146,14 +1188,14 @@
                     logoContainer.style.boxShadow = 
                         '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(255, 46, 99, 0.15)';
                 } 
-                // Dip phase (0-0.25 and 0.75-1 of wave)
-                else if (wavePosition < -0.7) {
+                // Dip phase - chỉ hiển thị khi giá trị rất thấp
+                else if (wavePosition < -0.85) {
                     // Show dip detection
                     peakMessage.style.opacity = '0';
                     dipMessage.style.opacity = '1';
                     
                     // Add pulse animation to dip message
-                    dipMessage.style.animation = 'detectionPulse 2s infinite alternate';
+                    dipMessage.style.animation = 'detectionPulse 3s infinite alternate';
                     peakMessage.style.animation = 'none';
                     
                     // Update status indicator
@@ -1178,15 +1220,15 @@
                     logoContainer.style.boxShadow = 
                         '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 212, 255, 0.15)';
                 }
-                // Transition phase
+                // Transition phase - chiếm phần lớn thời gian hơn
                 else {
                     // Fade out both messages based on wave position
-                    const fadeAmount = absoluteWavePosition * 0.8;
+                    const fadeAmount = absoluteWavePosition * 0.5; // Giảm độ mờ
                     peakMessage.style.opacity = `${fadeAmount}`;
                     dipMessage.style.opacity = `${fadeAmount}`;
                     
                     // Gentle pulse animation for both
-                    const pulseSpeed = 3 + absoluteWavePosition * 2;
+                    const pulseSpeed = 4 + absoluteWavePosition * 2; // Chậm hơn
                     peakMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
                     dipMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
                     
@@ -1206,7 +1248,7 @@
                     aiBadge.style.color = '#ffffff';
                     
                     // Update logo wave sync
-                    const syncOpacity = 0.3 + absoluteWavePosition * 0.3;
+                    const syncOpacity = 0.2 + absoluteWavePosition * 0.2; // Giảm độ mờ
                     logoWaveSync.style.opacity = `${syncOpacity}`;
                     logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid), var(--wave-peak))';
                     
@@ -1217,13 +1259,13 @@
                 // Sync logo wave effect with background waves
                 const logoWave = document.querySelector('.logo-wave-effect');
                 if (logoWave) {
-                    const waveOffset = wavePhase * 100;
-                    logoWave.style.transform = `translateX(${-waveOffset}%) translateY(${Math.sin(wavePhase * Math.PI * 4) * 5}px)`;
-                    logoWave.style.opacity = `${0.03 + absoluteWavePosition * 0.07}`;
+                    const waveOffset = wavePhase * 50; // Giảm chuyển động xuống một nửa
+                    logoWave.style.transform = `translateX(${-waveOffset}%) translateY(${Math.sin(wavePhase * Math.PI * 8) * 3}px)`;
+                    logoWave.style.opacity = `${0.02 + absoluteWavePosition * 0.04}`; // Giảm độ mờ
                 }
                 
                 // Move wave sync indicator
-                const syncPosition = wavePhase * 100;
+                const syncPosition = wavePhase * 50; // Giảm chuyển động xuống một nửa
                 logoWaveSync.style.transform = `translateX(${syncPosition}%)`;
                 
                 // Log wave state for debugging (less frequent)
@@ -1241,7 +1283,7 @@
                 const waves = document.querySelectorAll('.gentle-wave');
                 waves.forEach((wave, index) => {
                     const intensity = (index + 1) * 0.02;
-                    wave.style.transform = `translateX(${wavePhase * -50}%) translateY(${y * 5 - 2.5}px)`;
+                    wave.style.transform = `translateX(${wavePhase * -25}%) translateY(${y * 3 - 1.5}px)`; // Giảm cường độ
                 });
                 
                 // Move gravitational rings slightly
@@ -1249,7 +1291,7 @@
                 rings.forEach((ring, index) => {
                     const ringIntensity = (index + 1) * 0.001;
                     const currentTransform = ring.style.transform || 'translate(-50%, -50%)';
-                    ring.style.transform = `${currentTransform.split('translate')[0]} translate(${-50 + (x - 0.5) * 5}%, ${-50 + (y - 0.5) * 5}%)`;
+                    ring.style.transform = `${currentTransform.split('translate')[0]} translate(${-50 + (x - 0.5) * 3}%, ${-50 + (y - 0.5) * 3}%)`; // Giảm cường độ
                 });
             });
             
@@ -1283,8 +1325,8 @@
                     const progress = elapsed / duration;
                     
                     if (progress < 1) {
-                        const size = progress * 300;
-                        const opacity = 0.5 * (1 - progress);
+                        const size = progress * 200; // Giảm kích thước
+                        const opacity = 0.3 * (1 - progress); // Giảm độ mờ
                         
                         ripple.style.width = `${size}px`;
                         ripple.style.height = `${size}px`;
@@ -1305,6 +1347,7 @@
             // Console logging for wave analysis
             console.log('%c🌌 GRAVITATIONAL WAVE ANALYSIS SYSTEM ACTIVE', 'color: #00d4ff; font-size: 16px; font-weight: bold;');
             console.log('%cMonitoring Bitcoin gravitational waves in slow motion...', 'color: #f7931a;');
+            console.log('%cWave frequency reduced by 50% for better visibility', 'color: #ff2e63;');
             
             // Feature cards animation on scroll
             const observerOptions = {
@@ -1329,24 +1372,28 @@
                 observer.observe(card);
             });
             
-            // Update wave status periodically
+            // Update wave status periodically (less frequent)
             setInterval(() => {
                 const statusMessages = [
                     'ANALYZING GRAVITATIONAL WAVES',
                     'MONITORING BITCOIN PATTERNS',
                     'CALCULATING WAVE FREQUENCIES',
-                    'DETECTING MARKET RHYTHMS'
+                    'DETECTING MARKET RHYTHMS',
+                    'ANALYZING BITCOIN WAVES'
                 ];
                 
                 const randomStatus = statusMessages[Math.floor(Math.random() * statusMessages.length)];
                 statusText.textContent = randomStatus;
-            }, 8000);
+            }, 12000); // Tăng từ 8 giây lên 12 giây
             
-            // Add wave sync effect to badge
+            // Add wave sync effect to badge (less frequent)
             setInterval(() => {
                 const waveIntensity = Math.abs(Math.sin(wavePhase * Math.PI * 2));
-                aiBadge.style.transform = `translateY(${Math.sin(wavePhase * Math.PI * 4) * 2}px)`;
-            }, 50);
+                aiBadge.style.transform = `translateY(${Math.sin(wavePhase * Math.PI * 8) * 1}px)`; // Giảm cường độ
+            }, 100); // Giảm tần số cập nhật
+            
+            // Initial update of wave status visibility
+            updateWaveStatusVisibility();
         });
     </script>
 </body>
