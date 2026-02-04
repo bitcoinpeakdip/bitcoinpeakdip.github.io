@@ -375,16 +375,17 @@ function createSampleData() {
 
 async function loadHistoricalBitcoinData() {
     try {
-        console.log('📈 Loading historical Bitcoin price data...');
+        // Alternative: Use public CORS proxy
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const apiUrl = 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=180&interval=daily';
         
-        // Use CoinGecko API (free, no API key needed for basic)
-        const response = await fetch(
-            'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily'
-        );
+        const response = await fetch(proxyUrl + apiUrl, {
+            headers: {
+                'Origin': window.location.origin
+            }
+        });
         
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
         
         const data = await response.json();
         historicalPriceData = data.prices.map(point => ({
@@ -394,10 +395,7 @@ async function loadHistoricalBitcoinData() {
         
         console.log(`✅ Loaded ${historicalPriceData.length} Bitcoin price points`);
         
-        // Update chart if initialized
-        if (bitcoinChart) {
-            updateChartsWithData();
-        }
+        if (bitcoinChart) updateChartsWithData();
         
     } catch (error) {
         console.error('❌ Error loading Bitcoin data:', error);
