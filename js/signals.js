@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show initial loading notification
     showNotification('Loading Bitcoin EWS Signals from CSV...', 'info');
+    // Thêm nút zoom thủ công sau 3 giây
+    setTimeout(addManualZoomButton, 3000);	
 });
 
 // ========== DATA LOADING FUNCTIONS ==========
@@ -464,6 +466,13 @@ function updateUI() {
     updateStats();
     filterSignals();
     renderTable();
+    
+    // Khởi tạo charts nếu chưa có
+    if (!bitcoinChart) {
+        initializeCharts();
+    }
+    
+    // Cập nhật dữ liệu cho biểu đồ
     updateChartsWithData();
     updateAnalysisCharts();
     
@@ -473,7 +482,6 @@ function updateUI() {
         document.title = `Bitcoin EWS (${totalSignals} Signals) - PeakDip`;
     }
 }
-
 function updateUIForNoData(errorMessage = 'No data available') {
     console.log('🔄 Updating UI for no data state...');
     
@@ -1222,6 +1230,12 @@ let zoomState = {
 
 function initializeZoomControls() {
     console.log('🔍 Initializing zoom controls...');
+    
+    // Kiểm tra xem toolbar đã tồn tại chưa
+    if (document.querySelector('.zoom-toolbar')) {
+        console.log('✅ Zoom toolbar already exists');
+        return;
+    }
     
     // Create zoom toolbar
     const chartSection = document.querySelector('.chart-section');
@@ -2568,6 +2582,372 @@ function validateDataIntegrity() {
     return issues;
 }
 
+// ========== MISSING FUNCTIONS ==========
+
+// Thêm hàm này để khởi tạo phân tích biểu đồ
+function initializeAnalysisCharts() {
+    console.log('📊 Initializing analysis charts...');
+    
+    // Type Distribution Chart
+    const typeCtx = document.getElementById('typeDistributionChart')?.getContext('2d');
+    if (typeCtx) {
+        const typeChart = new Chart(typeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Peak Signals', 'Dip Signals'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#ff2e63', '#00d4ff'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.parsed} signals`;
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+        analysisCharts.push(typeChart);
+    }
+    
+    // Confidence Chart
+    const confidenceCtx = document.getElementById('confidenceChart')?.getContext('2d');
+    if (confidenceCtx) {
+        const confidenceChart = new Chart(confidenceCtx, {
+            type: 'bar',
+            data: {
+                labels: ['High (80-100)', 'Medium (60-79)', 'Low (<60)'],
+                datasets: [{
+                    data: [0, 0, 0],
+                    backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.parsed} signals`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        display: false,
+                        grid: { display: false }
+                    },
+                    y: { 
+                        display: false,
+                        beginAtZero: true,
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+        analysisCharts.push(confidenceChart);
+    }
+    
+    // Time Distribution Chart
+    const timeCtx = document.getElementById('timeDistributionChart')?.getContext('2d');
+    if (timeCtx) {
+        const timeChart = new Chart(timeCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Signals',
+                    data: new Array(12).fill(0),
+                    borderColor: '#f7931a',
+                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Signals: ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        display: false,
+                        grid: { display: false }
+                    },
+                    y: { 
+                        display: false,
+                        beginAtZero: true,
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+        analysisCharts.push(timeChart);
+    }
+    
+    console.log(`✅ Analysis charts initialized: ${analysisCharts.length} charts`);
+}
+
+// Thêm hàm này để cập nhật khoảng cách hiển thị
+function updateAnalysisCharts() {
+    if (analysisCharts.length === 0 || signalsData.length === 0) {
+        console.warn('⚠️ Cannot update analysis charts: insufficient data');
+        return;
+    }
+    
+    // Tính toán thống kê
+    const peakCount = signalsData.filter(s => s.signal_type === 'PEAK').length;
+    const dipCount = signalsData.filter(s => s.signal_type === 'DIP').length;
+    const highConfidence = signalsData.filter(s => s.confidence >= 80).length;
+    const mediumConfidence = signalsData.filter(s => s.confidence >= 60 && s.confidence < 80).length;
+    const lowConfidence = signalsData.filter(s => s.confidence < 60).length;
+    
+    // Phân phối theo tháng
+    const monthlyCounts = new Array(12).fill(0);
+    signalsData.forEach(signal => {
+        const month = signal.timestamp.getMonth();
+        monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
+    });
+    
+    // Cập nhật biểu đồ phân phối loại
+    if (analysisCharts[0]) {
+        analysisCharts[0].data.datasets[0].data = [peakCount, dipCount];
+        analysisCharts[0].update();
+    }
+    
+    // Cập nhật biểu đồ độ tin cậy
+    if (analysisCharts[1]) {
+        analysisCharts[1].data.datasets[0].data = [highConfidence, mediumConfidence, lowConfidence];
+        analysisCharts[1].update();
+    }
+    
+    // Cập nhật biểu đồ phân phối thời gian
+    if (analysisCharts[2]) {
+        analysisCharts[2].data.datasets[0].data = monthlyCounts;
+        analysisCharts[2].update();
+    }
+    
+    console.log('✅ Analysis charts updated');
+}
+
+// Thêm hàm này để cập nhật biểu đồ với dữ liệu
+function updateChartsWithData() {
+    if (!bitcoinChart || signalsData.length === 0) {
+        console.warn('⚠️ Cannot update chart: no chart or data');
+        return;
+    }
+    
+    console.log('📊 Updating charts with actual data...');
+    
+    // Tách peak và dip signals
+    const peakSignals = signalsData.filter(s => s.signal_type === 'PEAK');
+    const dipSignals = signalsData.filter(s => s.signal_type === 'DIP');
+    
+    // Cập nhật biểu đồ chính
+    bitcoinChart.data.datasets[0].data = historicalPriceData;
+    bitcoinChart.data.datasets[1].data = peakSignals.map(signal => ({
+        x: signal.timestamp,
+        y: signal.price,
+        signal: signal
+    }));
+    bitcoinChart.data.datasets[2].data = dipSignals.map(signal => ({
+        x: signal.timestamp,
+        y: signal.price,
+        signal: signal
+    }));
+    
+    bitcoinChart.update('none');
+    
+    console.log(`✅ Charts updated: ${peakSignals.length} peaks, ${dipSignals.length} dips on chart`);
+}
+
+// Sửa hàm initializeCharts để khởi tạo đúng cách
+function initializeCharts() {
+    console.log('📊 Initializing charts...');
+    
+    // Main Bitcoin Chart
+    const chartCtx = document.getElementById('bitcoinChart')?.getContext('2d');
+    if (!chartCtx) {
+        console.warn('⚠️ Bitcoin chart canvas not found');
+        return;
+    }
+    
+    // Xóa chart cũ nếu tồn tại
+    if (bitcoinChart) {
+        bitcoinChart.destroy();
+    }
+    
+    bitcoinChart = new Chart(chartCtx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'Bitcoin Price (Estimated)',
+                    data: [],
+                    borderColor: 'rgba(247, 147, 26, 0.8)',
+                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Peak Signals',
+                    data: [],
+                    borderColor: '#ff2e63',
+                    backgroundColor: '#ff2e63',
+                    borderWidth: 0,
+                    pointRadius: 6,
+                    pointStyle: 'triangle',
+                    pointRotation: 180,
+                    showLine: false
+                },
+                {
+                    label: 'Dip Signals',
+                    data: [],
+                    borderColor: '#00d4ff',
+                    backgroundColor: '#00d4ff',
+                    borderWidth: 0,
+                    pointRadius: 6,
+                    pointStyle: 'triangle',
+                    showLine: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: { 
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#f7931a',
+                    bodyColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: 'rgba(247, 147, 26, 0.3)',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            const datasetLabel = context.dataset.label || '';
+                            if (datasetLabel.includes('Bitcoin Price')) {
+                                return `Price: $${context.parsed.y.toLocaleString('en-US', { 
+                                    minimumFractionDigits: 2, 
+                                    maximumFractionDigits: 2 
+                                })}`;
+                            } else {
+                                const signal = context.raw?.signal;
+                                if (signal) {
+                                    return `${signal.signal_type}: $${signal.price.toLocaleString('en-US', { 
+                                        minimumFractionDigits: 2, 
+                                        maximumFractionDigits: 2 
+                                    })} (${signal.confidence}%)`;
+                                }
+                                return datasetLabel;
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'month',
+                        tooltipFormat: 'MMM dd, yyyy HH:mm'
+                    },
+                    grid: { 
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: { 
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        maxTicksLimit: 8
+                    }
+                },
+                y: {
+                    grid: { 
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString('en-US', { 
+                                minimumFractionDigits: 0, 
+                                maximumFractionDigits: 0 
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Khởi tạo phân tích biểu đồ
+    initializeAnalysisCharts();
+    
+    console.log('✅ Charts initialized');
+    
+    // Khởi tạo zoom controls sau khi chart đã sẵn sàng
+    setTimeout(() => {
+        if (bitcoinChart) {
+            initializeZoomControls();
+        }
+    }, 500);
+}
+
+// Thêm nút để kích hoạt zoom thủ công nếu cần
+function addManualZoomButton() {
+    const chartSection = document.querySelector('.chart-section');
+    if (!chartSection || document.querySelector('#manualZoomBtn')) return;
+    
+    const manualBtn = document.createElement('button');
+    manualBtn.id = 'manualZoomBtn';
+    manualBtn.className = 'csv-btn';
+    manualBtn.innerHTML = '<i class="fas fa-search"></i> Activate Zoom Controls';
+    manualBtn.style.margin = '10px 0';
+    manualBtn.onclick = function() {
+        initializeZoomControls();
+        this.style.display = 'none';
+    };
+    
+    chartSection.querySelector('.chart-controls').appendChild(manualBtn);
+}
 
 // Gọi hàm này sau khi parseCSVData
 // Trong parseCSVData, sau khi parse xong, thêm:
