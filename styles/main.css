@@ -969,3 +969,104 @@ footer {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
     background: linear-gradient(to right, #9c27b0, var(--wave-peak));
 }
+/* Thêm vào cuối main.css */
+
+/* No Data States */
+.no-data-container {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    margin: 30px 0;
+}
+
+.no-data-container i {
+    font-size: 4em;
+    color: var(--wave-mid);
+    opacity: 0.5;
+    margin-bottom: 20px;
+}
+
+.no-data-container h3 {
+    color: var(--text-light);
+    font-size: 1.8em;
+    margin-bottom: 15px;
+}
+
+.no-data-container p {
+    color: var(--text-glow);
+    font-size: 1.1em;
+    max-width: 600px;
+    margin: 0 auto 30px;
+    line-height: 1.6;
+}
+
+.no-data-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.no-data-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.no-data-btn.primary {
+    background: linear-gradient(to right, var(--wave-trough), var(--wave-mid));
+    color: white;
+}
+
+.no-data-btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.no-data-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* CSV Error States */
+.csv-error {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.csv-error-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #f44336;
+    margin-bottom: 15px;
+}
+
+.csv-error-header i {
+    font-size: 1.5em;
+}
+
+.csv-error-body {
+    color: var(--text-glow);
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+
+.csv-error-body code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: var(--wave-trough);
+}

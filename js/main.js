@@ -198,3 +198,29 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(card);
     });
 });
+// Thêm vào main.js (nếu file tồn tại)
+
+// Global error handler for CSV loading
+window.addEventListener('error', function(e) {
+    if (e.message.includes('CSV') || e.message.includes('signals')) {
+        console.error('Global error caught:', e);
+        
+        // Show user-friendly message
+        const banner = document.getElementById('dataStatusBanner');
+        if (banner) {
+            banner.style.display = 'block';
+            document.getElementById('statusMessage').textContent = 
+                'Error loading data: ' + e.message.substring(0, 100);
+        }
+    }
+});
+
+// Handle offline/online status
+window.addEventListener('offline', function() {
+    showNotification('You are offline. Some features may not work.', 'warning');
+});
+
+window.addEventListener('online', function() {
+    showNotification('Back online. Reloading data...', 'info');
+    setTimeout(() => location.reload(), 2000);
+});

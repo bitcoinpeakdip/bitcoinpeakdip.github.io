@@ -13,6 +13,55 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 </head>
 <body>
+	<!-- Thêm ngay sau <body> -->
+	<div class="data-status-banner" id="dataStatusBanner" style="display: none;">
+		<div class="status-content">
+			<i class="fas fa-exclamation-triangle"></i>
+			<span id="statusMessage">No CSV data loaded</span>
+			<button onclick="loadRealCSVData()" class="retry-btn">
+				<i class="fas fa-redo"></i> Retry
+			</button>
+		</div>
+	</div>
+
+	<script>
+		// Add CSS for status banner
+		const style = document.createElement('style');
+		style.textContent = `
+			.data-status-banner {
+				position: fixed;
+				top: 70px;
+				left: 0;
+				right: 0;
+				background: linear-gradient(to right, #f44336, #ff9800);
+				color: white;
+				padding: 12px 20px;
+				z-index: 9999;
+				text-align: center;
+				font-weight: bold;
+				box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+			}
+			.status-content {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 15px;
+			}
+			.retry-btn {
+				background: rgba(255,255,255,0.2);
+				border: 1px solid rgba(255,255,255,0.3);
+				color: white;
+				padding: 5px 15px;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			.retry-btn:hover {
+				background: rgba(255,255,255,0.3);
+			}
+		`;
+		document.head.appendChild(style);
+	</script>	
+
     <!-- Interactive Background -->
     <div class="interactive-background" id="interactiveBackground"></div>
     
@@ -462,7 +511,7 @@
                 }
             }, 2000);
         });
-    </script>   
+    </script>
     <script src="js/main.js"></script>
     <script src="js/signals.js"></script>
 </body>

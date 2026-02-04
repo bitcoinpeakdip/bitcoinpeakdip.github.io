@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSV Validator</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        textarea { width: 100%; height: 200px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>CSV Format Validator</h1>
+    <p>Paste your CSV content to validate format:</p>
+    <textarea id="csvInput" placeholder="Paste CSV here..."></textarea><br>
+    <button onclick="validateCSV()">Validate CSV</button>
+    <div id="result"></div>
+    
+    <script>
+        function validateCSV() {
+            const csv = document.getElementById('csvInput').value;
+            const lines = csv.trim().split('\n');
+            const result = document.getElementById('result');
+            
+            if (lines.length < 2) {
+                result.innerHTML = '<p class="error">❌ CSV must have at least header and one data row</p>';
+                return;
+            }
+            
+            const headers = lines[0].split(',').map(h => h.trim());
+            const required = ['timestamp', 'signal_type', 'price'];
+            const missing = required.filter(h => !headers.includes(h));
+            
+            if (missing.length > 0) {
+                result.innerHTML = `<p class="error">❌ Missing required columns: ${missing.join(', ')}</p>`;
+                return;
+            }
+            
+            let validRows = 0;
+            let errors = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                if (values.length < headers.length) {
+                    errors.push(`Row ${i}: Not enough columns`);
+                    continue;
+                }
+                
+                const row = {};
+                headers.forEach((h, idx) => row[h] = values[idx]?.trim());
+                
+                // Validate timestamp
+                if (!row.timestamp) errors.push(`Row ${i}: Missing timestamp`);
+                
+                // Validate signal_type
+                if (!['PEAK', 'DIP'].includes(row.signal_type?.toUpperCase())) {
+                    errors.push(`Row ${i}: Invalid signal_type (must be PEAK or DIP)`);
+                }
+                
+                // Validate price
+                const price = parseFloat(row.price);
+                if (isNaN(price) || price <= 0) {
+                    errors.push(`Row ${i}: Invalid price`);
+                }
+                
+                validRows++;
+            }
+            
+            if (errors.length > 0) {
+                result.innerHTML = `
+                    <p class="error">❌ Found ${errors.length} errors in ${lines.length-1} rows</p>
+                    <ul>${errors.map(e => `<li>${e}</li>`).join('')}</ul>
+                `;
+            } else {
+                result.innerHTML = `<p class="success">✅ CSV format is valid! ${validRows} rows parsed successfully.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
