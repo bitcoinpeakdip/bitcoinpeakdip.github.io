@@ -12,13 +12,7 @@ let analysisCharts = [];
 let historicalPriceData = [];
 let csvDataLoaded = false;
 let lastUpdateTime = null;
-// ========== ZOOM STATE ==========
-let zoomState = {
-    min: null,
-    max: null,
-    isZoomed: false,
-    zoomHistory: []
-};
+
 // ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Bitcoin PeakDip EWS Signals - ACTUAL DATA VERSION');
