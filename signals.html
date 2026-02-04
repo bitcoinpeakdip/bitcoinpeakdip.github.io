@@ -399,147 +399,70 @@
     
     <!-- CSV Data -->
     <script id="csvData" type="application/json">
-        {
-            "signals": [
-                {
-                    "timestamp": "2024-01-15T08:30:00",
-                    "signal_type": "PEAK",
-                    "price": 45000.50,
-                    "confidence": 85,
-                    "distance": 2.5,
-                    "validation": "VALIDATED",
-                    "strategy": "RECLAIM_FAILURE"
-                },
-                {
-                    "timestamp": "2024-01-15T12:45:00",
-                    "signal_type": "DIP",
-                    "price": 44200.75,
-                    "confidence": 92,
-                    "distance": 1.8,
-                    "validation": "VALIDATED",
-                    "strategy": "DISTRIBUTION_FADE"
-                },
-                {
-                    "timestamp": "2024-01-15T16:20:00",
-                    "signal_type": "PEAK",
-                    "price": 45200.25,
-                    "confidence": 78,
-                    "distance": 3.2,
-                    "validation": "PENDING",
-                    "strategy": "HEDGE_FLIP"
-                },
-                {
-                    "timestamp": "2024-01-16T09:15:00",
-                    "signal_type": "DIP",
-                    "price": 43800.50,
-                    "confidence": 88,
-                    "distance": 2.1,
-                    "validation": "VALIDATED",
-                    "strategy": "CONTINUATION"
-                },
-                {
-                    "timestamp": "2024-01-16T14:30:00",
-                    "signal_type": "PEAK",
-                    "price": 45700.75,
-                    "confidence": 91,
-                    "distance": 1.5,
-                    "validation": "VALIDATED",
-                    "strategy": "MOMENTUM_BREAKDOWN"
-                },
-                {
-                    "timestamp": "2024-01-17T10:45:00",
-                    "signal_type": "DIP",
-                    "price": 43200.25,
-                    "confidence": 76,
-                    "distance": 3.8,
-                    "validation": "VALIDATED",
-                    "strategy": "MULTI_TF_CONFLUENCE"
-                },
-                {
-                    "timestamp": "2024-01-17T18:20:00",
-                    "signal_type": "PEAK",
-                    "price": 45900.50,
-                    "confidence": 82,
-                    "distance": 2.3,
-                    "validation": "PENDING",
-                    "strategy": "VOLATILITY_EXPANSION"
-                },
-                {
-                    "timestamp": "2024-01-18T11:30:00",
-                    "signal_type": "DIP",
-                    "price": 42800.75,
-                    "confidence": 95,
-                    "distance": 1.2,
-                    "validation": "VALIDATED",
-                    "strategy": "DERIVATIVES_DIVERGENCE"
-                },
-                {
-                    "timestamp": "2024-01-18T15:45:00",
-                    "signal_type": "PEAK",
-                    "price": 46100.25,
-                    "confidence": 79,
-                    "distance": 2.9,
-                    "validation": "VALIDATED",
-                    "strategy": "RECLAIM_FAILURE"
-                },
-                {
-                    "timestamp": "2024-01-19T09:20:00",
-                    "signal_type": "DIP",
-                    "price": 42500.50,
-                    "confidence": 87,
-                    "distance": 2.0,
-                    "validation": "PENDING",
-                    "strategy": "DISTRIBUTION_FADE"
-                },
-                {
-                    "timestamp": "2024-01-19T13:55:00",
-                    "signal_type": "PEAK",
-                    "price": 46300.75,
-                    "confidence": 84,
-                    "distance": 2.1,
-                    "validation": "VALIDATED",
-                    "strategy": "HEDGE_FLIP"
-                },
-                {
-                    "timestamp": "2024-01-20T10:10:00",
-                    "signal_type": "DIP",
-                    "price": 42200.25,
-                    "confidence": 90,
-                    "distance": 1.7,
-                    "validation": "VALIDATED",
-                    "strategy": "CONTINUATION"
-                },
-                {
-                    "timestamp": "2024-01-20T16:40:00",
-                    "signal_type": "PEAK",
-                    "price": 46500.50,
-                    "confidence": 86,
-                    "distance": 2.4,
-                    "validation": "VALIDATED",
-                    "strategy": "MOMENTUM_BREAKDOWN"
-                },
-                {
-                    "timestamp": "2024-01-21T08:25:00",
-                    "signal_type": "DIP",
-                    "price": 41800.75,
-                    "confidence": 93,
-                    "distance": 1.3,
-                    "validation": "PENDING",
-                    "strategy": "MULTI_TF_CONFLUENCE"
-                },
-                {
-                    "timestamp": "2024-01-21T14:15:00",
-                    "signal_type": "PEAK",
-                    "price": 46700.25,
-                    "confidence": 80,
-                    "distance": 3.1,
-                    "validation": "VALIDATED",
-                    "strategy": "VOLATILITY_EXPANSION"
-                }
-            ]
-        }
     </script>
-    
+    <!-- Thêm đoạn này trước </body> -->
+    <script>
+        // Load CSV từ file thực
+        fetch('data/signals.csv')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to load CSV: ${response.status} ${response.statusText}`);
+                }
+                return response.text();
+            })
+            .then(csvText => {
+                window.realCsvData = csvText;
+                console.log('✅ CSV loaded successfully from data/signals.csv');
+                console.log('CSV length:', csvText.length, 'characters');
+                console.log('First 3 lines:', csvText.split('\n').slice(0, 3).join('\n'));
+                
+                // Dispatch event để signals.js biết dữ liệu đã sẵn sàng
+                const event = new CustomEvent('csvDataReady', { 
+                    detail: { csvText: csvText } 
+                });
+                document.dispatchEvent(event);
+            })
+            .catch(error => {
+                console.error('❌ Error loading CSV:', error);
+                
+                // Try alternative path if data/ doesn't work
+                fetch('signals.csv')
+                    .then(response => response.text())
+                    .then(csvText => {
+                        console.log('⚠️  Loaded from alternative path (signals.csv)');
+                        window.realCsvData = csvText;
+                        const event = new CustomEvent('csvDataReady', { 
+                            detail: { csvText: csvText } 
+                        });
+                        document.dispatchEvent(event);
+                    })
+                    .catch(error2 => {
+                        console.error('❌ Failed all CSV paths');
+                    });
+            });
+    </script>
+    <!-- Thêm ngay sau <body> -->
+    <div class="loading-indicator" id="globalLoading">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Loading Bitcoin EWS Signals...</span>
+    </div>
+
+    <script>
+        // Hide loading when page is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const loading = document.getElementById('globalLoading');
+                if (loading) {
+                    loading.style.opacity = '0';
+                    setTimeout(() => {
+                        if (loading.parentNode) {
+                            loading.parentNode.removeChild(loading);
+                        }
+                    }, 300);
+                }
+            }, 2000);
+        });
+    </script>   
     <script src="js/main.js"></script>
     <script src="js/signals.js"></script>
 </body>
