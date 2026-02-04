@@ -12,7 +12,13 @@ let analysisCharts = [];
 let historicalPriceData = [];
 let csvDataLoaded = false;
 let lastUpdateTime = null;
-
+// ========== ZOOM STATE ==========
+let zoomState = {
+    min: null,
+    max: null,
+    isZoomed: false,
+    zoomHistory: []
+};
 // ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Bitcoin PeakDip EWS Signals - ACTUAL DATA VERSION');
@@ -1010,6 +1016,9 @@ function initializeCharts() {
     });
     
     console.log('✅ Charts initialized');
+    setTimeout(() => {
+        initializeZoomControls();
+    }, 500);    
 }
 
 function updateChartsWithData() {
@@ -1209,7 +1218,831 @@ function updateAnalysisCharts() {
     
     console.log('✅ Analysis charts updated');
 }
+// ========== ZOOM & TIMELINE FUNCTIONS ==========
+let zoomState = {
+    min: null,
+    max: null,
+    isZoomed: false,
+    zoomHistory: []
+};
 
+function initializeZoomControls() {
+    console.log('🔍 Initializing zoom controls...');
+    
+    // Create zoom toolbar
+    const chartSection = document.querySelector('.chart-section');
+    if (!chartSection) return;
+    
+    const zoomToolbar = document.createElement('div');
+    zoomToolbar.className = 'zoom-toolbar';
+    zoomToolbar.innerHTML = `
+        <div class="zoom-controls">
+            <button class="zoom-btn" id="zoomIn" title="Zoom In">
+                <i class="fas fa-search-plus"></i>
+            </button>
+            <button class="zoom-btn" id="zoomOut" title="Zoom Out">
+                <i class="fas fa-search-minus"></i>
+            </button>
+            <button class="zoom-btn" id="zoomReset" title="Reset Zoom">
+                <i class="fas fa-expand-alt"></i>
+            </button>
+            <button class="zoom-btn" id="zoomPan" title="Pan Mode">
+                <i class="fas fa-arrows-alt"></i>
+            </button>
+            <button class="zoom-btn" id="zoomSelect" title="Select Area">
+                <i class="fas fa-vector-square"></i>
+            </button>
+        </div>
+        <div class="timeline-controls">
+            <input type="range" id="timelineSlider" min="0" max="100" value="100" class="timeline-slider">
+            <div class="timeline-labels">
+                <span id="zoomStartLabel">Start</span>
+                <span id="zoomEndLabel">End</span>
+            </div>
+        </div>
+        <div class="zoom-info">
+            <span id="zoomInfo">Full Range</span>
+            <button class="zoom-history-btn" id="zoomBack" title="Back">
+                <i class="fas fa-undo"></i>
+            </button>
+        </div>
+    `;
+    
+    chartSection.querySelector('.chart-container').parentNode.insertBefore(zoomToolbar, chartSection.querySelector('.chart-info'));
+    
+    // Add zoom CSS
+    addZoomStyles();
+    
+    // Initialize zoom event listeners
+    setupZoomEventListeners();
+    
+    // Initialize drag-to-zoom
+    setupDragToZoom();
+}
+
+function addZoomStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .zoom-toolbar {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 8px;
+        }
+        
+        .zoom-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-glow);
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .zoom-btn.active {
+            background: var(--wave-trough);
+            color: white;
+            border-color: var(--wave-trough);
+        }
+        
+        .timeline-controls {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .timeline-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--wave-trough);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+        
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            color: var(--text-glow);
+            font-size: 0.85em;
+        }
+        
+        .zoom-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: var(--wave-trough);
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .zoom-history-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-glow);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
+        .zoom-history-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .chart-container {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .selection-rectangle {
+            position: absolute;
+            border: 2px dashed var(--wave-trough);
+            background: rgba(0, 212, 255, 0.1);
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .zoom-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .zoom-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        /* Timeframe controls update */
+        .chart-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .timeframe-presets {
+            display: flex;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px;
+            border-radius: 8px;
+        }
+        
+        .timeframe-preset {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-glow);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .timeframe-preset:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .timeframe-preset.active {
+            background: var(--wave-trough);
+            color: white;
+            border-color: var(--wave-trough);
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function setupZoomEventListeners() {
+    // Zoom In
+    document.getElementById('zoomIn').addEventListener('click', function() {
+        zoomChart(0.8); // Zoom in 20%
+    });
+    
+    // Zoom Out
+    document.getElementById('zoomOut').addEventListener('click', function() {
+        zoomChart(1.2); // Zoom out 20%
+    });
+    
+    // Reset Zoom
+    document.getElementById('zoomReset').addEventListener('click', function() {
+        resetZoom();
+    });
+    
+    // Pan Mode
+    document.getElementById('zoomPan').addEventListener('click', function() {
+        togglePanMode();
+    });
+    
+    // Select Area
+    document.getElementById('zoomSelect').addEventListener('click', function() {
+        toggleSelectMode();
+    });
+    
+    // Timeline Slider
+    const timelineSlider = document.getElementById('timelineSlider');
+    timelineSlider.addEventListener('input', function() {
+        updateZoomFromSlider(this.value);
+    });
+    
+    // Zoom Back
+    document.getElementById('zoomBack').addEventListener('click', function() {
+        zoomBack();
+    });
+    
+    // Add timeframe presets
+    addTimeframePresets();
+}
+
+function addTimeframePresets() {
+    const chartControls = document.querySelector('.chart-controls');
+    if (!chartControls) return;
+    
+    const presetsContainer = document.createElement('div');
+    presetsContainer.className = 'timeframe-presets';
+    presetsContainer.innerHTML = `
+        <button class="timeframe-preset" data-preset="1h">1H</button>
+        <button class="timeframe-preset" data-preset="4h">4H</button>
+        <button class="timeframe-preset active" data-preset="1d">1D</button>
+        <button class="timeframe-preset" data-preset="1w">1W</button>
+        <button class="timeframe-preset" data-preset="1m">1M</button>
+        <button class="timeframe-preset" data-preset="3m">3M</button>
+        <button class="timeframe-preset" data-preset="1y">1Y</button>
+        <button class="timeframe-preset" data-preset="all">ALL</button>
+    `;
+    
+    chartControls.querySelector('.control-btn').parentNode.insertBefore(presetsContainer, chartControls.querySelector('.chart-legend'));
+    
+    // Add preset event listeners
+    presetsContainer.querySelectorAll('.timeframe-preset').forEach(btn => {
+        btn.addEventListener('click', function() {
+            presetsContainer.querySelectorAll('.timeframe-preset').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const preset = this.dataset.preset;
+            applyTimeframePreset(preset);
+        });
+    });
+}
+
+function applyTimeframePreset(preset) {
+    if (!bitcoinChart || historicalPriceData.length === 0) return;
+    
+    const now = new Date();
+    let minDate = new Date();
+    let unit = 'hour';
+    
+    switch(preset) {
+        case '1h':
+            minDate.setHours(now.getHours() - 1);
+            unit = 'minute';
+            break;
+        case '4h':
+            minDate.setHours(now.getHours() - 4);
+            unit = 'hour';
+            break;
+        case '1d':
+            minDate.setDate(now.getDate() - 1);
+            unit = 'hour';
+            break;
+        case '1w':
+            minDate.setDate(now.getDate() - 7);
+            unit = 'day';
+            break;
+        case '1m':
+            minDate.setMonth(now.getMonth() - 1);
+            unit = 'day';
+            break;
+        case '3m':
+            minDate.setMonth(now.getMonth() - 3);
+            unit = 'week';
+            break;
+        case '1y':
+            minDate.setFullYear(now.getFullYear() - 1);
+            unit = 'month';
+            break;
+        case 'all':
+            // Use full data range
+            minDate = new Date(Math.min(...historicalPriceData.map(d => d.x)));
+            unit = 'month';
+            break;
+    }
+    
+    // Save current zoom state
+    if (!zoomState.isZoomed) {
+        zoomState.zoomHistory.push({
+            min: bitcoinChart.options.scales.x.min,
+            max: bitcoinChart.options.scales.x.max
+        });
+    }
+    
+    // Apply zoom
+    bitcoinChart.options.scales.x.min = minDate;
+    bitcoinChart.options.scales.x.max = now;
+    bitcoinChart.options.scales.x.time.unit = unit;
+    
+    zoomState.min = minDate;
+    zoomState.max = now;
+    zoomState.isZoomed = preset !== 'all';
+    
+    bitcoinChart.update();
+    updateZoomInfo();
+    
+    console.log(`📊 Applied timeframe preset: ${preset}`);
+}
+
+function setupDragToZoom() {
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (!chartCanvas) return;
+    
+    let isSelecting = false;
+    let startX, startY;
+    let selectionRect = null;
+    
+    chartCanvas.addEventListener('mousedown', function(e) {
+        const selectBtn = document.getElementById('zoomSelect');
+        if (!selectBtn || !selectBtn.classList.contains('active')) return;
+        
+        const rect = chartCanvas.getBoundingClientRect();
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+        
+        // Create selection rectangle
+        selectionRect = document.createElement('div');
+        selectionRect.className = 'selection-rectangle';
+        selectionRect.style.left = startX + 'px';
+        selectionRect.style.top = startY + 'px';
+        chartCanvas.parentNode.appendChild(selectionRect);
+        
+        isSelecting = true;
+    });
+    
+    chartCanvas.addEventListener('mousemove', function(e) {
+        if (!isSelecting || !selectionRect) return;
+        
+        const rect = chartCanvas.getBoundingClientRect();
+        const currentX = e.clientX - rect.left;
+        const currentY = e.clientY - rect.top;
+        
+        const width = currentX - startX;
+        const height = currentY - startY;
+        
+        selectionRect.style.width = Math.abs(width) + 'px';
+        selectionRect.style.height = Math.abs(height) + 'px';
+        
+        if (width < 0) {
+            selectionRect.style.left = currentX + 'px';
+        }
+        if (height < 0) {
+            selectionRect.style.top = currentY + 'px';
+        }
+    });
+    
+    chartCanvas.addEventListener('mouseup', function(e) {
+        if (!isSelecting || !selectionRect) return;
+        
+        const rect = chartCanvas.getBoundingClientRect();
+        const endX = e.clientX - rect.left;
+        const endY = e.clientY - rect.top;
+        
+        // Calculate selected date range
+        const xScale = bitcoinChart.scales.x;
+        const chartRect = bitcoinChart.canvas.getBoundingClientRect();
+        
+        const minPixel = Math.min(startX, endX);
+        const maxPixel = Math.max(startX, endX);
+        
+        const minDate = xScale.getValueForPixel(minPixel);
+        const maxDate = xScale.getValueForPixel(maxPixel);
+        
+        // Apply zoom to selected range
+        if (minDate && maxDate && (maxDate - minDate) > 0) {
+            zoomToRange(minDate, maxDate);
+        }
+        
+        // Clean up
+        if (selectionRect.parentNode) {
+            selectionRect.parentNode.removeChild(selectionRect);
+        }
+        selectionRect = null;
+        isSelecting = false;
+    });
+    
+    // Pan functionality
+    let isPanning = false;
+    let panStartX = 0;
+    let panStartY = 0;
+    
+    chartCanvas.addEventListener('mousedown', function(e) {
+        const panBtn = document.getElementById('zoomPan');
+        if (!panBtn || !panBtn.classList.contains('active')) return;
+        
+        isPanning = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+        
+        chartCanvas.style.cursor = 'grabbing';
+    });
+    
+    chartCanvas.addEventListener('mousemove', function(e) {
+        if (!isPanning) return;
+        
+        const deltaX = e.clientX - panStartX;
+        const panSpeed = 0.5; // Adjust for sensitivity
+        
+        if (zoomState.min && zoomState.max) {
+            const range = zoomState.max - zoomState.min;
+            const pixelRange = chartCanvas.width;
+            const datePerPixel = range / pixelRange;
+            
+            const dateDelta = deltaX * datePerPixel * panSpeed;
+            
+            zoomState.min = new Date(zoomState.min.getTime() - dateDelta);
+            zoomState.max = new Date(zoomState.max.getTime() - dateDelta);
+            
+            bitcoinChart.options.scales.x.min = zoomState.min;
+            bitcoinChart.options.scales.x.max = zoomState.max;
+            bitcoinChart.update();
+            
+            panStartX = e.clientX;
+        }
+    });
+    
+    chartCanvas.addEventListener('mouseup', function() {
+        if (isPanning) {
+            isPanning = false;
+            chartCanvas.style.cursor = '';
+        }
+    });
+    
+    chartCanvas.addEventListener('mouseleave', function() {
+        if (isPanning) {
+            isPanning = false;
+            chartCanvas.style.cursor = '';
+        }
+        if (isSelecting && selectionRect) {
+            if (selectionRect.parentNode) {
+                selectionRect.parentNode.removeChild(selectionRect);
+            }
+            selectionRect = null;
+            isSelecting = false;
+        }
+    });
+}
+
+function zoomChart(factor) {
+    if (!bitcoinChart || !zoomState.isZoomed) {
+        // If not zoomed, zoom around center
+        const xScale = bitcoinChart.scales.x;
+        const range = xScale.max - xScale.min;
+        const center = xScale.min + range / 2;
+        const newRange = range * factor;
+        
+        zoomState.min = new Date(center - newRange / 2);
+        zoomState.max = new Date(center + newRange / 2);
+    } else {
+        // If already zoomed, zoom around current center
+        const center = zoomState.min.getTime() + (zoomState.max - zoomState.min) / 2;
+        const newRange = (zoomState.max - zoomState.min) * factor;
+        
+        zoomState.min = new Date(center - newRange / 2);
+        zoomState.max = new Date(center + newRange / 2);
+    }
+    
+    // Save to history
+    zoomState.zoomHistory.push({
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max
+    });
+    
+    // Apply zoom
+    bitcoinChart.options.scales.x.min = zoomState.min;
+    bitcoinChart.options.scales.x.max = zoomState.max;
+    zoomState.isZoomed = true;
+    
+    bitcoinChart.update();
+    updateZoomInfo();
+    updateTimelineSlider();
+}
+
+function zoomToRange(minDate, maxDate) {
+    // Save current state to history
+    zoomState.zoomHistory.push({
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max
+    });
+    
+    // Apply new range
+    zoomState.min = minDate;
+    zoomState.max = maxDate;
+    zoomState.isZoomed = true;
+    
+    bitcoinChart.options.scales.x.min = minDate;
+    bitcoinChart.options.scales.x.max = maxDate;
+    
+    bitcoinChart.update();
+    updateZoomInfo();
+    updateTimelineSlider();
+}
+
+function resetZoom() {
+    if (!zoomState.isZoomed) return;
+    
+    // Save to history
+    zoomState.zoomHistory.push({
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max
+    });
+    
+    // Reset to full range
+    const fullData = historicalPriceData;
+    if (fullData.length > 0) {
+        zoomState.min = new Date(Math.min(...fullData.map(d => d.x)));
+        zoomState.max = new Date(Math.max(...fullData.map(d => d.x)));
+        
+        // Add 5% padding
+        const range = zoomState.max - zoomState.min;
+        zoomState.min = new Date(zoomState.min.getTime() - range * 0.05);
+        zoomState.max = new Date(zoomState.max.getTime() + range * 0.05);
+    }
+    
+    bitcoinChart.options.scales.x.min = zoomState.min;
+    bitcoinChart.options.scales.x.max = zoomState.max;
+    zoomState.isZoomed = false;
+    
+    bitcoinChart.update();
+    updateZoomInfo();
+    updateTimelineSlider();
+}
+
+function zoomBack() {
+    if (zoomState.zoomHistory.length === 0) return;
+    
+    const previousState = zoomState.zoomHistory.pop();
+    if (previousState) {
+        zoomState.min = previousState.min;
+        zoomState.max = previousState.max;
+        zoomState.isZoomed = previousState.min !== null || previousState.max !== null;
+        
+        bitcoinChart.options.scales.x.min = zoomState.min;
+        bitcoinChart.options.scales.x.max = zoomState.max;
+        
+        bitcoinChart.update();
+        updateZoomInfo();
+        updateTimelineSlider();
+    }
+}
+
+function togglePanMode() {
+    const panBtn = document.getElementById('zoomPan');
+    const selectBtn = document.getElementById('zoomSelect');
+    
+    if (panBtn.classList.contains('active')) {
+        panBtn.classList.remove('active');
+        document.getElementById('bitcoinChart').style.cursor = '';
+    } else {
+        panBtn.classList.add('active');
+        if (selectBtn) selectBtn.classList.remove('active');
+        document.getElementById('bitcoinChart').style.cursor = 'grab';
+    }
+}
+
+function toggleSelectMode() {
+    const selectBtn = document.getElementById('zoomSelect');
+    const panBtn = document.getElementById('zoomPan');
+    
+    if (selectBtn.classList.contains('active')) {
+        selectBtn.classList.remove('active');
+        document.getElementById('bitcoinChart').style.cursor = '';
+    } else {
+        selectBtn.classList.add('active');
+        if (panBtn) panBtn.classList.remove('active');
+        document.getElementById('bitcoinChart').style.cursor = 'crosshair';
+    }
+}
+
+function updateZoomFromSlider(value) {
+    const fullData = historicalPriceData;
+    if (fullData.length === 0) return;
+    
+    const fullRange = Math.max(...fullData.map(d => d.x)) - Math.min(...fullData.map(d => d.x));
+    const visiblePercentage = value / 100;
+    
+    // Calculate visible range
+    const minDate = new Date(Math.min(...fullData.map(d => d.x)) + fullRange * (1 - visiblePercentage));
+    const maxDate = new Date(Math.max(...fullData.map(d => d.x)));
+    
+    // Save to history
+    if (zoomState.isZoomed) {
+        zoomState.zoomHistory.push({
+            min: bitcoinChart.options.scales.x.min,
+            max: bitcoinChart.options.scales.x.max
+        });
+    }
+    
+    // Apply zoom
+    zoomState.min = minDate;
+    zoomState.max = maxDate;
+    zoomState.isZoomed = value < 100;
+    
+    bitcoinChart.options.scales.x.min = minDate;
+    bitcoinChart.options.scales.x.max = maxDate;
+    
+    bitcoinChart.update();
+    updateZoomInfo();
+}
+
+function updateTimelineSlider() {
+    const slider = document.getElementById('timelineSlider');
+    const startLabel = document.getElementById('zoomStartLabel');
+    const endLabel = document.getElementById('zoomEndLabel');
+    
+    if (!slider || historicalPriceData.length === 0) return;
+    
+    const fullData = historicalPriceData;
+    const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
+    const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
+    const currentMin = zoomState.min || fullMin;
+    const currentMax = zoomState.max || fullMax;
+    
+    // Calculate slider value (0-100)
+    const fullRange = fullMax - fullMin;
+    const visibleRange = currentMax - currentMin;
+    const sliderValue = (visibleRange / fullRange) * 100;
+    
+    slider.value = Math.min(100, Math.max(0, sliderValue));
+    
+    // Update labels
+    if (startLabel) {
+        startLabel.textContent = formatDateShort(currentMin);
+    }
+    if (endLabel) {
+        endLabel.textContent = formatDateShort(currentMax);
+    }
+}
+
+function updateZoomInfo() {
+    const zoomInfo = document.getElementById('zoomInfo');
+    if (!zoomInfo) return;
+    
+    if (!zoomState.isZoomed) {
+        zoomInfo.textContent = 'Full Range';
+        return;
+    }
+    
+    const startDate = zoomState.min;
+    const endDate = zoomState.max;
+    const rangeDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    
+    zoomInfo.textContent = `${formatDateShort(startDate)} - ${formatDateShort(endDate)} (${rangeDays} days)`;
+}
+
+function formatDateShort(date) {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+        return 'Invalid Date';
+    }
+    
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+        return 'Today';
+    } else if (diffDays === 1) {
+        return 'Yesterday';
+    } else if (diffDays < 7) {
+        return `${diffDays}d ago`;
+    } else if (diffDays < 30) {
+        return `${Math.floor(diffDays / 7)}w ago`;
+    } else {
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+}
+
+// Cập nhật hàm initializeCharts để gọi initializeZoomControls
+function initializeCharts() {
+    // ... existing chart initialization code ...
+    
+    console.log('✅ Charts initialized');
+    
+    // Initialize zoom controls after chart is ready
+    setTimeout(() => {
+        initializeZoomControls();
+    }, 500);
+}
+
+function updateChartTimeframe(timeframe) {
+    if (!bitcoinChart) return;
+    
+    // Save current state if zoomed
+    if (zoomState.isZoomed) {
+        zoomState.zoomHistory.push({
+            min: bitcoinChart.options.scales.x.min,
+            max: bitcoinChart.options.scales.x.max
+        });
+    }
+    
+    let unit = 'month';
+    let displayFormats = {};
+    let daysBack = 0;
+    
+    switch(timeframe) {
+        case '1d':
+            unit = 'hour';
+            displayFormats.hour = 'HH:mm';
+            daysBack = 1;
+            break;
+        case '7d':
+            unit = 'day';
+            displayFormats.day = 'MMM dd';
+            daysBack = 7;
+            break;
+        case '30d':
+            unit = 'day';
+            displayFormats.day = 'MMM dd';
+            daysBack = 30;
+            break;
+        case '90d':
+            unit = 'week';
+            displayFormats.week = 'MMM dd';
+            daysBack = 90;
+            break;
+        default:
+            unit = 'month';
+            daysBack = 365; // 1 year
+    }
+    
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysBack);
+    
+    bitcoinChart.options.scales.x.min = startDate;
+    bitcoinChart.options.scales.x.max = endDate;
+    bitcoinChart.options.scales.x.time.unit = unit;
+    bitcoinChart.options.scales.x.time.displayFormats = displayFormats;
+    
+    // Update zoom state
+    zoomState.min = startDate;
+    zoomState.max = endDate;
+    zoomState.isZoomed = timeframe !== 'all';
+    
+    bitcoinChart.update();
+    updateZoomInfo();
+    updateTimelineSlider();
+    
+    console.log(`📈 Chart timeframe updated to ${timeframe} (${daysBack} days)`);
+}
 // ========== EVENT HANDLERS ==========
 function setupEventListeners() {
     console.log('🔧 Setting up event listeners...');
@@ -1740,6 +2573,7 @@ function validateDataIntegrity() {
     
     return issues;
 }
+
 
 // Gọi hàm này sau khi parseCSVData
 // Trong parseCSVData, sau khi parse xong, thêm:
