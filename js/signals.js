@@ -324,8 +324,20 @@ function parseCSVData(csvText) {
 function parseTimestamp(timestampStr) {
     if (!timestampStr) return null;
     
+    console.log(`Parsing timestamp: "${timestampStr}"`);
+    
     // Try multiple date formats
     const formats = [
+        // ISO format "YYYY-MM-DDTHH:mm:ss"
+        () => {
+            const match = timestampStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
+            if (match) {
+                const [_, year, month, day, hour, minute, second] = match.map(Number);
+                return new Date(year, month - 1, day, hour, minute, second);
+            }
+            return null;
+        },
+        
         // "M/D/YYYY HH:MM"
         () => {
             const match = timestampStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}) (\d{1,2}):(\d{2})$/);
@@ -346,25 +358,32 @@ function parseTimestamp(timestampStr) {
             return null;
         },
         
-        // ISO format
+        // "YYYY-MM-DD HH:MM:SS"
         () => {
-            const date = new Date(timestampStr);
-            return isNaN(date.getTime()) ? null : date;
+            const match = timestampStr.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+            if (match) {
+                const [_, year, month, day, hour, minute, second] = match.map(Number);
+                return new Date(year, month - 1, day, hour, minute, second);
+            }
+            return null;
         },
         
-        // Fallback: try Date.parse
+        // Try Date.parse
         () => {
-            const date = new Date(Date.parse(timestampStr));
+            const date = new Date(timestampStr);
             return isNaN(date.getTime()) ? null : date;
         }
     ];
     
     for (const format of formats) {
         const date = format();
-        if (date) return date;
+        if (date) {
+            console.log(`✅ Parsed as: ${date.toISOString()}`);
+            return date;
+        }
     }
     
-    console.warn(`Could not parse timestamp: "${timestampStr}"`);
+    console.warn(`❌ Could not parse timestamp: "${timestampStr}"`);
     return null;
 }
 
@@ -1030,12 +1049,36 @@ function updateChartsWithData() {
     }
     
     console.log('📊 Updating charts with actual data...');
+
+    // Debug định dạng thời gian
+    debugTimeFormat();
     
-    // Separate peak and dip signals
+    // Tách peak và dip signals
     const peakSignals = signalsData.filter(s => s.signal_type === 'PEAK');
     const dipSignals = signalsData.filter(s => s.signal_type === 'DIP');
     
-    // Update main chart
+    console.log(`📊 Data for chart:`);
+    console.log(`- Historical price points: ${historicalPriceData.length}`);
+    console.log(`- Peak signals: ${peakSignals.length}`);
+    console.log(`- Dip signals: ${dipSignals.length}`);
+    
+    // Kiểm tra dữ liệu mẫu
+    if (peakSignals.length > 0) {
+        console.log(`📊 Sample peak signal:`, {
+            time: peakSignals[0].timestamp,
+            price: peakSignals[0].price,
+            confidence: peakSignals[0].confidence
+        });
+    }
+    
+    if (historicalPriceData.length > 0) {
+        console.log(`📊 Sample price data:`, {
+            time: historicalPriceData[0].x,
+            price: historicalPriceData[0].y
+        });
+    }
+    
+    // Cập nhật biểu đồ chính
     bitcoinChart.data.datasets[0].data = historicalPriceData;
     bitcoinChart.data.datasets[1].data = peakSignals.map(signal => ({
         x: signal.timestamp,
@@ -1048,12 +1091,10 @@ function updateChartsWithData() {
         signal: signal
     }));
     
-    bitcoinChart.update('none');
-    
-    // Update analysis charts
-    updateAnalysisCharts();
+    bitcoinChart.update();
     
     console.log(`✅ Charts updated: ${peakSignals.length} peaks, ${dipSignals.length} dips on chart`);
+	
 }
 
 function initializeAnalysisCharts() {
@@ -1544,67 +1585,94 @@ function addTimeframePresets() {
 function applyTimeframePreset(preset) {
     if (!bitcoinChart || historicalPriceData.length === 0) return;
     
-    const now = new Date();
-    let minDate = new Date();
-    let unit = 'hour';
+    console.log(`📊 Applying timeframe preset: ${preset}`);
+    
+    const fullData = historicalPriceData;
+    const minDate = new Date(Math.min(...fullData.map(d => d.x)));
+    const maxDate = new Date(Math.max(...fullData.map(d => d.x)));
+    
+    let startDate = new Date(minDate);
+    let endDate = new Date(maxDate);
+    let unit = 'month';
     
     switch(preset) {
         case '1h':
-            minDate.setHours(now.getHours() - 1);
             unit = 'minute';
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setHours(startDate.getHours() - 1);
             break;
         case '4h':
-            minDate.setHours(now.getHours() - 4);
             unit = 'hour';
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setHours(startDate.getHours() - 4);
             break;
         case '1d':
-            minDate.setDate(now.getDate() - 1);
             unit = 'hour';
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - 1);
             break;
         case '1w':
-            minDate.setDate(now.getDate() - 7);
             unit = 'day';
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - 7);
             break;
         case '1m':
-            minDate.setMonth(now.getMonth() - 1);
             unit = 'day';
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setMonth(startDate.getMonth() - 1);
             break;
         case '3m':
-            minDate.setMonth(now.getMonth() - 3);
             unit = 'week';
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setMonth(startDate.getMonth() - 3);
             break;
         case '1y':
-            minDate.setFullYear(now.getFullYear() - 1);
             unit = 'month';
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setFullYear(startDate.getFullYear() - 1);
             break;
         case 'all':
-            // Use full data range
-            minDate = new Date(Math.min(...historicalPriceData.map(d => d.x)));
+            startDate = minDate;
+            endDate = maxDate;
             unit = 'month';
             break;
     }
     
-    // Save current zoom state
-    if (!zoomState.isZoomed) {
-        zoomState.zoomHistory.push({
-            min: bitcoinChart.options.scales.x.min,
-            max: bitcoinChart.options.scales.x.max
-        });
-    }
+    // Đảm bảo startDate không sớm hơn dữ liệu có sẵn
+    if (startDate < minDate) startDate = new Date(minDate);
     
-    // Apply zoom
-    bitcoinChart.options.scales.x.min = minDate;
-    bitcoinChart.options.scales.x.max = now;
+    // Thêm padding
+    const range = endDate - startDate;
+    startDate = new Date(startDate.getTime() - range * 0.05);
+    endDate = new Date(endDate.getTime() + range * 0.05);
+    
+    // Lưu vào history
+    zoomState.zoomHistory.push({
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max
+    });
+    
+    // Áp dụng zoom
+    bitcoinChart.options.scales.x.min = startDate;
+    bitcoinChart.options.scales.x.max = endDate;
     bitcoinChart.options.scales.x.time.unit = unit;
     
-    zoomState.min = minDate;
-    zoomState.max = now;
+    zoomState.min = startDate;
+    zoomState.max = endDate;
     zoomState.isZoomed = preset !== 'all';
     
     bitcoinChart.update();
     updateZoomInfo();
+    updateTimelineSlider();
     
-    console.log(`📊 Applied timeframe preset: ${preset}`);
+    console.log(`✅ Preset applied: ${preset} (${formatDateShort(startDate)} to ${formatDateShort(endDate)})`);
 }
 
 function setupDragToZoom() {
@@ -1990,66 +2058,84 @@ function initializeCharts() {
 }
 
 function updateChartTimeframe(timeframe) {
-    if (!bitcoinChart) return;
+    if (!bitcoinChart || historicalPriceData.length === 0) return;
     
-    // Save current state if zoomed
-    if (zoomState.isZoomed) {
-        zoomState.zoomHistory.push({
-            min: bitcoinChart.options.scales.x.min,
-            max: bitcoinChart.options.scales.x.max
-        });
-    }
+    console.log(`📈 Updating chart timeframe to: ${timeframe}`);
     
+    // Lấy phạm vi dữ liệu đầy đủ
+    const fullData = historicalPriceData;
+    const minDate = new Date(Math.min(...fullData.map(d => d.x)));
+    const maxDate = new Date(Math.max(...fullData.map(d => d.x)));
+    
+    let startDate = new Date(minDate);
+    let endDate = new Date(maxDate);
     let unit = 'month';
     let displayFormats = {};
-    let daysBack = 0;
     
+    // Tính toán phạm vi dựa trên timeframe
     switch(timeframe) {
         case '1d':
             unit = 'hour';
             displayFormats.hour = 'HH:mm';
-            daysBack = 1;
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - 1);
             break;
         case '7d':
             unit = 'day';
             displayFormats.day = 'MMM dd';
-            daysBack = 7;
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - 7);
             break;
         case '30d':
             unit = 'day';
             displayFormats.day = 'MMM dd';
-            daysBack = 30;
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - 30);
             break;
         case '90d':
             unit = 'week';
             displayFormats.week = 'MMM dd';
-            daysBack = 90;
+            endDate = new Date();
+            startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - 90);
             break;
         default:
+            // 'all' hoặc mặc định
+            startDate = minDate;
+            endDate = maxDate;
             unit = 'month';
-            daysBack = 365; // 1 year
     }
     
-    // Calculate date range
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - daysBack);
+    // Đảm bảo startDate không sớm hơn dữ liệu có sẵn
+    if (startDate < minDate) startDate = new Date(minDate);
     
+    // Thêm padding 5% để tránh cắt mất dữ liệu
+    const range = endDate - startDate;
+    startDate = new Date(startDate.getTime() - range * 0.05);
+    endDate = new Date(endDate.getTime() + range * 0.05);
+    
+    // Cập nhật cấu hình biểu đồ
     bitcoinChart.options.scales.x.min = startDate;
     bitcoinChart.options.scales.x.max = endDate;
     bitcoinChart.options.scales.x.time.unit = unit;
     bitcoinChart.options.scales.x.time.displayFormats = displayFormats;
     
-    // Update zoom state
+    // Cập nhật trạng thái zoom
     zoomState.min = startDate;
     zoomState.max = endDate;
     zoomState.isZoomed = timeframe !== 'all';
     
+    // Cập nhật biểu đồ
     bitcoinChart.update();
+    
+    // Cập nhật slider và thông tin zoom
     updateZoomInfo();
     updateTimelineSlider();
     
-    console.log(`📈 Chart timeframe updated to ${timeframe} (${daysBack} days)`);
+    console.log(`✅ Chart timeframe updated: ${formatDateShort(startDate)} to ${formatDateShort(endDate)} (${unit})`);
 }
 // ========== EVENT HANDLERS ==========
 function setupEventListeners() {
@@ -2181,7 +2267,14 @@ function setupEventListeners() {
                 break;
         }
     });
-    
+    // Thêm event listener cho nút Reset
+    const resetBtn = document.getElementById('resetViewBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            console.log('🔄 Reset view button clicked');
+            resetChartView();
+        });
+    }    
     console.log('✅ Event listeners setup complete');
 }
 
@@ -2287,40 +2380,6 @@ function handleCsvUpload(file) {
     };
     
     reader.readAsText(file);
-}
-
-function updateChartTimeframe(timeframe) {
-    if (!bitcoinChart) return;
-    
-    let unit = 'month';
-    let displayFormats = {};
-    
-    switch(timeframe) {
-        case '1d':
-            unit = 'hour';
-            displayFormats.hour = 'HH:mm';
-            break;
-        case '7d':
-            unit = 'day';
-            displayFormats.day = 'MMM dd';
-            break;
-        case '30d':
-            unit = 'day';
-            displayFormats.day = 'MMM dd';
-            break;
-        case '90d':
-            unit = 'week';
-            displayFormats.week = 'MMM dd';
-            break;
-        default:
-            unit = 'month';
-    }
-    
-    bitcoinChart.options.scales.x.time.unit = unit;
-    bitcoinChart.options.scales.x.time.displayFormats = displayFormats;
-    bitcoinChart.update();
-    
-    console.log(`📈 Chart timeframe updated to ${timeframe} (unit: ${unit})`);
 }
 
 // ========== HELPER FUNCTIONS ==========
@@ -2754,38 +2813,6 @@ function updateAnalysisCharts() {
     
     console.log('✅ Analysis charts updated');
 }
-
-// Thêm hàm này để cập nhật biểu đồ với dữ liệu
-function updateChartsWithData() {
-    if (!bitcoinChart || signalsData.length === 0) {
-        console.warn('⚠️ Cannot update chart: no chart or data');
-        return;
-    }
-    
-    console.log('📊 Updating charts with actual data...');
-    
-    // Tách peak và dip signals
-    const peakSignals = signalsData.filter(s => s.signal_type === 'PEAK');
-    const dipSignals = signalsData.filter(s => s.signal_type === 'DIP');
-    
-    // Cập nhật biểu đồ chính
-    bitcoinChart.data.datasets[0].data = historicalPriceData;
-    bitcoinChart.data.datasets[1].data = peakSignals.map(signal => ({
-        x: signal.timestamp,
-        y: signal.price,
-        signal: signal
-    }));
-    bitcoinChart.data.datasets[2].data = dipSignals.map(signal => ({
-        x: signal.timestamp,
-        y: signal.price,
-        signal: signal
-    }));
-    
-    bitcoinChart.update('none');
-    
-    console.log(`✅ Charts updated: ${peakSignals.length} peaks, ${dipSignals.length} dips on chart`);
-}
-
 // Sửa hàm initializeCharts để khởi tạo đúng cách
 function initializeCharts() {
     console.log('📊 Initializing charts...');
@@ -2947,6 +2974,23 @@ function addManualZoomButton() {
     };
     
     chartSection.querySelector('.chart-controls').appendChild(manualBtn);
+}
+
+function debugTimeFormat() {
+    console.log('⏰ Time Format Debug:');
+    
+    if (signalsData.length > 0) {
+        console.log('First signal timestamp:', signalsData[0].timestamp);
+        console.log('Type:', typeof signalsData[0].timestamp);
+        console.log('Is Date?', signalsData[0].timestamp instanceof Date);
+        console.log('Valid?', !isNaN(signalsData[0].timestamp.getTime()));
+    }
+    
+    if (historicalPriceData.length > 0) {
+        console.log('First price data timestamp:', historicalPriceData[0].x);
+        console.log('Type:', typeof historicalPriceData[0].x);
+        console.log('Is Date?', historicalPriceData[0].x instanceof Date);
+    }
 }
 
 // Gọi hàm này sau khi parseCSVData
