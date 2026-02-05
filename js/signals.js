@@ -98,10 +98,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize charts (empty for now)
     initializeCharts();
-    
+
     // Load historical Bitcoin price data (for chart background only)
     loadHistoricalBitcoinData();
     
+    // Thêm sau các initialization khác
+    initializePWAFeatures();
+   
     // Check if CSV is already loaded
     setTimeout(() => {
         if (!csvDataLoaded) {
@@ -3328,6 +3331,560 @@ function debugTimeFormat() {
     }
 }
 
+// ========== PWA & UPDATE NOTIFICATIONS ==========
+let isUpdateAvailable = false;
+let deferredPrompt = null;
+
+// Kiểm tra và đăng ký Service Worker
+function initializeServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('✅ Service Worker registered:', registration.scope);
+                
+                // Kiểm tra updates mỗi 5 phút
+                setInterval(() => {
+                    registration.update();
+                }, 5 * 60 * 1000);
+                
+                // Lắng nghe messages từ service worker
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data.type === 'CSV_UPDATED') {
+                        handleCSVUpdateNotification(event.data);
+                    }
+                });
+            })
+            .catch((error) => {
+                console.error('❌ Service Worker registration failed:', error);
+            });
+    }
+}
+
+// Xử lý notification khi CSV được cập nhật
+function handleCSVUpdateNotification(data) {
+    console.log('📢 CSV Update detected:', data);
+    
+    isUpdateAvailable = true;
+    
+    // Tạo persistent notification
+    createUpdateNotification();
+    
+    // Lưu vào localStorage để hiển thị lại sau
+    localStorage.setItem('lastUpdateNotification', JSON.stringify({
+        timestamp: data.timestamp,
+        shown: false
+    }));
+}
+
+// Tạo notification trên UI
+function createUpdateNotification() {
+    // Xóa notification cũ nếu có
+    const oldNotification = document.getElementById('csvUpdateNotification');
+    if (oldNotification) oldNotification.remove();
+    
+    const notification = document.createElement('div');
+    notification.id = 'csvUpdateNotification';
+    notification.className = 'update-notification';
+    notification.innerHTML = `
+        <div class="update-notification-content">
+            <i class="fas fa-sync-alt fa-spin"></i>
+            <div class="update-text">
+                <strong>📈 New Data Available!</strong>
+                <p>CSV has been updated via Git commit. Click to refresh.</p>
+            </div>
+            <button class="update-action-btn" onclick="refreshDataWithNotification()">
+                <i class="fas fa-redo"></i> Refresh Now
+            </button>
+            <button class="update-close-btn" onclick="dismissUpdateNotification()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto hide sau 30 giây
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.classList.add('fading');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }
+    }, 30000);
+    
+    // Trigger animation
+    setTimeout(() => notification.classList.add('show'), 100);
+}
+
+// Hàm refresh với notification
+function refreshDataWithNotification() {
+    const notification = document.getElementById('csvUpdateNotification');
+    if (notification) {
+        notification.innerHTML = `
+            <div class="update-notification-content">
+                <i class="fas fa-spinner fa-spin"></i>
+                <div class="update-text">
+                    <strong>Refreshing data...</strong>
+                    <p>Loading updated CSV content...</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    refreshData();
+    
+    // Sau khi refresh, cập nhật trạng thái
+    setTimeout(() => {
+        if (notification && notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+        isUpdateAvailable = false;
+        localStorage.setItem('lastUpdateNotification', JSON.stringify({
+            timestamp: new Date().toISOString(),
+            shown: true
+        }));
+    }, 2000);
+}
+
+// Hàm dismiss notification
+function dismissUpdateNotification() {
+    const notification = document.getElementById('csvUpdateNotification');
+    if (notification && notification.parentNode) {
+        notification.classList.remove('show');
+        notification.classList.add('fading');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }
+    
+    // Đánh dấu đã shown
+    const lastNotification = JSON.parse(localStorage.getItem('lastUpdateNotification') || '{}');
+    lastNotification.shown = true;
+    localStorage.setItem('lastUpdateNotification', JSON.stringify(lastNotification));
+}
+
+// PWA Install Prompt
+function initializePWAInstall() {
+    // Listen for beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Hiển thị install button
+        showInstallButton();
+    });
+    
+    // Check if app is already installed
+    window.addEventListener('appinstalled', () => {
+        console.log('📱 PWA installed successfully');
+        deferredPrompt = null;
+        hideInstallButton();
+        
+        // Show confirmation
+        showNotification('App installed successfully!', 'success');
+    });
+    
+    // Kiểm tra xem đang chạy ở chế độ standalone không
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
+        console.log('📱 Running in standalone mode');
+        document.body.classList.add('standalone-mode');
+    }
+}
+
+// Hiển thị install button
+function showInstallButton() {
+    // Kiểm tra xem đã có button chưa
+    if (document.getElementById('pwaInstallBtn')) return;
+    
+    const installBtn = document.createElement('button');
+    installBtn.id = 'pwaInstallBtn';
+    installBtn.className = 'pwa-install-btn';
+    installBtn.innerHTML = `
+        <i class="fas fa-download"></i>
+        <span>Add to Home Screen</span>
+    `;
+    
+    installBtn.onclick = showInstallPrompt;
+    
+    // Thêm vào navigation hoặc header
+    const nav = document.querySelector('.navigation .nav-container');
+    if (nav) {
+        nav.appendChild(installBtn);
+    } else {
+        document.body.appendChild(installBtn);
+    }
+    
+    // Auto hide sau 10 giây
+    setTimeout(() => {
+        installBtn.classList.add('fading');
+        setTimeout(() => {
+            if (installBtn.parentNode) {
+                installBtn.parentNode.removeChild(installBtn);
+            }
+        }, 300);
+    }, 10000);
+}
+
+function hideInstallButton() {
+    const installBtn = document.getElementById('pwaInstallBtn');
+    if (installBtn && installBtn.parentNode) {
+        installBtn.parentNode.removeChild(installBtn);
+    }
+}
+
+function showInstallPrompt() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('✅ User accepted install');
+                showNotification('App added to home screen!', 'success');
+            } else {
+                console.log('❌ User dismissed install');
+            }
+            deferredPrompt = null;
+            hideInstallButton();
+        });
+    }
+}
+
+// Periodically check for CSV updates
+function startUpdateChecker() {
+    // Kiểm tra mỗi 2 phút
+    setInterval(() => {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'CHECK_UPDATE'
+            });
+        }
+    }, 2 * 60 * 1000);
+    
+    // Kiểm tra ban đầu
+    checkForManualUpdate();
+}
+
+// Kiểm tra manual update từ localStorage
+function checkForManualUpdate() {
+    const lastCheck = localStorage.getItem('lastCSVCheck') || 0;
+    const now = Date.now();
+    
+    // Nếu đã 5 phút từ lần check cuối
+    if (now - lastCheck > 5 * 60 * 1000) {
+        fetch('/data/signals.csv?' + now, { cache: 'no-store' })
+            .then(response => response.text())
+            .then(csvText => {
+                const currentHash = hashString(csvText);
+                const savedHash = localStorage.getItem('csvHash');
+                
+                if (savedHash && currentHash !== savedHash) {
+                    // CSV đã thay đổi
+                    handleCSVUpdateNotification({
+                        timestamp: new Date().toISOString(),
+                        version: currentHash
+                    });
+                }
+                
+                // Lưu hash mới
+                localStorage.setItem('csvHash', currentHash);
+                localStorage.setItem('lastCSVCheck', now.toString());
+            })
+            .catch(console.error);
+    }
+}
+
+// Hàm hash đơn giản
+function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return hash.toString();
+}
+
+// Thêm vào CSS cho notification và PWA
+function addPWAStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Update Notification Styles */
+        .update-notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
+            color: white;
+            padding: 0;
+            border-radius: 12px;
+            z-index: 9999;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .update-notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .update-notification.fading {
+            transform: translateX(-50%) translateY(-100px);
+            opacity: 0;
+        }
+        
+        .update-notification-content {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            gap: 15px;
+        }
+        
+        .update-notification i {
+            font-size: 1.4em;
+            color: white;
+        }
+        
+        .update-text {
+            flex: 1;
+        }
+        
+        .update-text strong {
+            display: block;
+            font-size: 1.1em;
+            margin-bottom: 3px;
+        }
+        
+        .update-text p {
+            margin: 0;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .update-action-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        
+        .update-action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .update-close-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            opacity: 0.7;
+            padding: 5px;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .update-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 1;
+        }
+        
+        /* PWA Install Button */
+        .pwa-install-btn {
+            background: linear-gradient(135deg, var(--wave-peak), var(--wave-mid));
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(255, 46, 99, 0.3);
+            transition: all 0.3s ease;
+            margin-left: 15px;
+            animation: pulseInstall 2s infinite;
+        }
+        
+        .pwa-install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 46, 99, 0.4);
+        }
+        
+        .pwa-install-btn.fading {
+            opacity: 0;
+            transform: scale(0.8);
+            pointer-events: none;
+        }
+        
+        @keyframes pulseInstall {
+            0% {
+                box-shadow: 0 5px 15px rgba(255, 46, 99, 0.3);
+            }
+            50% {
+                box-shadow: 0 5px 25px rgba(255, 46, 99, 0.5);
+            }
+            100% {
+                box-shadow: 0 5px 15px rgba(255, 46, 99, 0.3);
+            }
+        }
+        
+        /* Standalone mode adjustments */
+        .standalone-mode .navigation {
+            padding-top: env(safe-area-inset-top);
+            height: calc(70px + env(safe-area-inset-top));
+        }
+        
+        .standalone-mode .nav-container {
+            padding-top: env(safe-area-inset-top);
+        }
+        
+        .standalone-mode .content-container {
+            padding-top: calc(100px + env(safe-area-inset-top));
+        }
+        
+        /* Offline indicator */
+        .offline-indicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+        
+        /* Git Update Info */
+        .git-update-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--wave-trough);
+            margin: 10px 0;
+        }
+        
+        .git-update-info i {
+            color: var(--wave-trough);
+            margin-right: 10px;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Thêm offline detection
+function setupOfflineDetection() {
+    window.addEventListener('online', () => {
+        const indicator = document.getElementById('offlineIndicator');
+        if (indicator) indicator.remove();
+        
+        showNotification('Back online. Checking for updates...', 'success');
+        checkForManualUpdate();
+    });
+    
+    window.addEventListener('offline', () => {
+        const indicator = document.createElement('div');
+        indicator.id = 'offlineIndicator';
+        indicator.className = 'offline-indicator';
+        indicator.innerHTML = `
+            <i class="fas fa-wifi-slash"></i>
+            <span>You are offline</span>
+        `;
+        document.body.appendChild(indicator);
+    });
+}
+
+// Khởi tạo tất cả PWA features
+function initializePWAFeatures() {
+    addPWAStyles();
+    initializeServiceWorker();
+    initializePWAInstall();
+    setupOfflineDetection();
+    startUpdateChecker();
+    
+    // Kiểm tra notification cũ
+    const lastNotification = JSON.parse(localStorage.getItem('lastUpdateNotification') || '{}');
+    if (lastNotification.timestamp && !lastNotification.shown) {
+        // Hiển thị lại notification cũ
+        setTimeout(() => {
+            createUpdateNotification();
+        }, 3000);
+    }
+}
+
+// Kiểm tra commit history qua GitHub API
+async function checkGitHubUpdates() {
+    try {
+        const repo = 'bitcoinpeakdip/bitcoinpeakdip.github.io';
+        const response = await fetch(`https://api.github.com/repos/${repo}/commits?path=data/signals.csv&per_page=1`);
+        
+        if (response.ok) {
+            const commits = await response.json();
+            if (commits.length > 0) {
+                const latestCommit = commits[0];
+                const latestCommitDate = new Date(latestCommit.commit.committer.date);
+                const lastChecked = localStorage.getItem('lastCommitCheck');
+                
+                if (!lastChecked || new Date(lastChecked) < latestCommitDate) {
+                    // Có update mới
+                    showUpdateNotification('New CSV data available via Git commit!');
+                    localStorage.setItem('lastCommitCheck', latestCommitDate.toISOString());
+                }
+            }
+        }
+    } catch (error) {
+        console.log('GitHub API check failed:', error);
+    }
+}
+
+// Kiểm tra mỗi 5 phút
+setInterval(checkGitHubUpdates, 5 * 60 * 1000);
+
+// Kiểm tra timestamp file
+async function checkUpdateTimestamp() {
+    try {
+        const response = await fetch('/last-update.txt?' + Date.now());
+        const timestamp = await response.text();
+        const lastChecked = localStorage.getItem('lastUpdateTimestamp');
+        
+        if (lastChecked !== timestamp.trim()) {
+            showUpdateNotification('Data has been updated!');
+            localStorage.setItem('lastUpdateTimestamp', timestamp.trim());
+        }
+    } catch (error) {
+        console.log('Timestamp check failed:', error);
+    }
+}
 // Gọi hàm này sau khi parseCSVData
 // Trong parseCSVData, sau khi parse xong, thêm:
-// validateDataIntegrity();
+// validateDataIntegrity();// test
