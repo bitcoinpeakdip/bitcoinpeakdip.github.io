@@ -1391,3 +1391,58 @@
         display: block;
     }
 }
+/* Đảm bảo bảng có thể scroll ngang */
+.log-container {
+    overflow-x: auto;
+    margin-bottom: 25px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--wave-trough) rgba(0, 0, 0, 0.3);
+}
+
+.log-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+    background: var(--wave-trough);
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+    background: var(--wave-mid);
+}
+
+/* Đảm bảo bảng đủ rộng để scroll */
+.signals-table {
+    min-width: 900px;
+}
+
+/* Hiển thị gợi ý kéo ngang trên mobile */
+.mobile-scroll-hint {
+    display: block;
+    text-align: center;
+    color: var(--wave-trough);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: rgba(0, 212, 255, 0.1);
+    border-radius: 8px;
+    animation: pulseHint 2s infinite;
+}
+
+@keyframes pulseHint {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+@media (min-width: 769px) {
+    .mobile-scroll-hint {
+        display: none;
+    }
+}

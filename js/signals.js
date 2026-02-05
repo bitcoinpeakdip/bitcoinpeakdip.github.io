@@ -307,13 +307,25 @@ function parseCSVData(csvText) {
         updateUIForNoData('No valid signals found in CSV');
         return;
     }
+
+    // Debug timestamp trước khi sort
+    console.log("🔍 Debug timestamps trước khi sort:");
+    if (signalsData.length > 0) {
+        signalsData.slice(0, 3).forEach((signal, i) => {
+            console.log(`${i}: ${formatDateTime(signal.timestamp)} - timestamp: ${signal.timestamp.getTime()}`);
+        });
+    }
     
-    // ========== SỬA: Sắp xếp dữ liệu MỚI NHẤT lên đầu ==========
-    signalsData.sort((a, b) => b.timestamp - a.timestamp); // Đảo ngược so với cũ
+    // Sắp xếp MỚI NHẤT lên đầu (lớn nhất = mới nhất)
+    signalsData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     
     if (signalsData.length > 0) {
-        console.log(`📅 Date range: Mới nhất ${signalsData[0]?.timestamp.toISOString()} đến Cũ nhất ${signalsData[signalsData.length-1]?.timestamp.toISOString()}`);
-        console.log(`📅 Top 5 mới nhất: ${signalsData.slice(0, 5).map(s => formatDateTime(s.timestamp)).join(', ')}`);
+        console.log(`✅ Đã sắp xếp mới nhất lên đầu`);
+        console.log(`📅 Date range: Mới nhất ${formatDateTime(signalsData[0]?.timestamp)} đến Cũ nhất ${formatDateTime(signalsData[signalsData.length-1]?.timestamp)}`);
+        console.log(`📅 Top 5 mới nhất:`);
+        signalsData.slice(0, 5).forEach((signal, i) => {
+            console.log(`${i}: ${formatDateTime(signal.timestamp)} - $${signal.price} (${signal.signal_type})`);
+        });
     }
     
     // Update UI with actual data
@@ -871,7 +883,11 @@ function renderTable() {
     }
     
     console.log(`📋 Rendering table page ${currentPage} (${itemsPerPage} items per page)`);
-    
+    // DEBUG: Kiểm tra dữ liệu đầu tiên
+    if (filteredSignals.length > 0) {
+        console.log(`📋 First signal in filteredSignals: ${formatDateTime(filteredSignals[0].timestamp)} - $${filteredSignals[0].price}`);
+        console.log(`📋 Last signal in filteredSignals: ${formatDateTime(filteredSignals[filteredSignals.length-1].timestamp)} - $${filteredSignals[filteredSignals.length-1].price}`);
+    }    
     // Clear existing rows
     tableBody.innerHTML = '';
     
