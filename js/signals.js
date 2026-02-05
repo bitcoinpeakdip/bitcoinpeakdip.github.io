@@ -13,6 +13,74 @@ let historicalPriceData = [];
 let csvDataLoaded = false;
 let lastUpdateTime = null;
 
+// ========== VERSION CONTROL & CACHE BUSTING ==========
+const APP_VERSION = '1.4.0'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
+const VERSION_KEY = 'peakdip_version';
+
+// Kiểm tra và xử lý cache khi version thay đổi
+function handleCacheVersion() {
+    const storedVersion = localStorage.getItem(VERSION_KEY);
+    
+    if (storedVersion !== APP_VERSION) {
+        console.log(`🔄 Version update detected: ${APP_VERSION} (was ${storedVersion})`);
+        
+        // 1. Clear all storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // 2. Clear caches
+        if ('caches' in window) {
+            caches.keys().then(cacheNames => {
+                cacheNames.forEach(cacheName => {
+                    caches.delete(cacheName);
+                    console.log(`🗑️ Deleted cache: ${cacheName}`);
+                });
+            });
+        }
+        
+        // 3. Clear IndexedDB
+        if (window.indexedDB) {
+            indexedDB.databases().then(dbs => {
+                dbs.forEach(db => {
+                    if (db.name) indexedDB.deleteDatabase(db.name);
+                });
+            });
+        }
+        
+        // 4. Save new version
+        localStorage.setItem(VERSION_KEY, APP_VERSION);
+        
+        // 5. Show user-friendly notification
+        if (storedVersion) { // Chỉ thông báo nếu đã có version cũ
+            setTimeout(() => {
+                showNotification(
+                    `🔄 Đã cập nhật phiên bản mới (${APP_VERSION})`,
+                    'success',
+                    3000
+                );
+            }, 1000);
+        }
+        
+        // 6. Force hard reload ONCE
+        if (storedVersion && !window.location.search.includes('force_reload')) {
+            const url = new URL(window.location);
+            url.searchParams.set('force_reload', Date.now());
+            window.location.href = url.toString();
+            return true;
+        }
+    }
+    
+    // Log version
+    console.log(`🚀 Bitcoin PeakDip EWS v${APP_VERSION}`);
+    return false;
+}
+
+// Chạy ngay khi script load
+if (handleCacheVersion()) {
+    // Nếu đã reload thì không chạy code tiếp
+    throw new Error('Reloading page for cache update...');
+}
+
 // ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Bitcoin PeakDip EWS Signals - ACTUAL DATA VERSION');
