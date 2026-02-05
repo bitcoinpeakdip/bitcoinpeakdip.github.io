@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
     showNotification('Loading Bitcoin EWS Signals from CSV...', 'info');
     // Thêm nút zoom thủ công sau 3 giây
     setTimeout(addManualZoomButton, 3000);	
+    // Thêm dòng này để setup drag scroll
+    setTimeout(setupTableDragScroll, 1000);	
 });
 
 // ========== DATA LOADING FUNCTIONS ==========
@@ -2501,6 +2503,96 @@ function setupEventListeners() {
         });
     }    
     console.log('✅ Event listeners setup complete');
+}
+
+// Thêm ngay sau hàm setupEventListeners() hoặc trước DOMContentLoaded
+function setupTableDragScroll() {
+    const logContainer = document.querySelector('.log-container');
+    if (!logContainer) {
+        console.log('⏳ Waiting for log container...');
+        setTimeout(setupTableDragScroll, 500);
+        return;
+    }
+    
+    console.log('🔄 Setting up table drag scroll...');
+    
+    let isDragging = false;
+    let startX;
+    let scrollLeft;
+    
+    // Mouse events
+    logContainer.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.pageX - logContainer.offsetLeft;
+        scrollLeft = logContainer.scrollLeft;
+        logContainer.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+    
+    logContainer.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            isDragging = false;
+            logContainer.style.cursor = 'grab';
+        }
+    });
+    
+    logContainer.addEventListener('mouseup', () => {
+        isDragging = false;
+        logContainer.style.cursor = 'grab';
+    });
+    
+    logContainer.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - logContainer.offsetLeft;
+        const walk = (x - startX) * 2; // Tốc độ kéo
+        logContainer.scrollLeft = scrollLeft - walk;
+        updateScrollIndicators();
+    });
+    
+    // Touch events for mobile
+    logContainer.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startX = e.touches[0].pageX - logContainer.offsetLeft;
+        scrollLeft = logContainer.scrollLeft;
+    });
+    
+    logContainer.addEventListener('touchend', () => {
+        isDragging = false;
+    });
+    
+    logContainer.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const x = e.touches[0].pageX - logContainer.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        logContainer.scrollLeft = scrollLeft - walk;
+        updateScrollIndicators();
+    });
+    
+    // Update scroll indicators
+    function updateScrollIndicators() {
+        const scrollLeft = logContainer.scrollLeft;
+        const scrollWidth = logContainer.scrollWidth;
+        const clientWidth = logContainer.clientWidth;
+        
+        logContainer.classList.remove('scrolled-left', 'scrolled-right', 'scrolled-both');
+        
+        if (scrollLeft > 10 && scrollLeft < (scrollWidth - clientWidth - 10)) {
+            logContainer.classList.add('scrolled-both');
+        } else if (scrollLeft > 10) {
+            logContainer.classList.add('scrolled-left');
+        } else if (scrollLeft < (scrollWidth - clientWidth - 10)) {
+            logContainer.classList.add('scrolled-right');
+        }
+    }
+    
+    // Update on resize
+    window.addEventListener('resize', updateScrollIndicators);
+    
+    // Initial update
+    setTimeout(updateScrollIndicators, 100);
+    
+    console.log('✅ Table drag scroll setup complete');
 }
 
 function refreshData() {
