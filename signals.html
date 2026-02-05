@@ -511,7 +511,7 @@
                 console.error('❌ Error loading CSV:', error);
                 
                 // Try alternative path if data/ doesn't work
-                fetch('signals.csv')
+                fetch('data/signals.csv')
                     .then(response => response.text())
                     .then(csvText => {
                         console.log('⚠️  Loaded from alternative path (signals.csv)');

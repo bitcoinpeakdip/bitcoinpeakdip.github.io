@@ -53,11 +53,19 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
   // Special handling cho CSV file để check updates
-  if (url.pathname.endsWith('signals.csv')) {
-    event.respondWith(
-      networkFirstWithUpdateCheck(event.request)
-    );
-  } 
+  if (url.pathname.endsWith('/data/signals.csv') || url.pathname.endsWith('/signals.csv')) {
+      // Chuyển hướng /signals.csv sang /data/signals.csv
+      if (url.pathname.endsWith('/signals.csv')) {
+          const newRequest = new Request('/data/signals.csv', event.request);
+          event.respondWith(
+              networkFirstWithUpdateCheck(newRequest)
+          );
+      } else {
+          event.respondWith(
+              networkFirstWithUpdateCheck(event.request)
+          );
+      }
+  }
   // API calls và external resources - network first
   else if (url.hostname.includes('cdn.jsdelivr.net') || 
            url.hostname.includes('cdnjs.cloudflare.com')) {

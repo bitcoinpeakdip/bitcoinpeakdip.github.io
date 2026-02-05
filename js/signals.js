@@ -133,11 +133,7 @@ async function loadRealCSVData() {
         
         // Try multiple paths in order of priority
         const paths = [
-            'data/signals.csv', 
-            './data/signals.csv', 
-            'signals.csv', 
-            './signals.csv',
-            '../signals.csv'
+            'data/signals.csv'
         ];
         
         let loadedData = false;
@@ -2686,7 +2682,7 @@ function refreshData() {
     currentPage = 1;
     
     // Force reload from server (no cache)
-    fetch('signals.csv?' + new Date().getTime(), {
+    fetch('/data/signals.csv?' + new Date().getTime(), {
         cache: 'no-store',
         headers: {
             'Cache-Control': 'no-cache'
