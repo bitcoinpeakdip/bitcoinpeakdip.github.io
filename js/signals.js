@@ -133,6 +133,7 @@ async function loadRealCSVData() {
     }
 }
 
+// ========== SỬA HÀM parseCSVData ==========
 function parseCSVData(csvText) {
     console.log('📊 START: Parsing CSV data (ACTUAL DATA ONLY)');
     
@@ -299,7 +300,6 @@ function parseCSVData(csvText) {
     
     console.log(`✅ COMPLETE: Parsed ${validRows} valid signals from CSV`);
     console.log(`📊 STATS: Peak: ${peakCount}, Dip: ${dipCount}, Other: ${otherCount}, Invalid: ${invalidRows}`);
-    console.log(`📅 Date range: ${signalsData[0]?.timestamp.toISOString()} to ${signalsData[signalsData.length-1]?.timestamp.toISOString()}`);
     
     if (validRows === 0) {
         console.error('❌ No valid signals found in CSV');
@@ -308,8 +308,13 @@ function parseCSVData(csvText) {
         return;
     }
     
-    // Sort by timestamp (oldest to newest)
-    signalsData.sort((a, b) => a.timestamp - b.timestamp);
+    // ========== SỬA: Sắp xếp dữ liệu MỚI NHẤT lên đầu ==========
+    signalsData.sort((a, b) => b.timestamp - a.timestamp); // Đảo ngược so với cũ
+    
+    if (signalsData.length > 0) {
+        console.log(`📅 Date range: Mới nhất ${signalsData[0]?.timestamp.toISOString()} đến Cũ nhất ${signalsData[signalsData.length-1]?.timestamp.toISOString()}`);
+        console.log(`📅 Top 5 mới nhất: ${signalsData.slice(0, 5).map(s => formatDateTime(s.timestamp)).join(', ')}`);
+    }
     
     // Update UI with actual data
     updateUI();
@@ -318,7 +323,235 @@ function parseCSVData(csvText) {
     lastUpdateTime = new Date();
     
     // Show success notification
-    showNotification(`Loaded ${validRows} actual signals from CSV`, 'success');
+    showNotification(`Loaded ${validRows} actual signals from CSV (mới nhất lên đầu)`, 'success');
+}
+
+// ========== THÊM CSS CHO BẢNG KÉO NGANG ==========
+function addTableScrollStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Cải thiện scroll cho bảng trên mobile và desktop */
+        .log-container {
+            overflow-x: auto;
+            margin-bottom: 25px;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling trên iOS */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--wave-trough) rgba(0, 0, 0, 0.3); /* Firefox */
+        }
+        
+        .log-container::-webkit-scrollbar {
+            height: 8px; /* Chiều cao thanh scroll */
+        }
+        
+        .log-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        
+        .log-container::-webkit-scrollbar-thumb {
+            background: var(--wave-trough);
+            border-radius: 4px;
+        }
+        
+        .log-container::-webkit-scrollbar-thumb:hover {
+            background: var(--wave-mid);
+        }
+        
+        /* Đảm bảo bảng có độ rộng tối thiểu trên mobile */
+        .signals-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            min-width: 800px; /* Độ rộng tối thiểu để kéo ngang */
+        }
+        
+        /* Hiệu ứng khi kéo */
+        .log-container:active {
+            cursor: grabbing;
+        }
+        
+        /* Thêm indicator scroll trên mobile */
+        @media (max-width: 768px) {
+            .log-container {
+                position: relative;
+                padding-bottom: 15px;
+            }
+            
+            .log-container::after {
+                content: '← Kéo để xem thêm →';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                text-align: center;
+                color: var(--wave-trough);
+                font-size: 0.8em;
+                opacity: 0.7;
+                padding: 5px;
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 0 0 10px 10px;
+                animation: scrollHint 2s infinite alternate;
+            }
+            
+            @keyframes scrollHint {
+                0% {
+                    opacity: 0.5;
+                    transform: translateX(-5px);
+                }
+                100% {
+                    opacity: 0.8;
+                    transform: translateX(5px);
+                }
+            }
+        }
+        
+        /* Desktop: thêm shadow khi scroll */
+        @media (min-width: 769px) {
+            .log-container {
+                position: relative;
+            }
+            
+            .log-container.scroll-start::before {
+                display: none;
+            }
+            
+            .log-container.scroll-end::after {
+                display: none;
+            }
+            
+            .log-container::before,
+            .log-container::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 30px;
+                pointer-events: none;
+                z-index: 1;
+                transition: opacity 0.3s ease;
+            }
+            
+            .log-container::before {
+                left: 0;
+                background: linear-gradient(to right, rgba(0, 0, 0, 0.7), transparent);
+                opacity: 0;
+            }
+            
+            .log-container::after {
+                right: 0;
+                background: linear-gradient(to left, rgba(0, 0, 0, 0.7), transparent);
+                opacity: 1;
+            }
+            
+            .log-container.scrolled::before {
+                opacity: 1;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ========== THÊM HÀM XỬ LÝ SCROLL CHO BẢNG ==========
+function setupTableScroll() {
+    const logContainer = document.querySelector('.log-container');
+    if (!logContainer) return;
+    
+    // Thêm CSS
+    addTableScrollStyles();
+    
+    // Kiểm tra scroll position
+    function updateScrollIndicators() {
+        if (logContainer.scrollWidth > logContainer.clientWidth) {
+            const scrollLeft = logContainer.scrollLeft;
+            const scrollRight = logContainer.scrollWidth - logContainer.clientWidth - scrollLeft;
+            
+            if (scrollLeft > 10) {
+                logContainer.classList.add('scrolled');
+                logContainer.classList.add('scroll-start');
+            } else {
+                logContainer.classList.remove('scrolled');
+                logContainer.classList.remove('scroll-start');
+            }
+            
+            if (scrollRight > 10) {
+                logContainer.classList.add('scroll-end');
+            } else {
+                logContainer.classList.remove('scroll-end');
+            }
+        }
+    }
+    
+    // Event listener cho scroll
+    logContainer.addEventListener('scroll', updateScrollIndicators);
+    
+    // Khởi tạo ban đầu
+    setTimeout(updateScrollIndicators, 100);
+    
+    // Update khi resize window
+    window.addEventListener('resize', updateScrollIndicators);
+    
+    // Thêm touch/swipe support cho mobile
+    let startX = 0;
+    let startY = 0;
+    let isHorizontalScroll = false;
+    
+    logContainer.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isHorizontalScroll = false;
+    });
+    
+    logContainer.addEventListener('touchmove', function(e) {
+        if (!isHorizontalScroll) {
+            const diffX = Math.abs(e.touches[0].clientX - startX);
+            const diffY = Math.abs(e.touches[0].clientY - startY);
+            
+            // Nếu kéo ngang nhiều hơn dọc thì cho phép scroll ngang
+            if (diffX > diffY) {
+                isHorizontalScroll = true;
+            }
+        }
+        
+        // Ngăn scroll dọc khi đang scroll ngang
+        if (isHorizontalScroll) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    console.log('✅ Table scroll setup complete');
+}
+
+// ========== CẬP NHẬT HÀM updateUI ==========
+function updateUI() {
+    console.log('🔄 Updating UI with actual data...');
+    
+    updateLastUpdated();
+    updateStats();
+    filterSignals();
+    renderTable();
+    
+    // Khởi tạo charts nếu chưa có
+    if (!bitcoinChart) {
+        initializeCharts();
+    }
+    
+    // Cập nhật dữ liệu cho biểu đồ
+    updateChartsWithData();
+    updateAnalysisCharts();
+    
+    // Setup table scroll (chỉ cần gọi một lần)
+    if (!window.tableScrollInitialized) {
+        setupTableScroll();
+        window.tableScrollInitialized = true;
+    }
+    
+    // Update page title with signal count
+    const totalSignals = signalsData.length;
+    if (totalSignals > 0) {
+        document.title = `Bitcoin EWS (${totalSignals} Signals) - PeakDip`;
+    }
 }
 
 function parseTimestamp(timestampStr) {
@@ -477,30 +710,6 @@ function generateFallbackPriceData() {
     }
 }
 
-// ========== UI UPDATE FUNCTIONS ==========
-function updateUI() {
-    console.log('🔄 Updating UI with actual data...');
-    
-    updateLastUpdated();
-    updateStats();
-    filterSignals();
-    renderTable();
-    
-    // Khởi tạo charts nếu chưa có
-    if (!bitcoinChart) {
-        initializeCharts();
-    }
-    
-    // Cập nhật dữ liệu cho biểu đồ
-    updateChartsWithData();
-    updateAnalysisCharts();
-    
-    // Update page title with signal count
-    const totalSignals = signalsData.length;
-    if (totalSignals > 0) {
-        document.title = `Bitcoin EWS (${totalSignals} Signals) - PeakDip`;
-    }
-}
 function updateUIForNoData(errorMessage = 'No data available') {
     console.log('🔄 Updating UI for no data state...');
     

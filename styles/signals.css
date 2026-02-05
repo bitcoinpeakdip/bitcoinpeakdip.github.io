@@ -1295,3 +1295,99 @@
     border: none;
     box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
 }
+
+/* Thêm vào signals.css */
+/* Cải thiện hiển thị bảng trên mobile */
+@media (max-width: 768px) {
+    .signals-table th,
+    .signals-table td {
+        padding: 12px 8px;
+        font-size: 0.9em;
+        white-space: nowrap;
+    }
+    
+    .signal-type,
+    .confidence-indicator,
+    .validation-status,
+    .strategy-tag {
+        font-size: 0.8em;
+        padding: 4px 8px;
+    }
+    
+    .price-display .price {
+        font-size: 0.95em;
+    }
+    
+    .timestamp {
+        min-width: 120px;
+    }
+    
+    .timestamp .date {
+        font-size: 0.9em;
+    }
+    
+    .timestamp .time {
+        font-size: 0.8em;
+        opacity: 0.8;
+    }
+}
+
+/* Đảm bảo các cột có độ rộng hợp lý */
+.signals-table th:nth-child(1) { /* Date & Time */
+    min-width: 140px;
+}
+
+.signals-table th:nth-child(2) { /* Signal Type */
+    min-width: 100px;
+}
+
+.signals-table th:nth-child(3) { /* Price */
+    min-width: 120px;
+}
+
+.signals-table th:nth-child(4) { /* Confidence */
+    min-width: 100px;
+}
+
+.signals-table th:nth-child(5) { /* Distance */
+    min-width: 100px;
+}
+
+.signals-table th:nth-child(6) { /* Validation */
+    min-width: 120px;
+}
+
+.signals-table th:nth-child(7) { /* Strategy */
+    min-width: 150px;
+}
+/* Thêm vào signals.css */
+.mobile-scroll-hint {
+    display: none;
+    text-align: center;
+    color: var(--wave-trough);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: rgba(0, 212, 255, 0.1);
+    border-radius: 8px;
+    animation: pulseHint 2s infinite;
+}
+
+.mobile-scroll-hint i {
+    margin-right: 8px;
+}
+
+@keyframes pulseHint {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .mobile-scroll-hint {
+        display: block;
+    }
+}
