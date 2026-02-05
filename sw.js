@@ -1,5 +1,5 @@
 // sw.js - Đặt tại bitcoinpeakdip.github.io/sw.js
-const CACHE_NAME = 'peakdip-ews-v1.1';
+const CACHE_NAME = 'peakdip-ews-v1.5';
 const FILES_TO_CACHE = [
   '/',
   '/index.html',
