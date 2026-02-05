@@ -396,42 +396,45 @@
         </section>
         
         <!-- CSV Data Format Info -->
-        <section class="csv-info-section">
-            <h2><i class="fas fa-file-code"></i> CSV Data Format</h2>
-            <div class="csv-format">
-                <div class="format-example">
-                    <h3><i class="fas fa-table"></i> Example CSV Structure</h3>
-                    <pre><code>timestamp,signal_type,price,confidence,distance,validation,strategy
-2024-01-15T08:30:00,PEAK,45000.50,85,2.5,VALIDATED,RECLAIM_FAILURE
-2024-01-15T12:45:00,DIP,44200.75,92,1.8,VALIDATED,DISTRIBUTION_FADE
-2024-01-16T09:15:00,PEAK,45500.25,78,3.2,PENDING,HEDGE_FLIP</code></pre>
-                </div>
-                
-                <div class="format-details">
-                    <h3><i class="fas fa-info-circle"></i> Field Descriptions</h3>
-                    <ul>
-                        <li><strong>timestamp:</strong> ISO 8601 format (YYYY-MM-DDTHH:MM:SS)</li>
-                        <li><strong>signal_type:</strong> PEAK or DIP</li>
-                        <li><strong>price:</strong> Bitcoin price at signal detection</li>
-                        <li><strong>confidence:</strong> 0-100 score (higher = more confident)</li>
-                        <li><strong>distance:</strong> Distance from ideal entry (%)</li>
-                        <li><strong>validation:</strong> VALIDATED, PENDING, or INVALID</li>
-                        <li><strong>strategy:</strong> Which strategy triggered the signal</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="csv-actions">
-                <a href="data/signals.csv" class="csv-btn" download>
-                    <i class="fas fa-download"></i> Download Sample CSV
-                </a>
-                <button class="csv-btn" id="uploadCsv">
-                    <i class="fas fa-upload"></i> Upload CSV File
-                </button>
-                <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
-            </div>
-        </section>
-        
+		<!-- CSV Data Format Info -->
+		<section class="csv-info-section">
+			<h2><i class="fas fa-file-code"></i> CSV Data Format</h2>
+			<div class="csv-format">
+				<div class="format-example">
+					<h3><i class="fas fa-table"></i> Example CSV Structure</h3>
+					<pre><code>timestamp,signal_type,price,confidence,distance,validation,strategy
+		2024-01-15T08:30:00,PEAK,45000.50,85,2.5,VALIDATED,RECLAIM_FAILURE
+		2024-01-15T12:45:00,DIP,44200.75,92,1.8,VALIDATED,DISTRIBUTION_FADE
+		2024-01-16T09:15:00,PEAK,45500.25,78,3.2,PENDING,HEDGE_FLIP</code></pre>
+				</div>
+				
+				<div class="format-details">
+					<h3><i class="fas fa-info-circle"></i> Field Descriptions & Update Instructions</h3>
+					<ul>
+						<li><strong>timestamp:</strong> ISO 8601 format (YYYY-MM-DDTHH:MM:SS) or M/D/YYYY HH:MM</li>
+						<li><strong>signal_type:</strong> PEAK or DIP</li>
+						<li><strong>price:</strong> Bitcoin price at signal detection</li>
+						<li><strong>confidence:</strong> 0-100 score (higher = more confident)</li>
+						<li><strong>distance:</strong> Distance from ideal entry (%)</li>
+						<li><strong>validation:</strong> VALIDATED, PENDING, or INVALID</li>
+						<li><strong>strategy:</strong> Which strategy triggered the signal</li>
+						<li style="color: #ff9800; font-weight: bold; border-left: 3px solid #ff9800; padding-left: 10px; background: rgba(255, 152, 0, 0.1); margin-top: 15px;">
+							<i class="fas fa-code-branch"></i> <strong>UPDATE METHOD:</strong> CSV file can only be updated via Git commits. Direct upload is disabled for security.
+						</li>
+					</ul>
+				</div>
+			</div>
+			
+			<div class="csv-actions">
+				<a href="data/signals.csv" class="csv-btn" download>
+					<i class="fas fa-download"></i> Download Current CSV
+				</a>
+				<div class="update-info">
+					<i class="fas fa-code-branch"></i>
+					<span>CSV updates via Git commit only</span>
+				</div>
+			</div>
+		</section>
         <!-- Back to Home -->
         <div class="back-home">
             <a href="index.html" class="back-btn">

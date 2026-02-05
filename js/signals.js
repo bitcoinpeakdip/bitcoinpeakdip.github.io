@@ -2523,10 +2523,10 @@ function setupEventListeners() {
     }
     
     // CSV upload
-    const uploadBtn = document.getElementById('uploadCsv');
-    const fileInput = document.getElementById('csvFileInput');
+    //const uploadBtn = document.getElementById('uploadCsv');
+    //const fileInput = document.getElementById('csvFileInput');
     
-    if (uploadBtn && fileInput) {
+    /*if (uploadBtn && fileInput) {
         uploadBtn.addEventListener('click', function() {
             fileInput.click();
         });
@@ -2536,7 +2536,7 @@ function setupEventListeners() {
                 handleCsvUpload(e.target.files[0]);
             }
         });
-    }
+    }*/
     
     // Add keyboard shortcuts
     document.addEventListener('keydown', function(e) {
@@ -2715,56 +2715,6 @@ function refreshData() {
         
         showNotification('Refresh failed, using cached data', 'warning');
     });
-}
-
-function handleCsvUpload(file) {
-    if (!file) return;
-    
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-        showNotification('Please upload a CSV file', 'error');
-        return;
-    }
-    
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        showNotification('File too large (max 10MB)', 'error');
-        return;
-    }
-    
-    const reader = new FileReader();
-    
-    reader.onloadstart = function() {
-        showNotification('Reading CSV file...', 'info');
-    };
-    
-    reader.onload = function(e) {
-        try {
-            const csvText = e.target.result;
-            console.log('📁 User uploaded CSV:', file.name, file.size, 'bytes');
-            
-            // Parse the uploaded CSV
-            parseCSVData(csvText);
-            
-            // Update source indicator
-            lastUpdateTime = new Date();
-            updateLastUpdated();
-            
-            showNotification('CSV uploaded and processed successfully!', 'success');
-            
-            // Update file input
-            const fileInput = document.getElementById('csvFileInput');
-            if (fileInput) fileInput.value = '';
-            
-        } catch (error) {
-            console.error('❌ Error parsing uploaded CSV:', error);
-            showNotification('Error parsing CSV file: ' + error.message, 'error');
-        }
-    };
-    
-    reader.onerror = function() {
-        showNotification('Error reading file', 'error');
-    };
-    
-    reader.readAsText(file);
 }
 
 // ========== HELPER FUNCTIONS ==========

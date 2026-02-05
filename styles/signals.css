@@ -1482,3 +1482,122 @@
     opacity: 0.8;
     margin-top: 4px;
 }
+/* Thêm vào cuối signals.css */
+.update-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 15px;
+    border-radius: 8px;
+    color: var(--text-glow);
+    font-size: 0.9em;
+    border-left: 3px solid var(--wave-mid);
+}
+
+.update-info i {
+    color: var(--wave-mid);
+    font-size: 1.2em;
+}
+
+.update-info span {
+    font-weight: 500;
+}
+
+/* Cập nhật lại csv-actions */
+.csv-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    text-align: center;
+}
+
+.csv-info-section .format-details ul {
+    margin-bottom: 20px;
+}
+
+.csv-info-section .format-details li:last-child {
+    color: #ff9800;
+    font-weight: bold;
+    border-left: 3px solid #ff9800;
+    padding-left: 10px;
+    background: rgba(255, 152, 0, 0.1);
+    margin-top: 15px;
+}
+/* Thêm vào signals.css */
+.git-instructions-section {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.git-instructions-section h2 {
+    color: var(--wave-mid);
+    margin-bottom: 25px;
+    font-size: 1.8em;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.git-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.git-step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid var(--wave-trough);
+}
+
+.step-number {
+    background: var(--wave-trough);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-content h3 {
+    color: var(--text-light);
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.step-content p {
+    color: var(--text-glow);
+    margin-bottom: 10px;
+    font-size: 0.95em;
+}
+
+.step-content code {
+    display: block;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: var(--wave-trough);
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    margin: 5px 0;
+    white-space: nowrap;
+    overflow-x: auto;
+}
