@@ -1,4 +1,5 @@
 timestamp,signal_type,price,confidence,distance,validation,strategy
+2/6/2026 12:15,DIP,65466,0.98,,,
 1/25/2026 23:15,DIP,88038,0.98,,,
 1/14/2026 0:45,PEAK,93391.69,0.98,,,
 1/6/2026 2:45,PEAK,94270,0.98,,,
@@ -133,4 +134,4 @@ timestamp,signal_type,price,confidence,distance,validation,strategy
 11/4/2022 21:30,PEAK,21137.7,0.98,,,
 10/31/2022 17:00,PEAK,20715.89,0.98,,,
 9/26/2022 21:45,PEAK,19181.4,0.98,,,
-Test update
+Test update,,,,,,
