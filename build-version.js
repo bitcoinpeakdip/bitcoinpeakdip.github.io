@@ -191,3 +191,30 @@ console.log('\n📋 Next steps:`);
 console.log(`  1. Review RELEASE_v${newVersion}.md`);
 console.log('  2. Test the application');
 console.log('  3. Deploy to production');
+
+// ========== PWA MANIFEST UPDATE ==========
+const manifestPath = path.join(__dirname, 'manifest.json');
+if (fs.existsSync(manifestPath)) {
+    let manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    manifest.start_url = `/?v=${newVersion}`;
+    manifest.name = `Bitcoin PeakDip v${newVersion}`;
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    console.log('✅ Updated manifest.json');
+}
+
+// ========== SERVICE WORKER UPDATE ==========
+const swPath = path.join(__dirname, 'service-worker.js');
+if (fs.existsSync(swPath)) {
+    let swContent = fs.readFileSync(swPath, 'utf8');
+    // Update cache version
+    swContent = swContent.replace(
+        /const CACHE_NAME = 'bitcoin-peakdip-v[\d\.]+';/,
+        `const CACHE_NAME = 'bitcoin-peakdip-v${newVersion}';`
+    );
+    swContent = swContent.replace(
+        /const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v[\d\.]+';/,
+        `const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v${newVersion}';`
+    );
+    fs.writeFileSync(swPath, swContent);
+    console.log('✅ Updated service-worker.js');
+}

@@ -1070,3 +1070,204 @@ footer {
     font-family: monospace;
     color: var(--wave-trough);
 }
+
+/* PWA Styles */
+.update-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background: linear-gradient(to right, var(--wave-trough), #9c27b0);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 10000;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
+    backdrop-filter: blur(10px);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.update-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.update-content i {
+    font-size: 1.5em;
+}
+
+.update-btn {
+    background: white;
+    color: #00d4ff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: auto;
+    transition: all 0.3s ease;
+}
+
+.update-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,255,255,0.2);
+}
+
+.close-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: rotate(90deg);
+}
+
+.install-prompt {
+    position: fixed;
+    bottom: 80px;
+    left: 20px;
+    right: 20px;
+    background: linear-gradient(to right, var(--wave-trough), #9c27b0);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 10000;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.install-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.install-content i {
+    font-size: 1.5em;
+    color: white;
+}
+
+.install-content span {
+    flex: 1;
+    font-size: 1.1em;
+}
+
+.install-btn {
+    background: white;
+    color: #00d4ff;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1em;
+}
+
+.install-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+}
+
+.dismiss-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.dismiss-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: rotate(90deg);
+}
+
+/* Standalone mode adjustments */
+@media (display-mode: standalone) {
+    .navigation {
+        padding-top: env(safe-area-inset-top);
+    }
+    
+    .status-indicator {
+        bottom: calc(30px + env(safe-area-inset-bottom));
+    }
+    
+    .content-container {
+        padding-top: calc(40px + env(safe-area-inset-top));
+    }
+}
+
+@media (display-mode: fullscreen) {
+    .navigation {
+        padding-top: 20px;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+/* Offline indicator */
+.offline-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #ff9800;
+    color: white;
+    text-align: center;
+    padding: 8px;
+    font-size: 0.9em;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    animation: slideDown 0.3s ease;
+}
+
+.offline-indicator i {
+    font-size: 1.1em;
+}
