@@ -1497,3 +1497,42 @@ footer {
         font-size: 0.85em;
     }
 }
+
+/* FIX: Căn chỉnh dropdown menu với các menu items khác */
+.nav-item {
+    display: flex;
+    align-items: center;
+}
+
+.nav-item.dropdown {
+    display: flex;
+    align-items: center;
+}
+
+.nav-link.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    line-height: normal;
+    padding: 10px 0;
+    margin: 0;
+}
+
+/* Đảm bảo tất cả nav-link có cùng chiều cao */
+.nav-link {
+    display: flex;
+    align-items: center;
+    min-height: 40px; /* Cùng chiều cao cho tất cả */
+    line-height: 1.2;
+}
+
+/* Fix cho mobile */
+@media (max-width: 768px) {
+    .nav-item.dropdown {
+        display: block;
+    }
+    
+    .nav-link.dropdown-toggle {
+        min-height: 40px;
+        padding: 10px 0;
+    }
+}
