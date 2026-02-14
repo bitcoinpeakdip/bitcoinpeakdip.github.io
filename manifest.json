@@ -1,6 +1,6 @@
 {
   "name": "Bitcoin PeakDip - Early Warning System",
-  "short_name": "BTC PeakDip",
+  "short_name": "Bitcoin PeakDip",
   "description": "Real-time Bitcoin peak and dip detection using Early Warning System with AI algorithms",
   "start_url": "/index.html",
   "display": "standalone",
