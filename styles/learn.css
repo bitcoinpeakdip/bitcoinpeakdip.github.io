@@ -409,3 +409,58 @@
 .post-meta i {
     color: #f7931a;  /* Màu cam cho icon calendar */
 }
+
+/* ===== FIX: MÀU CHỮ CHO ARTICLES ===== */
+
+/* Tiêu đề articles - màu trắng */
+.learn-card h3 {
+    color: #ffffff !important;
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Mô tả articles - màu trắng mờ */
+.learn-card p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    line-height: 1.6;
+    font-size: 0.95em;
+}
+
+/* Meta info (thời gian đọc, level) */
+.card-meta {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Icon trong meta */
+.card-meta i {
+    color: #00d4ff !important;  /* Giữ màu xanh cho icon */
+    margin-right: 5px;
+}
+
+/* Level badge (Beginner, Intermediate, etc) */
+.card-meta span:last-child {
+    background: rgba(0, 212, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 20px;
+    color: #00d4ff !important;
+    font-weight: 600;
+}
+
+/* Icon chính trong card */
+.card-icon i {
+    color: #00d4ff !important;
+    font-size: 2.5em;
+    opacity: 0.9;
+}
+
+/* Hiệu ứng hover */
+.learn-card:hover h3 {
+    color: #00d4ff !important;  /* Đổi màu khi hover */
+    transition: color 0.3s ease;
+}
+
+.learn-card:hover p {
+    color: #ffffff !important;
+}
