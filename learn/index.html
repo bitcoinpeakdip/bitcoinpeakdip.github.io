@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn - Bitcoin PeakDip Knowledge Base</title>
+    <meta name="description" content="Master Bitcoin trading with Early Warning System - Complete knowledge base">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/learn.css">
+</head>
+<body>
+    <!-- Interactive Background -->
+    <div class="interactive-background" id="interactiveBackground"></div>
+    
+    <!-- Navigation Menu (giống các trang khác) -->
+    <nav class="navigation" id="navigation">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo">
+                <i class="fas fa-wave-square"></i>
+                Bitcoin PeakDip
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item">
+                    <a href="../index.html" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="../about.html" class="nav-link">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="../product.html" class="nav-link">Product</a>
+                </li>
+                <li class="nav-item">
+                    <a href="../signals.html" class="nav-link">EWS Signals</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="javascript:void(0);" class="nav-link dropdown-toggle active">
+                        <i class="fas fa-graduation-cap"></i> Learn
+                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                    </a>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-header">
+                            <i class="fas fa-book-open"></i>
+                            <span>Knowledge Base</span>
+                        </div>
+                        <a href="ews-basics.html" class="dropdown-item">
+                            <i class="fas fa-satellite-dish"></i>
+                            <div class="item-content">
+                                <span class="item-title">EWS Fundamentals</span>
+                                <span class="item-desc">How our Early Warning System works</span>
+                            </div>
+                        </a>
+                        <a href="strategy-guide.html" class="dropdown-item">
+                            <i class="fas fa-chess-knight"></i>
+                            <div class="item-content">
+                                <span class="item-title">8 Strategies Explained</span>
+                                <span class="item-desc">Detailed guide to all strategies</span>
+                            </div>
+                        </a>
+                        <a href="multi-tf-analysis.html" class="dropdown-item">
+                            <i class="fas fa-layer-group"></i>
+                            <div class="item-content">
+                                <span class="item-title">Multi-Timeframe Guide</span>
+                                <span class="item-desc">5M, 15M, 1H confluence analysis</span>
+                            </div>
+                        </a>
+                        <a href="risk-management.html" class="dropdown-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <div class="item-content">
+                                <span class="item-title">Risk Management</span>
+                                <span class="item-desc">Position sizing & stop-loss strategies</span>
+                            </div>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="blog/" class="dropdown-item">
+                            <i class="fas fa-newspaper"></i>
+                            <div class="item-content">
+                                <span class="item-title">Market Analysis</span>
+                                <span class="item-desc">Weekly updates & insights</span>
+                            </div>
+                        </a>
+                        <a href="tutorials/" class="dropdown-item">
+                            <i class="fas fa-video"></i>
+                            <div class="item-content">
+                                <span class="item-title">Video Tutorials</span>
+                                <span class="item-desc">Step-by-step guides</span>
+                            </div>
+                        </a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link">Contact</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- Sensor Network Background -->
+    <div class="sensor-network">
+        <div class="sensor-ring ring-1"></div>
+        <div class="sensor-ring ring-2"></div>
+        <div class="sensor-ring ring-3"></div>
+        <div class="sensor-ring ring-4"></div>
+        <div class="bitcoin-waves">
+            <div class="bitcoin-wave wave-1"></div>
+            <div class="bitcoin-wave wave-2"></div>
+            <div class="bitcoin-wave wave-3"></div>
+        </div>
+        <div class="energy-particles" id="energyParticles"></div>
+    </div>
+    
+    <!-- Status Indicator -->
+    <div class="status-indicator" id="statusIndicator">
+        <div class="status-light status-peak" id="statusLight"></div>
+        <div class="status-text" id="statusText">LEARNING CENTER</div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="content-container">
+        <div class="learn-header">
+            <h1 class="learn-title">
+                <i class="fas fa-graduation-cap"></i>
+                Bitcoin PeakDip Knowledge Base
+            </h1>
+            <p class="learn-subtitle">Master the art of Early Warning System trading</p>
+        </div>
+        
+        <div class="learn-grid">
+            <!-- Card 1: EWS Fundamentals -->
+            <a href="ews-basics.html" class="learn-card">
+                <div class="card-icon">
+                    <i class="fas fa-satellite-dish"></i>
+                </div>
+                <h3>EWS Fundamentals</h3>
+                <p>Learn how our Early Warning System detects Bitcoin peaks and dips using advanced AI algorithms.</p>
+                <div class="card-meta">
+                    <span><i class="fas fa-clock"></i> 10 min read</span>
+                    <span><i class="fas fa-signal"></i> Beginner</span>
+                </div>
+            </a>
+            
+            <!-- Card 2: 8 Strategies -->
+            <a href="strategy-guide.html" class="learn-card">
+                <div class="card-icon">
+                    <i class="fas fa-chess-knight"></i>
+                </div>
+                <h3>8 Strategies Explained</h3>
+                <p>Deep dive into all trading strategies: RECLAIM_FAILURE, MOMENTUM_BREAKDOWN, and more.</p>
+                <div class="card-meta">
+                    <span><i class="fas fa-clock"></i> 15 min read</span>
+                    <span><i class="fas fa-signal"></i> Intermediate</span>
+                </div>
+            </a>
+            
+            <!-- Card 3: Multi-Timeframe -->
+            <a href="multi-tf-analysis.html" class="learn-card">
+                <div class="card-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h3>Multi-Timeframe Guide</h3>
+                <p>Master 5M, 15M, and 1H confluence analysis for higher probability trades.</p>
+                <div class="card-meta">
+                    <span><i class="fas fa-clock"></i> 12 min read</span>
+                    <span><i class="fas fa-signal"></i> Advanced</span>
+                </div>
+            </a>
+            
+            <!-- Card 4: Risk Management -->
+            <a href="risk-management.html" class="learn-card">
+                <div class="card-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Risk Management</h3>
+                <p>Essential risk management techniques: position sizing, stop-loss, and capital preservation.</p>
+                <div class="card-meta">
+                    <span><i class="fas fa-clock"></i> 8 min read</span>
+                    <span><i class="fas fa-signal"></i> All Levels</span>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Quick Start Guide -->
+        <div class="quick-start">
+            <h2><i class="fas fa-rocket"></i> Quick Start Guide</h2>
+            <div class="quick-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Understand EWS Basics</h3>
+                    <p>Start with <a href="ews-basics.html">EWS Fundamentals</a> to learn how the system works</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Learn the Strategies</h3>
+                    <p>Study the <a href="strategy-guide.html">8 Strategies</a> and when to use each</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Master Timeframes</h3>
+                    <p>Understand <a href="multi-tf-analysis.html">multi-timeframe analysis</a> for confluence</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Manage Risk</h3>
+                    <p>Apply <a href="risk-management.html">risk management</a> rules to protect capital</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Learning Paths -->
+        <div class="learning-paths">
+            <h2><i class="fas fa-map-signs"></i> Learning Paths</h2>
+            
+            <div class="paths-grid">
+                <div class="path-card beginner">
+                    <h3><i class="fas fa-seedling"></i> Beginner Path</h3>
+                    <ul>
+                        <li>✅ EWS Fundamentals</li>
+                        <li>✅ Basic Risk Management</li>
+                        <li>🔄 Understanding Signals</li>
+                        <li>⏳ Paper Trading</li>
+                    </ul>
+                </div>
+                
+                <div class="path-card intermediate">
+                    <h3><i class="fas fa-chart-line"></i> Intermediate Path</h3>
+                    <ul>
+                        <li>✅ 8 Strategies Guide</li>
+                        <li>✅ Multi-Timeframe Basics</li>
+                        <li>🔄 Entry/Exit Techniques</li>
+                        <li>⏳ Strategy Backtesting</li>
+                    </ul>
+                </div>
+                
+                <div class="path-card advanced">
+                    <h3><i class="fas fa-crown"></i> Advanced Path</h3>
+                    <ul>
+                        <li>✅ Advanced Confluence</li>
+                        <li>✅ Derivatives Analysis</li>
+                        <li>🔄 Volatility Trading</li>
+                        <li>⏳ Portfolio Management</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Posts Section -->
+        <div class="recent-posts">
+            <h2><i class="fas fa-newspaper"></i> Latest Market Analysis</h2>
+            <div class="posts-list" id="recentPosts">
+                <!-- Sẽ load bằng JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer>
+            <p>© 2024 Bitcoin PeakDip Early Warning System. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="../index.html" class="footer-link">Home</a>
+                <a href="../about.html" class="footer-link">About</a>
+                <a href="../product.html" class="footer-link">Product</a>
+                <a href="../signals.html" class="footer-link">EWS Signals</a>
+                <a href="index.html" class="footer-link active">Learn</a>
+                <a href="#contact" class="footer-link">Contact</a>
+            </div>
+        </footer>
+    </div>
+    
+    <script src="../js/main.js"></script>
+    <script src="../js/learn.js"></script>
+</body>
+</html>
