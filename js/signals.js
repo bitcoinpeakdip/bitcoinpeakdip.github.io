@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (READS ONLY ACTUAL CSV DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.0.0 - Stable (No demo data generation)
+// Version: 1.4.1 - Stable (No demo data generation)
 
 let signalsData = [];
 let currentPage = 1;
@@ -14,7 +14,7 @@ let csvDataLoaded = false;
 let lastUpdateTime = null;
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.0'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
+const APP_VERSION = '1.4.1'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi

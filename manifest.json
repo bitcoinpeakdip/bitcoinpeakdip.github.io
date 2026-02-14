@@ -1,8 +1,8 @@
 {
-  "name": "Bitcoin PeakDip - Early Warning System",
+  "name": "Bitcoin PeakDip v1.4.1",
   "short_name": "Bitcoin PeakDip",
   "description": "Real-time Bitcoin peak and dip detection using Early Warning System with AI algorithms",
-  "start_url": "/index.html",
+  "start_url": "/?v=1.4.1",
   "display": "standalone",
   "background_color": "#050811",
   "theme_color": "#00d4ff",
@@ -84,7 +84,11 @@
       "url": "/about.html"
     }
   ],
-  "categories": ["finance", "cryptocurrency", "trading"],
+  "categories": [
+    "finance",
+    "cryptocurrency",
+    "trading"
+  ],
   "screenshots": [
     {
       "src": "screenshots/home.jpg",
@@ -105,5 +109,8 @@
   "prefer_related_applications": false,
   "lang": "en",
   "dir": "ltr",
-  "display_override": ["standalone", "fullscreen"]
+  "display_override": [
+    "standalone",
+    "fullscreen"
+  ]
 }

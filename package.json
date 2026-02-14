@@ -1,0 +1,20 @@
+{
+  "name": "bitcoin-peakdip",
+  "version": "1.4.0",
+  "description": "Bitcoin PeakDip Early Warning System",
+  "scripts": {
+    "version": "node build-version.js",
+    "version:patch": "node build-version.js patch",
+    "version:minor": "node build-version.js minor",
+    "version:major": "node build-version.js major",
+    "deploy": "npm run version && git add . && git commit -m \"Release v$(node -p \"require('./version.json').version\")\" && git push",
+    "deploy:patch": "npm run version:patch && git add . && git commit -m \"Release v$(node -p \"require('./version.json').version\")\" && git push",
+    "deploy:minor": "npm run version:minor && git add . && git commit -m \"Release v$(node -p \"require('./version.json').version\")\" && git push",
+    "deploy:major": "npm run version:major && git add . && git commit -m \"Release v$(node -p \"require('./version.json').version\")\" && git push",
+    "preview": "npx http-server -p 8080",
+    "clean": "rm -rf node_modules package-lock.json"
+  },
+  "keywords": ["bitcoin", "trading", "ews", "crypto"],
+  "author": "Bitcoin PeakDip",
+  "license": "ISC"
+}

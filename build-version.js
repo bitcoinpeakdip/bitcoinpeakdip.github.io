@@ -105,12 +105,6 @@ htmlFiles.forEach(filename => {
     console.log(`✅ Updated ${filename}`);
 });
 
-// ========== CẬP NHẬT JS FILES ==========
-const jsFiles = [
-    'js/signals.js',
-    'js/main.js'
-];
-
 jsFiles.forEach(filename => {
     const filePath = path.join(__dirname, filename);
     
@@ -199,7 +193,7 @@ console.log(`✅ Created release notes: RELEASE_v${newVersion}.md`);
 console.log('\n🎉 Build completed successfully!');
 console.log(`📊 New Version: ${newVersion}`);
 console.log(`📅 Build Date: ${versionInfo.build_date}`);
-console.log('\n📋 Next steps:`);
+console.log(`\n📋 Next steps:`);
 console.log(`  1. Review RELEASE_v${newVersion}.md`);
 console.log('  2. Test the application');
 console.log('  3. Deploy to production');

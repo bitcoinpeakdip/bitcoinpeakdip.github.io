@@ -1,10 +1,11 @@
-// version.json
 {
-  "version": "1.4.0",
-  "build_date": "2024-02-06",
+  "version": "1.4.1",
+  "build_date": "2026-02-14",
   "changelog": [
     "Fixed: Mobile scroll functionality",
     "Fixed: Newest data sorting",
     "Improved: Table drag scrolling"
-  ]
+  ],
+  "build_time": "13:01:38",
+  "build_timestamp": 1771048898807
 }
