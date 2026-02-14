@@ -56,7 +56,19 @@ const htmlFiles = [
     'signals.html',
     'index.html',
     'about.html',
-    'product.html'
+    'product.html',
+    'learn/index.html',        // Thêm
+    'learn/ews-basics.html',   // Thêm
+    'learn/strategy-guide.html', // Thêm
+    'learn/multi-tf-analysis.html', // Thêm
+    'learn/risk-management.html' // Thêm    
+];
+
+// Thêm vào jsFiles array
+const jsFiles = [
+    'js/signals.js',
+    'js/main.js',
+    'js/learn.js'  // Thêm
 ];
 
 htmlFiles.forEach(filename => {

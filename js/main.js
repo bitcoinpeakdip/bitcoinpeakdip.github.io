@@ -43,7 +43,56 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
         });
     });
+
+   // ===== THÊM CODE XỬ LÝ DROPDOWN MOBILE TỪ ĐÂY =====
+    // Handle dropdown for mobile
+    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
     
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768) {
+                e.preventDefault();
+                const dropdown = this.closest('.dropdown');
+                
+                // Close other dropdowns
+                document.querySelectorAll('.dropdown').forEach(d => {
+                    if (d !== dropdown) {
+                        d.classList.remove('active');
+                        // Reset arrow for other dropdowns
+                        const otherArrow = d.querySelector('.dropdown-arrow');
+                        if (otherArrow) {
+                            otherArrow.style.transform = '';
+                        }
+                    }
+                });
+                
+                // Toggle current dropdown
+                dropdown.classList.toggle('active');
+                
+                // Update arrow
+                const arrow = this.querySelector('.dropdown-arrow');
+                if (arrow) {
+                    arrow.style.transform = dropdown.classList.contains('active') ? 'rotate(180deg)' : '';
+                }
+            }
+        });
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown').forEach(d => {
+                    d.classList.remove('active');
+                });
+                
+                document.querySelectorAll('.dropdown-arrow').forEach(arrow => {
+                    arrow.style.transform = '';
+                });
+            }
+        }
+    });
+        
     // Navigation scroll effect
     window.addEventListener('scroll', function() {
         if (navigation) {
