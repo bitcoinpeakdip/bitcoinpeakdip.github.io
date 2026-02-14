@@ -316,3 +316,96 @@
 .tag.risk-medium { background: rgba(255, 193, 7, 0.2); color: #FFC107; }
 .tag.risk-high { background: rgba(244, 67, 54, 0.2); color: #F44336; }
 .tag.winrate { background: rgba(33, 150, 243, 0.2); color: #2196F3; }
+
+/* ===== FIX: Cải thiện khả năng đọc cho articles ===== */
+
+/* Tiêu đề chính */
+.learn-title {
+    color: #ffffff !important;  /* Màu trắng */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    font-weight: 700;
+}
+
+.learn-subtitle {
+    color: rgba(255, 255, 255, 0.9) !important;  /* Trắng mờ */
+}
+
+/* Card titles */
+.learn-card h3 {
+    color: #ffffff !important;  /* Trắng */
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* Card description text */
+.learn-card p {
+    color: rgba(255, 255, 255, 0.9) !important;  /* Trắng mờ */
+    line-height: 1.6;
+    font-size: 0.95em;
+}
+
+/* Card meta info (thời gian đọc, level) */
+.card-meta {
+    color: rgba(255, 255, 255, 0.8) !important;  /* Trắng mờ hơn */
+}
+
+.card-meta i {
+    color: #00d4ff !important;  /* Giữ màu xanh cho icon */
+    margin-right: 5px;
+}
+
+/* Level badges */
+.card-meta span:last-child {
+    background: rgba(0, 212, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 20px;
+    color: #00d4ff !important;  /* Màu xanh cho level */
+    font-weight: 600;
+}
+
+/* Icons trong card */
+.card-icon i {
+    color: #00d4ff !important;  /* Giữ màu xanh cho icon */
+    font-size: 2.5em;
+    opacity: 0.9;
+}
+
+/* Hover effects */
+.learn-card:hover h3 {
+    color: #00d4ff !important;  /* Đổi màu khi hover */
+    transition: color 0.3s ease;
+}
+
+.learn-card:hover p {
+    color: #ffffff !important;
+}
+
+/* Latest Market Analysis section */
+.recent-posts h2 {
+    color: #ffffff !important;
+    font-size: 1.8em;
+    margin-bottom: 25px;
+}
+
+.recent-posts h2 i {
+    color: #00d4ff;
+}
+
+.post-item h4 a {
+    color: #00d4ff !important;  /* Màu xanh cho link */
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.post-item p {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.post-meta {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.post-meta i {
+    color: #f7931a;  /* Màu cam cho icon calendar */
+}
