@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (USES REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.10 - Real Bitcoin Price Data Integration
+// Version: 1.4.11 - Real Bitcoin Price Data Integration
 
 let signalsData = [];
 let currentPage = 1;
@@ -14,7 +14,7 @@ let csvDataLoaded = false;
 let lastUpdateTime = null;
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.10'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
+const APP_VERSION = '1.4.11'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi
@@ -2128,6 +2128,25 @@ function updateChartTimeframe(timeframe) {
             startDate = new Date(now);
             startDate.setDate(startDate.getDate() - 90);
             break;
+        // THÊM CÁC CASE MỚI TỪ ĐÂY
+        case '180d':
+            unit = 'week';
+            endDate = new Date(now);
+            startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - 180);
+            break;
+        case '1y':
+            unit = 'month';
+            endDate = new Date(now);
+            startDate = new Date(now);
+            startDate.setFullYear(startDate.getFullYear() - 1);
+            break;
+        case '2y':
+            unit = 'month';
+            endDate = new Date(now);
+            startDate = new Date(now);
+            startDate.setFullYear(startDate.getFullYear() - 2);
+            break;            
         default:
             startDate = minDate;
             endDate = maxDate;

@@ -1985,3 +1985,49 @@
         box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
     }
 }
+/* Timeframe buttons layout */
+.timeframe-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.chart-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.chart-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .chart-controls-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .timeframe-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .timeframe-buttons .control-btn {
+        flex: 1;
+        min-width: 50px;
+        padding: 8px 5px;
+        font-size: 0.85em;
+    }
+}
