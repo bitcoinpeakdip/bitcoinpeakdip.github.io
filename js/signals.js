@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (USES REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.9 - Real Bitcoin Price Data Integration
+// Version: 1.4.10 - Real Bitcoin Price Data Integration
 
 let signalsData = [];
 let currentPage = 1;
@@ -14,7 +14,7 @@ let csvDataLoaded = false;
 let lastUpdateTime = null;
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.9'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
+const APP_VERSION = '1.4.10'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi
@@ -3829,3 +3829,611 @@ function addClickZoomStyles() {
 
 // Gọi khi trang load
 addClickZoomStyles();
+
+// ========== TIME RANGE SELECTOR FEATURE ==========
+// Thêm sau phần Click-to-Zoom code
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('⏰ Initializing Time Range Selector...');
+    
+    // Đợi chart và data load xong
+    setTimeout(initTimeRangeSelector, 2000);
+});
+
+function initTimeRangeSelector() {
+    if (!window.bitcoinChart || !window.signalsData) {
+        console.log('⏳ Waiting for chart and signals data...');
+        setTimeout(initTimeRangeSelector, 1000);
+        return;
+    }
+    
+    createTimeRangeSelector();
+    setupTimeRangeEvents();
+}
+
+function createTimeRangeSelector() {
+    // Tìm chart section để thêm time range selector
+    const chartSection = document.querySelector('.chart-section');
+    if (!chartSection) return;
+    
+    // Kiểm tra nếu đã có thì không thêm nữa
+    if (document.getElementById('timeRangeSelector')) return;
+    
+    // Tạo time range selector container
+    const timeRangeContainer = document.createElement('div');
+    timeRangeContainer.className = 'time-range-selector';
+    timeRangeContainer.id = 'timeRangeSelector';
+    timeRangeContainer.innerHTML = `
+        <div class="time-range-header">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Time Range Selection</span>
+            <span class="time-range-badge">Select period to view Peak/Dip signals</span>
+        </div>
+        
+        <div class="time-range-controls">
+            <!-- Quick preset buttons -->
+            <div class="range-presets">
+                <button class="range-preset-btn" data-days="1">24H</button>
+                <button class="range-preset-btn" data-days="7">7D</button>
+                <button class="range-preset-btn" data-days="30">30D</button>
+                <button class="range-preset-btn" data-days="90">90D</button>
+                <button class="range-preset-btn" data-days="180">6M</button>
+                <button class="range-preset-btn" data-days="365">1Y</button>
+                <button class="range-preset-btn" data-all="true">All Time</button>
+            </div>
+            
+            <!-- Custom date range picker -->
+            <div class="custom-range">
+                <div class="date-input-group">
+                    <label for="startDate">From:</label>
+                    <input type="datetime-local" id="startDate" class="date-input">
+                </div>
+                
+                <div class="date-input-group">
+                    <label for="endDate">To:</label>
+                    <input type="datetime-local" id="endDate" class="date-input">
+                </div>
+                
+                <button class="apply-range-btn" id="applyCustomRange">
+                    <i class="fas fa-check"></i> Apply
+                </button>
+                
+                <button class="reset-range-btn" id="resetRange">
+                    <i class="fas fa-undo-alt"></i> Reset
+                </button>
+            </div>
+        </div>
+        
+        <!-- Range info display -->
+        <div class="range-info" id="rangeInfo">
+            <div class="range-stats">
+                <span><i class="fas fa-chart-line"></i> <span id="rangeDataPoints">0</span> data points</span>
+                <span><i class="fas fa-mountain"></i> <span id="rangePeaks">0</span> peaks</span>
+                <span><i class="fas fa-water"></i> <span id="rangeDips">0</span> dips</span>
+                <span><i class="fas fa-calendar"></i> <span id="rangePeriod">All time</span></span>
+            </div>
+        </div>
+    `;
+    
+    // Thêm CSS cho time range selector
+    addTimeRangeStyles();
+    
+    // Chèn sau chart container
+    const chartContainer = chartSection.querySelector('.chart-container');
+    if (chartContainer) {
+        chartContainer.insertAdjacentElement('afterend', timeRangeContainer);
+    } else {
+        chartSection.appendChild(timeRangeContainer);
+    }
+}
+
+function addTimeRangeStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .time-range-selector {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .time-range-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .time-range-header i {
+            color: var(--wave-trough);
+            font-size: 1.3em;
+        }
+        
+        .time-range-header span {
+            color: white;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        
+        .time-range-badge {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--wave-trough) !important;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em !important;
+            margin-left: auto;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+        
+        .time-range-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .range-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .range-preset-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-glow);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 60px;
+        }
+        
+        .range-preset-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .range-preset-btn.active {
+            background: var(--wave-trough);
+            color: white;
+            border-color: var(--wave-trough);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+        
+        .custom-range {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .date-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .date-input-group label {
+            color: var(--text-glow);
+            font-size: 0.9em;
+            min-width: 40px;
+        }
+        
+        .date-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 10px;
+            color: white;
+            font-size: 0.9em;
+        }
+        
+        .date-input:focus {
+            outline: none;
+            border-color: var(--wave-trough);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.1);
+        }
+        
+        .apply-range-btn, .reset-range-btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .apply-range-btn {
+            background: linear-gradient(to right, var(--wave-trough), var(--wave-mid));
+            color: white;
+        }
+        
+        .apply-range-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+        
+        .reset-range-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-glow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .reset-range-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .range-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid var(--wave-trough);
+        }
+        
+        .range-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .range-stats span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-glow);
+            font-size: 0.95em;
+        }
+        
+        .range-stats i {
+            color: var(--wave-trough);
+            font-size: 1.1em;
+        }
+        
+        .range-stats span:nth-child(2) i {
+            color: var(--wave-peak);
+        }
+        
+        .range-stats span:nth-child(3) i {
+            color: var(--wave-trough);
+        }
+        
+        @media (max-width: 768px) {
+            .custom-range {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .date-input-group {
+                min-width: 100%;
+            }
+            
+            .range-stats {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .range-presets {
+                justify-content: center;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function setupTimeRangeEvents() {
+    // Preset buttons
+    document.querySelectorAll('.range-preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active class from all preset buttons
+            document.querySelectorAll('.range-preset-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            if (this.hasAttribute('data-all')) {
+                // Show all data
+                resetToFullRange();
+            } else {
+                const days = parseInt(this.getAttribute('data-days'));
+                applyPresetRange(days);
+            }
+        });
+    });
+    
+    // Apply custom range
+    document.getElementById('applyCustomRange').addEventListener('click', function() {
+        applyCustomRange();
+    });
+    
+    // Reset range
+    document.getElementById('resetRange').addEventListener('click', function() {
+        resetToFullRange();
+        // Remove active class from all preset buttons
+        document.querySelectorAll('.range-preset-btn').forEach(b => b.classList.remove('active'));
+    });
+    
+    // Set default dates for custom range
+    setDefaultDateInputs();
+}
+
+function setDefaultDateInputs() {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    const formatDateForInput = (date) => {
+        return date.toISOString().slice(0, 16);
+    };
+    
+    const startInput = document.getElementById('startDate');
+    const endInput = document.getElementById('endDate');
+    
+    if (startInput && endInput) {
+        startInput.value = formatDateForInput(thirtyDaysAgo);
+        endInput.value = formatDateForInput(now);
+    }
+}
+
+function applyPresetRange(days) {
+    if (!window.bitcoinChart || !window.signalsData) return;
+    
+    const now = new Date();
+    const startDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+    
+    // Lấy tất cả timestamps từ chart labels
+    const allTimestamps = window.bitcoinChart.data.labels.map(ts => new Date(ts));
+    
+    // Tìm index của start date gần nhất
+    let startIndex = 0;
+    for (let i = 0; i < allTimestamps.length; i++) {
+        if (allTimestamps[i] >= startDate) {
+            startIndex = i;
+            break;
+        }
+    }
+    
+    // Zoom chart đến range
+    zoomChartToRange(startIndex, allTimestamps.length - 1);
+    
+    // Cập nhật thông tin range
+    updateRangeInfo(startDate, now);
+}
+
+function applyCustomRange() {
+    const startInput = document.getElementById('startDate').value;
+    const endInput = document.getElementById('endDate').value;
+    
+    if (!startInput || !endInput) {
+        alert('Please select both start and end dates');
+        return;
+    }
+    
+    const startDate = new Date(startInput);
+    const endDate = new Date(endInput);
+    
+    if (startDate >= endDate) {
+        alert('End date must be after start date');
+        return;
+    }
+    
+    if (!window.bitcoinChart || !window.signalsData) return;
+    
+    const allTimestamps = window.bitcoinChart.data.labels.map(ts => new Date(ts));
+    
+    // Tìm index gần nhất với startDate và endDate
+    let startIndex = 0;
+    let endIndex = allTimestamps.length - 1;
+    
+    for (let i = 0; i < allTimestamps.length; i++) {
+        if (allTimestamps[i] >= startDate) {
+            startIndex = i;
+            break;
+        }
+    }
+    
+    for (let i = allTimestamps.length - 1; i >= 0; i--) {
+        if (allTimestamps[i] <= endDate) {
+            endIndex = i;
+            break;
+        }
+    }
+    
+    if (startIndex > endIndex) {
+        alert('No data in selected range');
+        return;
+    }
+    
+    // Zoom chart
+    zoomChartToRange(startIndex, endIndex);
+    
+    // Cập nhật thông tin
+    updateRangeInfo(startDate, endDate);
+}
+
+function zoomChartToRange(startIndex, endIndex) {
+    if (!window.bitcoinChart) return;
+    
+    try {
+        // Lấy timestamps tương ứng
+        const startTime = window.bitcoinChart.data.labels[startIndex];
+        const endTime = window.bitcoinChart.data.labels[endIndex];
+        
+        // Zoom chart
+        const xAxis = window.bitcoinChart.scales.x;
+        if (xAxis) {
+            xAxis.options.min = new Date(startTime);
+            xAxis.options.max = new Date(endTime);
+            window.bitcoinChart.update();
+        }
+        
+        // Highlight các signal points trong range
+        highlightSignalsInRange(startTime, endTime);
+        
+        // Hiệu ứng flash
+        const chartContainer = document.querySelector('.chart-container');
+        if (chartContainer) {
+            chartContainer.classList.add('chart-flash');
+            setTimeout(() => {
+                chartContainer.classList.remove('chart-flash');
+            }, 500);
+        }
+        
+        console.log(`🔍 Zoomed to range: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`);
+    } catch (e) {
+        console.error('Error zooming chart:', e);
+    }
+}
+
+function highlightSignalsInRange(startTime, endTime) {
+    if (!window.signalsData) return;
+    
+    const start = new Date(startTime).getTime();
+    const end = new Date(endTime).getTime();
+    
+    // Đếm signals trong range
+    let peaksInRange = 0;
+    let dipsInRange = 0;
+    
+    window.signalsData.forEach(signal => {
+        const signalTime = new Date(signal.timestamp).getTime();
+        if (signalTime >= start && signalTime <= end) {
+            if (signal.signal_type === 'PEAK') peaksInRange++;
+            else if (signal.signal_type === 'DIP') dipsInRange++;
+        }
+    });
+    
+    // Cập nhật range info
+    const rangePeaks = document.getElementById('rangePeaks');
+    const rangeDips = document.getElementById('rangeDips');
+    const rangeDataPoints = document.getElementById('rangeDataPoints');
+    
+    if (rangePeaks) rangePeaks.textContent = peaksInRange;
+    if (rangeDips) rangeDips.textContent = dipsInRange;
+    if (rangeDataPoints) {
+        const dataPoints = window.bitcoinChart.data.labels.filter(ts => {
+            const t = new Date(ts).getTime();
+            return t >= start && t <= end;
+        }).length;
+        rangeDataPoints.textContent = dataPoints;
+    }
+}
+
+function updateRangeInfo(startDate, endDate) {
+    const rangePeriod = document.getElementById('rangePeriod');
+    if (rangePeriod) {
+        const formatDate = (date) => {
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        };
+        rangePeriod.textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+    }
+    
+    // Cập nhật số liệu signals trong range
+    if (window.signalsData) {
+        const start = startDate.getTime();
+        const end = endDate.getTime();
+        
+        let peaks = 0, dips = 0;
+        window.signalsData.forEach(signal => {
+            const signalTime = new Date(signal.timestamp).getTime();
+            if (signalTime >= start && signalTime <= end) {
+                if (signal.signal_type === 'PEAK') peaks++;
+                else if (signal.signal_type === 'DIP') dips++;
+            }
+        });
+        
+        const rangePeaks = document.getElementById('rangePeaks');
+        const rangeDips = document.getElementById('rangeDips');
+        const rangeDataPoints = document.getElementById('rangeDataPoints');
+        
+        if (rangePeaks) rangePeaks.textContent = peaks;
+        if (rangeDips) rangeDips.textContent = dips;
+        if (rangeDataPoints) {
+            const dataPoints = window.bitcoinChart.data.labels.filter(ts => {
+                const t = new Date(ts).getTime();
+                return t >= start && t <= end;
+            }).length;
+            rangeDataPoints.textContent = dataPoints;
+        }
+    }
+}
+
+function resetToFullRange() {
+    if (!window.bitcoinChart) return;
+    
+    try {
+        const xAxis = window.bitcoinChart.scales.x;
+        if (xAxis) {
+            xAxis.options.min = null;
+            xAxis.options.max = null;
+            window.bitcoinChart.update();
+        }
+        
+        // Reset range info
+        const rangePeriod = document.getElementById('rangePeriod');
+        if (rangePeriod) rangePeriod.textContent = 'All time';
+        
+        // Reset counts to total
+        if (window.signalsData) {
+            const peaks = window.signalsData.filter(s => s.signal_type === 'PEAK').length;
+            const dips = window.signalsData.filter(s => s.signal_type === 'DIP').length;
+            
+            const rangePeaks = document.getElementById('rangePeaks');
+            const rangeDips = document.getElementById('rangeDips');
+            const rangeDataPoints = document.getElementById('rangeDataPoints');
+            
+            if (rangePeaks) rangePeaks.textContent = peaks;
+            if (rangeDips) rangeDips.textContent = dips;
+            if (rangeDataPoints) rangeDataPoints.textContent = window.bitcoinChart.data.labels.length;
+        }
+        
+        // Hiệu ứng flash
+        const chartContainer = document.querySelector('.chart-container');
+        if (chartContainer) {
+            chartContainer.classList.add('chart-flash');
+            setTimeout(() => {
+                chartContainer.classList.remove('chart-flash');
+            }, 500);
+        }
+        
+        // Reset date inputs to default
+        setDefaultDateInputs();
+        
+        // Remove active class from preset buttons
+        document.querySelectorAll('.range-preset-btn').forEach(b => b.classList.remove('active'));
+        
+        console.log('🔄 Reset to full range');
+    } catch (e) {
+        console.error('Error resetting range:', e);
+    }
+}
+
+// Thêm event listener cho chart data loaded
+document.addEventListener('signalsDataLoaded', function(e) {
+    console.log('📊 Signals data loaded, updating range info...');
+    setTimeout(() => {
+        if (document.getElementById('timeRangeSelector')) {
+            resetToFullRange();
+        }
+    }, 1000);
+});
