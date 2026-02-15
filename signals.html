@@ -617,49 +617,51 @@
     </script>
     <!-- Thêm đoạn này trước </body> -->
     <script>
-        // Load CSV từ file thực
-        fetch('data/signals.csv')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to load CSV: ${response.status} ${response.statusText}`);
-                }
-                return response.text();
-            })
-            .then(csvText => {
+        // Load cả hai file CSV: signals và Bitcoin price data
+        Promise.all([
+            fetch('data/signals.csv').catch(() => fetch('signals.csv')),
+            fetch('data/Binance_BTCUSDT_d.csv').catch(() => fetch('Binance_BTCUSDT_d.csv'))
+        ])
+        .then(async ([signalsResponse, bitcoinResponse]) => {
+            // Xử lý signals CSV
+            if (signalsResponse && signalsResponse.ok) {
+                const csvText = await signalsResponse.text();
                 window.realCsvData = csvText;
-                console.log('✅ CSV loaded successfully from data/signals.csv');
+                console.log('✅ Signals CSV loaded successfully');
                 console.log('CSV length:', csvText.length, 'characters');
-                console.log('First 3 lines:', csvText.split('\n').slice(0, 3).join('\n'));
                 
-                // Dispatch event để signals.js biết dữ liệu đã sẵn sàng
                 const event = new CustomEvent('csvDataReady', { 
                     detail: { csvText: csvText } 
                 });
                 document.dispatchEvent(event);
-            })
-            .catch(error => {
-                console.error('❌ Error loading CSV:', error);
+            } else {
+                console.error('❌ Error loading signals CSV');
+            }
+            
+            // Xử lý Bitcoin price CSV
+            if (bitcoinResponse && bitcoinResponse.ok) {
+                const bitcoinCsvText = await bitcoinResponse.text();
+                window.bitcoinPriceData = bitcoinCsvText;
+                console.log('💰 Bitcoin price CSV loaded successfully');
+                console.log('Bitcoin CSV length:', bitcoinCsvText.length, 'characters');
+                console.log('First line:', bitcoinCsvText.split('\n')[0]);
                 
-                // Try alternative path if data/ doesn't work
-                fetch('signals.csv')
-                    .then(response => response.text())
-                    .then(csvText => {
-                        console.log('⚠️  Loaded from alternative path (signals.csv)');
-                        window.realCsvData = csvText;
-                        const event = new CustomEvent('csvDataReady', { 
-                            detail: { csvText: csvText } 
-                        });
-                        document.dispatchEvent(event);
-                    })
-                    .catch(error2 => {
-                        console.error('❌ Failed all CSV paths');
-                    });
-            });
+                const bitcoinEvent = new CustomEvent('bitcoinDataReady', { 
+                    detail: { csvText: bitcoinCsvText } 
+                });
+                document.dispatchEvent(bitcoinEvent);
+            } else {
+                console.error('❌ Error loading Bitcoin price CSV');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Fatal error loading CSV files:', error);
+        });
     </script>
     <!-- Thêm ngay sau <body> -->
     <div class="loading-indicator" id="globalLoading">
         <i class="fas fa-spinner fa-spin"></i>
-        <span>Loading Bitcoin EWS Signals...</span>
+        <span>Loading Bitcoin EWS Signals and Real Price Data...</span>
     </div>
 
     <script>
@@ -675,7 +677,7 @@
                         }
                     }, 300);
                 }
-            }, 2000);
+            }, 3000); // Tăng thời gian lên 3 giây vì load 2 file
         });
     </script>
     <script src="js/main.js?v=1.4.6"></script>

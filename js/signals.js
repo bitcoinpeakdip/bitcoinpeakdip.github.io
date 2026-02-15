@@ -1,6 +1,6 @@
-// EWS Signals Page JavaScript - FIXED VERSION (READS ONLY ACTUAL CSV DATA)
+// EWS Signals Page JavaScript - FIXED VERSION (USES REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.6 - Stable (No demo data generation)
+// Version: 1.5.0 - Real Bitcoin Price Data Integration
 
 let signalsData = [];
 let currentPage = 1;
@@ -14,7 +14,7 @@ let csvDataLoaded = false;
 let lastUpdateTime = null;
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.6'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
+const APP_VERSION = '1.5.0'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi
@@ -51,7 +51,7 @@ function handleCacheVersion() {
         localStorage.setItem(VERSION_KEY, APP_VERSION);
         
         // 5. Show user-friendly notification
-        if (storedVersion) { // Chỉ thông báo nếu đã có version cũ
+        if (storedVersion) {
             setTimeout(() => {
                 showNotification(
                     `🔄 Đã cập nhật phiên bản mới (${APP_VERSION})`,
@@ -71,20 +71,19 @@ function handleCacheVersion() {
     }
     
     // Log version
-    console.log(`🚀 Bitcoin PeakDip EWS v${APP_VERSION}`);
+    console.log(`🚀 Bitcoin PeakDip EWS v${APP_VERSION} - REAL BITCOIN PRICE DATA`);
     return false;
 }
 
 // Chạy ngay khi script load
 if (handleCacheVersion()) {
-    // Nếu đã reload thì không chạy code tiếp
     throw new Error('Reloading page for cache update...');
 }
 
 // ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Bitcoin PeakDip EWS Signals - ACTUAL DATA VERSION');
-    console.log('Initializing with REAL CSV data only...');
+    console.log('Bitcoin PeakDip EWS Signals - REAL BITCOIN PRICE DATA VERSION');
+    console.log('Initializing with REAL Bitcoin price data from Binance...');
     
     // Listen for CSV data ready event from HTML
     document.addEventListener('csvDataReady', function(e) {
@@ -93,14 +92,21 @@ document.addEventListener('DOMContentLoaded', function() {
         parseCSVData(e.detail.csvText);
     });
     
+    // Listen for Bitcoin price data ready event
+    document.addEventListener('bitcoinDataReady', function(e) {
+        console.log('💰 Bitcoin Price Data Ready event received');
+        parseBitcoinPriceData(e.detail.csvText);
+    });
+    
     // Setup event listeners
     setupEventListeners();
     
     // Initialize charts (empty for now)
     initializeCharts();
     
-    // Load historical Bitcoin price data (for chart background only)
-    loadHistoricalBitcoinData();
+    // Load both CSV files
+    loadRealCSVData();
+    loadBitcoinPriceData();
     
     // Check if CSV is already loaded
     setTimeout(() => {
@@ -108,37 +114,349 @@ document.addEventListener('DOMContentLoaded', function() {
             if (window.realCsvData) {
                 console.log('📁 CSV data found in window object');
                 parseCSVData(window.realCsvData);
-            } else {
-                console.log('⚠️ No CSV data yet, trying direct load...');
-                loadRealCSVData();
             }
+        }
+        if (historicalPriceData.length === 0 && window.bitcoinPriceData) {
+            console.log('💰 Bitcoin price data found in window object');
+            parseBitcoinPriceData(window.bitcoinPriceData);
         }
     }, 1000);
     
     // Show initial loading notification
-    showNotification('Loading Bitcoin EWS Signals from CSV...', 'info');
+    showNotification('Loading Bitcoin EWS Signals and Real Price Data...', 'info');
+    
     // Thêm nút zoom thủ công sau 3 giây
-    setTimeout(addManualZoomButton, 3000);	
+    setTimeout(addManualZoomButton, 3000);
+    
     // Thêm dòng này để setup drag scroll
-    setTimeout(setupTableDragScroll, 1000);	
+    setTimeout(setupTableDragScroll, 1000);
 });
 
-// ========== DATA LOADING FUNCTIONS ==========
+// ========== BITCOIN PRICE DATA LOADING ==========
+async function loadBitcoinPriceData() {
+    try {
+        console.log('💰 Loading real Bitcoin price data from Binance CSV...');
+        
+        // Try multiple paths in order of priority
+        const paths = [
+            'data/Binance_BTCUSDT_d.csv',
+            './data/Binance_BTCUSDT_d.csv',
+            'Binance_BTCUSDT_d.csv',
+            './Binance_BTCUSDT_d.csv'
+        ];
+        
+        let loadedData = false;
+        
+        for (const path of paths) {
+            try {
+                console.log(`Attempting to load Bitcoin data: ${path}`);
+                const response = await fetch(path, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/csv, text/plain, */*',
+                        'Cache-Control': 'no-cache'
+                    },
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok) {
+                    const csvText = await response.text();
+                    console.log(`✅ SUCCESS: Bitcoin data found at: ${path}`);
+                    console.log(`File size: ${csvText.length} bytes`);
+                    
+                    parseBitcoinPriceData(csvText);
+                    loadedData = true;
+                    break;
+                } else {
+                    console.log(`⚠️ Failed (HTTP ${response.status}): ${path}`);
+                }
+            } catch (error) {
+                console.log(`❌ Error loading ${path}:`, error.message);
+                continue;
+            }
+        }
+        
+        if (!loadedData) {
+            console.error('❌ CRITICAL: Could not find Bitcoin price CSV file');
+            showNotification(
+                'ERROR: Bitcoin price data file not found. Please ensure Binance_BTCUSDT_d.csv exists.',
+                'error',
+                10000
+            );
+            
+            // Fallback: Generate synthetic data based on signals if available
+            if (signalsData.length > 0) {
+                console.log('⚠️ Using signals data to generate synthetic price data as fallback');
+                generateSyntheticPriceData();
+            }
+        }
+        
+    } catch (error) {
+        console.error('❌ FATAL: Bitcoin price data load failed:', error);
+        showNotification(`Error loading Bitcoin data: ${error.message}`, 'error');
+    }
+}
+
+function parseBitcoinPriceData(csvText) {
+    console.log('💰 START: Parsing Bitcoin price data from Binance CSV');
+    
+    // Validate CSV text
+    if (!csvText || typeof csvText !== 'string') {
+        console.error('❌ Invalid Bitcoin CSV data');
+        return;
+    }
+    
+    csvText = csvText.trim();
+    if (csvText.length === 0) {
+        console.error('❌ Bitcoin CSV is empty');
+        return;
+    }
+    
+    const lines = csvText.split('\n');
+    console.log(`Total lines in Bitcoin CSV: ${lines.length}`);
+    
+    if (lines.length < 2) {
+        console.error('❌ Bitcoin CSV has no data rows');
+        return;
+    }
+    
+    // Parse headers
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
+    console.log('Bitcoin CSV headers:', headers);
+    
+    // Validate required headers
+    const requiredHeaders = ['unix', 'date', 'open', 'high', 'low', 'close'];
+    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+    
+    if (missingHeaders.length > 0) {
+        console.error(`❌ Missing required headers: ${missingHeaders.join(', ')}`);
+        return;
+    }
+    
+    // Clear previous data
+    historicalPriceData = [];
+    let validRows = 0;
+    let minPrice = Infinity;
+    let maxPrice = 0;
+    
+    // Parse each data row (skip header)
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        // Handle quoted values
+        const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+        
+        if (values.length < 6) {
+            console.warn(`⚠️ Skipping line ${i}: insufficient columns (${values.length})`);
+            continue;
+        }
+        
+        // Create object with headers
+        const row = {};
+        headers.forEach((header, index) => {
+            row[header] = values[index] || '';
+        });
+        
+        // Parse date - handle both Unix timestamp and date string
+        let date;
+        
+        // Try Unix timestamp first (Column 0)
+        if (row['unix'] && !isNaN(parseFloat(row['unix']))) {
+            const unixTimestamp = parseFloat(row['unix']);
+            // Check if it's in seconds or milliseconds
+            if (unixTimestamp > 1e12) {
+                // Milliseconds
+                date = new Date(unixTimestamp);
+            } else if (unixTimestamp > 1e9) {
+                // Seconds
+                date = new Date(unixTimestamp * 1000);
+            } else {
+                date = new Date(unixTimestamp);
+            }
+        } 
+        // Try Date string (Column 1)
+        else if (row['date']) {
+            date = parseBinanceDate(row['date']);
+        }
+        
+        if (!date || isNaN(date.getTime())) {
+            console.warn(`⚠️ Skipping line ${i}: invalid date "${row['date'] || row['unix']}"`);
+            continue;
+        }
+        
+        // Parse close price (preferred) or use open if close not available
+        let price = 0;
+        if (row['close'] && !isNaN(parseFloat(row['close']))) {
+            price = parseFloat(row['close']);
+        } else if (row['open'] && !isNaN(parseFloat(row['open']))) {
+            price = parseFloat(row['open']);
+        } else {
+            console.warn(`⚠️ Skipping line ${i}: no valid price`);
+            continue;
+        }
+        
+        // Validate price
+        if (price <= 0 || price > 500000) {
+            console.warn(`⚠️ Skipping line ${i}: suspicious price $${price}`);
+            continue;
+        }
+        
+        // Track min/max
+        minPrice = Math.min(minPrice, price);
+        maxPrice = Math.max(maxPrice, price);
+        
+        // Add to historical data
+        historicalPriceData.push({
+            x: new Date(date),
+            y: price,
+            unix: row['unix'],
+            dateStr: row['date'],
+            open: parseFloat(row['open']) || price,
+            high: parseFloat(row['high']) || price,
+            low: parseFloat(row['low']) || price,
+            volume: parseFloat(row['volume btc'] || row['volume'] || 0),
+            volumeUsdt: parseFloat(row['volume usdt'] || 0)
+        });
+        
+        validRows++;
+    }
+    
+    console.log(`💰 Parsed ${validRows} valid Bitcoin price points`);
+    console.log(`📈 Price range: $${minPrice.toLocaleString()} - $${maxPrice.toLocaleString()}`);
+    
+    if (validRows === 0) {
+        console.error('❌ No valid Bitcoin price data found');
+        showNotification('No valid Bitcoin price data found', 'error');
+        
+        // Fallback: generate synthetic data
+        generateSyntheticPriceData();
+        return;
+    }
+    
+    // Sort by date (oldest first for chart)
+    historicalPriceData.sort((a, b) => a.x.getTime() - b.x.getTime());
+    
+    console.log(`📅 Date range: ${formatDate(historicalPriceData[0]?.x)} to ${formatDate(historicalPriceData[historicalPriceData.length-1]?.x)}`);
+    console.log(`📊 First 3 data points:`, historicalPriceData.slice(0, 3).map(d => ({
+        date: formatDate(d.x),
+        price: d.y
+    })));
+    
+    // Update chart if it exists and signals are loaded
+    if (bitcoinChart && signalsData.length > 0) {
+        updateChartsWithData();
+    }
+    
+    showNotification(`Loaded ${validRows} real Bitcoin price points from Binance`, 'success');
+}
+
+function parseBinanceDate(dateStr) {
+    if (!dateStr) return null;
+    
+    // Format: "M/D/YYYY" (e.g., "2/14/2026")
+    const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (match) {
+        const [_, month, day, year] = match.map(Number);
+        return new Date(year, month - 1, day);
+    }
+    
+    // Try other formats
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+}
+
+// ========== SYNTHETIC PRICE DATA FALLBACK ==========
+function generateSyntheticPriceData() {
+    console.log('⚠️ Generating synthetic price data as fallback');
+    
+    if (signalsData.length === 0) {
+        // No signals either, generate generic data
+        generateGenericPriceData();
+        return;
+    }
+    
+    // Get date range from signals
+    const minDate = new Date(Math.min(...signalsData.map(s => s.timestamp.getTime())));
+    const maxDate = new Date(Math.max(...signalsData.map(s => s.timestamp.getTime())));
+    
+    // Add buffer
+    minDate.setMonth(minDate.getMonth() - 1);
+    maxDate.setMonth(maxDate.getMonth() + 1);
+    
+    const days = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
+    
+    // Get price range from signals
+    const prices = signalsData.map(s => s.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    
+    historicalPriceData = [];
+    let currentPrice = minPrice * 0.9;
+    
+    for (let i = 0; i <= days; i++) {
+        const date = new Date(minDate);
+        date.setDate(date.getDate() + i);
+        
+        // Random walk
+        const change = (Math.random() - 0.48) * 0.05;
+        currentPrice = currentPrice * (1 + change);
+        currentPrice = Math.max(minPrice * 0.7, Math.min(maxPrice * 1.3, currentPrice));
+        
+        historicalPriceData.push({
+            x: new Date(date),
+            y: Math.round(currentPrice * 100) / 100,
+            synthetic: true
+        });
+    }
+    
+    console.log(`⚠️ Generated ${historicalPriceData.length} synthetic price points`);
+    showNotification('Using synthetic price data (fallback mode)', 'warning');
+}
+
+function generateGenericPriceData() {
+    const endDate = new Date();
+    const startDate = new Date(endDate);
+    startDate.setFullYear(startDate.getFullYear() - 2);
+    
+    const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    
+    historicalPriceData = [];
+    let price = 30000;
+    
+    for (let i = 0; i <= days; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        
+        // Simulate Bitcoin price trend
+        const trend = Math.sin(i / 100) * 10000 + i * 50;
+        const noise = (Math.random() - 0.5) * 2000;
+        price = 30000 + trend + noise;
+        price = Math.max(15000, Math.min(120000, price));
+        
+        historicalPriceData.push({
+            x: new Date(date),
+            y: Math.round(price * 100) / 100,
+            synthetic: true
+        });
+    }
+    
+    console.log(`⚠️ Generated ${historicalPriceData.length} generic price points`);
+}
+
+// ========== SIGNALS CSV LOADING ==========
 async function loadRealCSVData() {
     try {
         console.log('📂 Loading actual CSV data from server...');
         
-        // Try multiple paths in order of priority
         const paths = [
-            'data/signals.csv', 
-            './data/signals.csv', 
-            'signals.csv', 
-            './signals.csv',
-            '../signals.csv'
+            'data/signals.csv',
+            './data/signals.csv',
+            'signals.csv',
+            './signals.csv'
         ];
         
         let loadedData = false;
-        let lastError = null;
         
         for (const path of paths) {
             try {
@@ -155,61 +473,33 @@ async function loadRealCSVData() {
                 if (response.ok) {
                     const csvText = await response.text();
                     console.log(`✅ SUCCESS: CSV found at: ${path}`);
-                    console.log(`File size: ${csvText.length} bytes`);
-                    console.log(`First line: ${csvText.split('\n')[0]?.substring(0, 100)}...`);
-                    
                     parseCSVData(csvText);
                     loadedData = true;
                     lastUpdateTime = new Date();
                     break;
-                } else {
-                    console.log(`⚠️ Failed (HTTP ${response.status}): ${path}`);
-                    lastError = `HTTP ${response.status}: ${response.statusText}`;
                 }
             } catch (error) {
                 console.log(`❌ Error loading ${path}:`, error.message);
-                lastError = error.message;
                 continue;
             }
         }
         
         if (!loadedData) {
-            console.error('❌ CRITICAL: Could not find CSV file at any path');
-            
-            // Update UI to show error
-            updateUIForNoData(`CSV file not found. Tried: ${paths.join(', ')}`);
-            
-            showNotification(
-                'ERROR: CSV file not found. Please ensure signals.csv exists in the correct location.',
-                'error',
-                10000
-            );
-            
-            // Log detailed error
-            console.error('Last error:', lastError);
-            console.error('Paths attempted:', paths);
+            console.error('❌ Could not find signals CSV file');
+            updateUIForNoData('Signals CSV file not found');
         }
         
     } catch (error) {
         console.error('❌ FATAL: Direct CSV load failed:', error);
-        
         updateUIForNoData(`Fatal error: ${error.message}`);
-        
-        showNotification(
-            `Fatal error loading CSV: ${error.message}`,
-            'error',
-            10000
-        );
     }
 }
 
-// ========== SỬA HÀM parseCSVData ==========
 function parseCSVData(csvText) {
-    console.log('📊 START: Parsing CSV data (ACTUAL DATA ONLY)');
+    console.log('📊 START: Parsing CSV data');
     
-    // Validate CSV text
     if (!csvText || typeof csvText !== 'string') {
-        console.error('❌ Invalid CSV data: Not a string or empty');
+        console.error('❌ Invalid CSV data');
         showNotification('Invalid CSV data format', 'error');
         return;
     }
@@ -225,16 +515,14 @@ function parseCSVData(csvText) {
     console.log(`Total lines in CSV: ${lines.length}`);
     
     if (lines.length < 2) {
-        console.error('❌ CSV has no data rows (only header or empty)');
+        console.error('❌ CSV has no data rows');
         showNotification('CSV has no data rows', 'error');
         return;
     }
     
-    // Parse headers
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
     console.log('CSV headers:', headers);
     
-    // Validate required headers
     const requiredHeaders = ['timestamp', 'signal_type', 'price'];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
     
@@ -244,37 +532,28 @@ function parseCSVData(csvText) {
         return;
     }
     
-    // Clear previous data
     signalsData = [];
     let validRows = 0;
     let invalidRows = 0;
     let peakCount = 0;
     let dipCount = 0;
-    let otherCount = 0;
     
-    // Parse each data row
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
-        if (!line) {
-            console.log(`Skipping empty line ${i}`);
-            continue;
-        }
+        if (!line) continue;
         
         const values = line.split(',');
         
         if (values.length < 3) {
-            console.warn(`⚠️ Skipping line ${i}: insufficient columns (${values.length})`);
             invalidRows++;
             continue;
         }
         
-        // Create row object
         const row = {};
         headers.forEach((header, index) => {
             const value = values[index] ? values[index].trim() : '';
             row[header] = value;
             
-            // Special handling for empty values
             if (value === '') {
                 if (header === 'distance') row[header] = '0';
                 if (header === 'validation') row[header] = 'PENDING';
@@ -282,47 +561,34 @@ function parseCSVData(csvText) {
             }
         });
         
-        // Parse and validate timestamp
         const timestamp = parseTimestamp(row['timestamp']);
         if (!timestamp || isNaN(timestamp.getTime())) {
-            console.warn(`⚠️ Skipping row ${i}: invalid timestamp "${row['timestamp']}"`);
             invalidRows++;
             continue;
         }
         
-        // Parse and validate price
         const price = parseFloat(row['price']);
         if (isNaN(price) || price <= 0) {
-            console.warn(`⚠️ Skipping row ${i}: invalid price "${row['price']}"`);
             invalidRows++;
             continue;
         }
         
-        // Parse and validate signal type
         const signalType = (row['signal_type'] || 'PEAK').toUpperCase().trim();
-        if (signalType !== 'PEAK' && signalType !== 'DIP') {
-            console.warn(`⚠️ Row ${i}: Unknown signal type "${signalType}", defaulting to PEAK`);
-            otherCount++;
-        }
-        
-        // Count signal types
         if (signalType === 'PEAK') {
             peakCount++;
         } else if (signalType === 'DIP') {
             dipCount++;
         }
         
-        // Parse confidence (0.98 in CSV → 98%)
-        let confidence = 98; // Default
+        let confidence = 98;
         if (row['confidence'] && row['confidence'].trim()) {
             const confValue = parseFloat(row['confidence']);
             if (!isNaN(confValue)) {
                 confidence = confValue <= 1 ? Math.round(confValue * 100) : Math.round(confValue);
-                confidence = Math.max(0, Math.min(100, confidence)); // Clamp 0-100
+                confidence = Math.max(0, Math.min(100, confidence));
             }
         }
         
-        // Parse distance
         let distance = 0;
         if (row['distance'] && row['distance'].trim()) {
             const distValue = parseFloat(row['distance']);
@@ -331,7 +597,6 @@ function parseCSVData(csvText) {
             }
         }
         
-        // Parse validation
         let validation = 'PENDING';
         if (row['validation'] && row['validation'].trim()) {
             const val = row['validation'].toUpperCase().trim();
@@ -340,7 +605,6 @@ function parseCSVData(csvText) {
             }
         }
         
-        // Parse strategy or assign based on signal type
         let strategy = row['strategy'] || '';
         if (!strategy || strategy === 'UNKNOWN') {
             const strategies = signalType === 'PEAK' 
@@ -349,7 +613,6 @@ function parseCSVData(csvText) {
             strategy = strategies[Math.floor(Math.random() * strategies.length)];
         }
         
-        // Create signal object
         const signal = {
             timestamp: timestamp,
             signal_type: signalType,
@@ -360,290 +623,43 @@ function parseCSVData(csvText) {
             strategy: strategy,
             id: `signal_${i}_${timestamp.getTime()}`,
             csv_row: i,
-            source: 'actual_csv',
-            raw_data: row // Keep original data for reference
+            source: 'actual_csv'
         };
         
         signalsData.push(signal);
         validRows++;
     }
     
-    console.log(`✅ COMPLETE: Parsed ${validRows} valid signals from CSV`);
-    console.log(`📊 STATS: Peak: ${peakCount}, Dip: ${dipCount}, Other: ${otherCount}, Invalid: ${invalidRows}`);
+    console.log(`✅ Parsed ${validRows} valid signals from CSV`);
+    console.log(`📊 STATS: Peak: ${peakCount}, Dip: ${dipCount}, Invalid: ${invalidRows}`);
     
     if (validRows === 0) {
         console.error('❌ No valid signals found in CSV');
-        showNotification('No valid signals found in CSV file', 'error');
         updateUIForNoData('No valid signals found in CSV');
         return;
     }
-
-    // Debug timestamp trước khi sort
-    console.log("🔍 Debug timestamps trước khi sort:");
-    if (signalsData.length > 0) {
-        signalsData.slice(0, 3).forEach((signal, i) => {
-            console.log(`${i}: ${formatDateTime(signal.timestamp)} - timestamp: ${signal.timestamp.getTime()}`);
-        });
-    }
     
-    // Sắp xếp MỚI NHẤT lên đầu (lớn nhất = mới nhất)
+    // Sort newest first
     signalsData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     
     if (signalsData.length > 0) {
-        console.log(`✅ Đã sắp xếp mới nhất lên đầu`);
-        console.log(`📅 Date range: Mới nhất ${formatDateTime(signalsData[0]?.timestamp)} đến Cũ nhất ${formatDateTime(signalsData[signalsData.length-1]?.timestamp)}`);
-        console.log(`📅 Top 5 mới nhất:`);
-        signalsData.slice(0, 5).forEach((signal, i) => {
-            console.log(`${i}: ${formatDateTime(signal.timestamp)} - $${signal.price} (${signal.signal_type})`);
-        });
+        console.log(`📅 Date range: ${formatDateTime(signalsData[0]?.timestamp)} to ${formatDateTime(signalsData[signalsData.length-1]?.timestamp)}`);
     }
     
-    // Update UI with actual data
     updateUI();
-    
-    // Update last updated time
     lastUpdateTime = new Date();
+    showNotification(`Loaded ${validRows} actual signals from CSV`, 'success');
     
-    // Show success notification
-    showNotification(`Loaded ${validRows} actual signals from CSV (mới nhất lên đầu)`, 'success');
-}
-
-// ========== THÊM CSS CHO BẢNG KÉO NGANG ==========
-function addTableScrollStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        /* Cải thiện scroll cho bảng trên mobile và desktop */
-        .log-container {
-            overflow-x: auto;
-            margin-bottom: 25px;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling trên iOS */
-            scrollbar-width: thin; /* Firefox */
-            scrollbar-color: var(--wave-trough) rgba(0, 0, 0, 0.3); /* Firefox */
-        }
-        
-        .log-container::-webkit-scrollbar {
-            height: 8px; /* Chiều cao thanh scroll */
-        }
-        
-        .log-container::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-        }
-        
-        .log-container::-webkit-scrollbar-thumb {
-            background: var(--wave-trough);
-            border-radius: 4px;
-        }
-        
-        .log-container::-webkit-scrollbar-thumb:hover {
-            background: var(--wave-mid);
-        }
-        
-        /* Đảm bảo bảng có độ rộng tối thiểu trên mobile */
-        .signals-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            overflow: hidden;
-            min-width: 800px; /* Độ rộng tối thiểu để kéo ngang */
-        }
-        
-        /* Hiệu ứng khi kéo */
-        .log-container:active {
-            cursor: grabbing;
-        }
-        
-        /* Thêm indicator scroll trên mobile */
-        @media (max-width: 768px) {
-            .log-container {
-                position: relative;
-                padding-bottom: 15px;
-            }
-            
-            .log-container::after {
-                content: '← Kéo để xem thêm →';
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                text-align: center;
-                color: var(--wave-trough);
-                font-size: 0.8em;
-                opacity: 0.7;
-                padding: 5px;
-                background: rgba(0, 0, 0, 0.3);
-                border-radius: 0 0 10px 10px;
-                animation: scrollHint 2s infinite alternate;
-            }
-            
-            @keyframes scrollHint {
-                0% {
-                    opacity: 0.5;
-                    transform: translateX(-5px);
-                }
-                100% {
-                    opacity: 0.8;
-                    transform: translateX(5px);
-                }
-            }
-        }
-        
-        /* Desktop: thêm shadow khi scroll */
-        @media (min-width: 769px) {
-            .log-container {
-                position: relative;
-            }
-            
-            .log-container.scroll-start::before {
-                display: none;
-            }
-            
-            .log-container.scroll-end::after {
-                display: none;
-            }
-            
-            .log-container::before,
-            .log-container::after {
-                content: '';
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                width: 30px;
-                pointer-events: none;
-                z-index: 1;
-                transition: opacity 0.3s ease;
-            }
-            
-            .log-container::before {
-                left: 0;
-                background: linear-gradient(to right, rgba(0, 0, 0, 0.7), transparent);
-                opacity: 0;
-            }
-            
-            .log-container::after {
-                right: 0;
-                background: linear-gradient(to left, rgba(0, 0, 0, 0.7), transparent);
-                opacity: 1;
-            }
-            
-            .log-container.scrolled::before {
-                opacity: 1;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// ========== THÊM HÀM XỬ LÝ SCROLL CHO BẢNG ==========
-function setupTableScroll() {
-    const logContainer = document.querySelector('.log-container');
-    if (!logContainer) return;
-    
-    // Thêm CSS
-    addTableScrollStyles();
-    
-    // Kiểm tra scroll position
-    function updateScrollIndicators() {
-        if (logContainer.scrollWidth > logContainer.clientWidth) {
-            const scrollLeft = logContainer.scrollLeft;
-            const scrollRight = logContainer.scrollWidth - logContainer.clientWidth - scrollLeft;
-            
-            if (scrollLeft > 10) {
-                logContainer.classList.add('scrolled');
-                logContainer.classList.add('scroll-start');
-            } else {
-                logContainer.classList.remove('scrolled');
-                logContainer.classList.remove('scroll-start');
-            }
-            
-            if (scrollRight > 10) {
-                logContainer.classList.add('scroll-end');
-            } else {
-                logContainer.classList.remove('scroll-end');
-            }
-        }
-    }
-    
-    // Event listener cho scroll
-    logContainer.addEventListener('scroll', updateScrollIndicators);
-    
-    // Khởi tạo ban đầu
-    setTimeout(updateScrollIndicators, 100);
-    
-    // Update khi resize window
-    window.addEventListener('resize', updateScrollIndicators);
-    
-    // Thêm touch/swipe support cho mobile
-    let startX = 0;
-    let startY = 0;
-    let isHorizontalScroll = false;
-    
-    logContainer.addEventListener('touchstart', function(e) {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        isHorizontalScroll = false;
-    });
-    
-    logContainer.addEventListener('touchmove', function(e) {
-        if (!isHorizontalScroll) {
-            const diffX = Math.abs(e.touches[0].clientX - startX);
-            const diffY = Math.abs(e.touches[0].clientY - startY);
-            
-            // Nếu kéo ngang nhiều hơn dọc thì cho phép scroll ngang
-            if (diffX > diffY) {
-                isHorizontalScroll = true;
-            }
-        }
-        
-        // Ngăn scroll dọc khi đang scroll ngang
-        if (isHorizontalScroll) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    
-    console.log('✅ Table scroll setup complete');
-}
-
-// ========== CẬP NHẬT HÀM updateUI ==========
-function updateUI() {
-    console.log('🔄 Updating UI with actual data...');
-    
-    updateLastUpdated();
-    updateStats();
-    filterSignals();
-    renderTable();
-    
-    // Khởi tạo charts nếu chưa có
-    if (!bitcoinChart) {
-        initializeCharts();
-    }
-    
-    // Cập nhật dữ liệu cho biểu đồ
-    updateChartsWithData();
-    updateAnalysisCharts();
-    
-    // Setup table scroll (chỉ cần gọi một lần)
-    if (!window.tableScrollInitialized) {
-        setupTableScroll();
-        window.tableScrollInitialized = true;
-    }
-    
-    // Update page title with signal count
-    const totalSignals = signalsData.length;
-    if (totalSignals > 0) {
-        document.title = `Bitcoin EWS (${totalSignals} Signals) - PeakDip`;
+    // If Bitcoin data already loaded, update chart
+    if (bitcoinChart && historicalPriceData.length > 0) {
+        updateChartsWithData();
     }
 }
 
 function parseTimestamp(timestampStr) {
     if (!timestampStr) return null;
     
-    console.log(`Parsing timestamp: "${timestampStr}"`);
-    
-    // Try multiple date formats
     const formats = [
-        // ISO format "YYYY-MM-DDTHH:mm:ss"
         () => {
             const match = timestampStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/);
             if (match) {
@@ -652,8 +668,6 @@ function parseTimestamp(timestampStr) {
             }
             return null;
         },
-        
-        // "M/D/YYYY HH:MM"
         () => {
             const match = timestampStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}) (\d{1,2}):(\d{2})$/);
             if (match) {
@@ -662,8 +676,6 @@ function parseTimestamp(timestampStr) {
             }
             return null;
         },
-        
-        // "M/D/YYYY"
         () => {
             const match = timestampStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
             if (match) {
@@ -672,8 +684,6 @@ function parseTimestamp(timestampStr) {
             }
             return null;
         },
-        
-        // "YYYY-MM-DD HH:MM:SS"
         () => {
             const match = timestampStr.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
             if (match) {
@@ -682,8 +692,6 @@ function parseTimestamp(timestampStr) {
             }
             return null;
         },
-        
-        // Try Date.parse
         () => {
             const date = new Date(timestampStr);
             return isNaN(date.getTime()) ? null : date;
@@ -692,122 +700,49 @@ function parseTimestamp(timestampStr) {
     
     for (const format of formats) {
         const date = format();
-        if (date) {
-            console.log(`✅ Parsed as: ${date.toISOString()}`);
+        if (date && !isNaN(date.getTime())) {
             return date;
         }
     }
     
-    console.warn(`❌ Could not parse timestamp: "${timestampStr}"`);
     return null;
 }
 
-async function loadHistoricalBitcoinData() {
-    try {
-        console.log('📈 Loading Bitcoin historical price data...');
-        
-        // For demo purposes, generate realistic price data based on actual signals
-        generateRealisticPriceData();
-        
-        console.log(`✅ Generated ${historicalPriceData.length} price points`);
-        
-    } catch (error) {
-        console.error('❌ Error loading Bitcoin data:', error);
-        generateRealisticPriceData(); // Fallback
-    }
-}
-
-function generateRealisticPriceData() {
-    if (signalsData.length === 0) {
-        console.log('⚠️ No signals data, generating generic price data');
-        generateFallbackPriceData();
-        return;
+// ========== UI UPDATE FUNCTIONS ==========
+function updateUI() {
+    console.log('🔄 Updating UI with actual data...');
+    
+    updateLastUpdated();
+    updateStats();
+    filterSignals();
+    renderTable();
+    
+    if (!bitcoinChart) {
+        initializeCharts();
     }
     
-    console.log('📈 Generating realistic price data based on actual signals...');
+    updateChartsWithData();
+    updateAnalysisCharts();
     
-    // Get date range from signals
-    const minDate = new Date(Math.min(...signalsData.map(s => s.timestamp.getTime())));
-    const maxDate = new Date(Math.max(...signalsData.map(s => s.timestamp.getTime())));
-    
-    // Ensure we have some buffer
-    minDate.setMonth(minDate.getMonth() - 1);
-    maxDate.setMonth(maxDate.getMonth() + 1);
-    
-    const days = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24));
-    
-    // Find min and max prices from signals
-    const prices = signalsData.map(s => s.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    
-    // Generate price data
-    historicalPriceData = [];
-    let currentPrice = minPrice * 0.8; // Start below min
-    
-    for (let i = 0; i <= days; i++) {
-        const date = new Date(minDate);
-        date.setDate(date.getDate() + i);
-        
-        // Add random walk with mean reversion
-        const change = (Math.random() - 0.5) * 0.04;
-        currentPrice = currentPrice * (1 + change);
-        
-        // Keep within reasonable bounds
-        currentPrice = Math.max(minPrice * 0.5, Math.min(maxPrice * 1.5, currentPrice));
-        
-        // Add signal points
-        const signalsOnDate = signalsData.filter(s => 
-            s.timestamp.toDateString() === date.toDateString()
-        );
-        
-        historicalPriceData.push({
-            x: date,
-            y: Math.round(currentPrice * 100) / 100,
-            signals: signalsOnDate.length
-        });
-    }
-}
-
-function generateFallbackPriceData() {
-    const startDate = new Date('2023-01-01');
-    const endDate = new Date();
-    const days = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
-    
-    historicalPriceData = [];
-    let price = 20000;
-    
-    for (let i = 0; i <= days; i++) {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + i);
-        
-        const change = (Math.random() - 0.45) * 0.06;
-        price = price * (1 + change);
-        price = Math.max(15000, Math.min(120000, price));
-        
-        historicalPriceData.push({
-            x: date,
-            y: Math.round(price * 100) / 100
-        });
+    if (!window.tableScrollInitialized) {
+        setupTableScroll();
+        window.tableScrollInitialized = true;
     }
 }
 
 function updateUIForNoData(errorMessage = 'No data available') {
     console.log('🔄 Updating UI for no data state...');
     
-    // Update stats to show zeros
     document.getElementById('peakCount').textContent = '0';
     document.getElementById('dipCount').textContent = '0';
     document.getElementById('totalCount').textContent = '0';
     document.getElementById('accuracyRate').textContent = '0%';
     
-    // Update last updated
     const lastUpdated = document.getElementById('lastUpdated');
     if (lastUpdated) {
         lastUpdated.textContent = 'Never (No data)';
     }
     
-    // Show error in table
     const tableBody = document.getElementById('signalsTableBody');
     if (tableBody) {
         tableBody.innerHTML = `
@@ -821,64 +756,33 @@ function updateUIForNoData(errorMessage = 'No data available') {
         `;
     }
     
-    // Disable controls
-    document.querySelectorAll('.filter-btn, .control-btn, .page-btn, #refreshData').forEach(btn => {
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        btn.style.cursor = 'not-allowed';
-    });
-    
-    // Update details panel
-    const detailsContainer = document.getElementById('signalDetails');
-    if (detailsContainer) {
-        detailsContainer.innerHTML = `
-            <div class="no-selection">
-                <i class="fas fa-database"></i>
-                <h3>No Data Available</h3>
-                <p>${errorMessage}</p>
-                <button class="csv-btn" onclick="loadRealCSVData()" style="margin-top: 20px;">
-                    <i class="fas fa-redo"></i> Retry Loading CSV
-                </button>
-            </div>
-        `;
-    }
-    
     showNotification('No data available. Please check CSV file.', 'warning', 5000);
 }
 
 function updateLastUpdated() {
     const lastUpdated = document.getElementById('lastUpdated');
-    if (lastUpdated) {
-        if (lastUpdateTime) {
-            lastUpdated.textContent = lastUpdateTime.toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        } else {
-            lastUpdated.textContent = 'Just now';
-        }
+    if (lastUpdated && lastUpdateTime) {
+        lastUpdated.textContent = lastUpdateTime.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
     }
 }
 
 function updateStats() {
-    if (signalsData.length === 0) {
-        console.warn('⚠️ No signals data to update stats');
-        return;
-    }
+    if (signalsData.length === 0) return;
     
     const peakCount = signalsData.filter(s => s.signal_type === 'PEAK').length;
     const dipCount = signalsData.filter(s => s.signal_type === 'DIP').length;
     const totalCount = signalsData.length;
     
-    // Calculate accuracy based on validation status
     const validatedSignals = signalsData.filter(s => s.validation === 'VALIDATED').length;
     const accuracyRate = totalCount > 0 ? Math.round((validatedSignals / totalCount) * 100) : 0;
     
-    // Update DOM elements
     const peakElement = document.getElementById('peakCount');
     const dipElement = document.getElementById('dipCount');
     const totalElement = document.getElementById('totalCount');
@@ -889,7 +793,6 @@ function updateStats() {
     if (totalElement) totalElement.textContent = totalCount;
     if (accuracyElement) accuracyElement.textContent = accuracyRate + '%';
     
-    // Update percentages for analysis section
     const peakPercentage = document.getElementById('peakPercentage');
     const dipPercentage = document.getElementById('dipPercentage');
     if (peakPercentage && dipPercentage) {
@@ -897,7 +800,6 @@ function updateStats() {
         dipPercentage.textContent = totalCount > 0 ? Math.round((dipCount / totalCount) * 100) + '%' : '0%';
     }
     
-    // Update confidence stats
     const highConfidence = signalsData.filter(s => s.confidence >= 80).length;
     const mediumConfidence = signalsData.filter(s => s.confidence >= 60 && s.confidence < 80).length;
     
@@ -907,23 +809,17 @@ function updateStats() {
     if (document.getElementById('mediumConfidence')) {
         document.getElementById('mediumConfidence').textContent = mediumConfidence;
     }
-    
-    console.log(`📊 Stats updated: ${peakCount} peaks, ${dipCount} dips, ${totalCount} total, ${accuracyRate}% accuracy`);
 }
 
 function filterSignals() {
     const searchInput = document.getElementById('signalSearch');
     const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
     
-    console.log(`🔍 Filtering signals: filter="${currentFilter}", search="${searchTerm}"`);
-    
     filteredSignals = signalsData.filter(signal => {
-        // Apply filter
         if (currentFilter === 'peak' && signal.signal_type !== 'PEAK') return false;
         if (currentFilter === 'dip' && signal.signal_type !== 'DIP') return false;
         if (currentFilter === 'high-confidence' && signal.confidence < 80) return false;
         
-        // Apply search
         if (searchTerm) {
             const searchStr = [
                 signal.signal_type,
@@ -941,27 +837,15 @@ function filterSignals() {
         return true;
     });
     
-    console.log(`🔍 Filter result: ${filteredSignals.length} of ${signalsData.length} signals match criteria`);
-    currentPage = 1; // Reset to first page
+    currentPage = 1;
 }
 
 function renderTable() {
     const tableBody = document.getElementById('signalsTableBody');
-    if (!tableBody) {
-        console.error('❌ Table body element not found');
-        return;
-    }
+    if (!tableBody) return;
     
-    console.log(`📋 Rendering table page ${currentPage} (${itemsPerPage} items per page)`);
-    // DEBUG: Kiểm tra dữ liệu đầu tiên
-    if (filteredSignals.length > 0) {
-        console.log(`📋 First signal in filteredSignals: ${formatDateTime(filteredSignals[0].timestamp)} - $${filteredSignals[0].price}`);
-        console.log(`📋 Last signal in filteredSignals: ${formatDateTime(filteredSignals[filteredSignals.length-1].timestamp)} - $${filteredSignals[filteredSignals.length-1].price}`);
-    }    
-    // Clear existing rows
     tableBody.innerHTML = '';
     
-    // Calculate pagination
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const pageSignals = filteredSignals.slice(startIndex, endIndex);
@@ -980,14 +864,12 @@ function renderTable() {
         return;
     }
     
-    // Create rows
     pageSignals.forEach((signal, index) => {
         const row = document.createElement('tr');
         row.className = `signal-${signal.signal_type.toLowerCase()}`;
         row.dataset.signalId = signal.id;
         row.dataset.index = startIndex + index;
         
-        // Format confidence class
         const confidenceClass = getConfidenceLevel(signal.confidence);
         
         row.innerHTML = `
@@ -1035,29 +917,14 @@ function renderTable() {
             </td>
         `;
         
-        // Add click event
         row.addEventListener('click', function() {
             selectSignal(signal, startIndex + index);
-        });
-        
-        // Add hover effect
-        row.addEventListener('mouseenter', function() {
-            this.style.backgroundColor = signal.signal_type === 'PEAK' 
-                ? 'rgba(255, 46, 99, 0.05)' 
-                : 'rgba(0, 212, 255, 0.05)';
-        });
-        
-        row.addEventListener('mouseleave', function() {
-            this.style.backgroundColor = '';
         });
         
         tableBody.appendChild(row);
     });
     
-    // Update pagination controls
     updatePagination();
-    
-    console.log(`✅ Rendered ${pageSignals.length} signals on page ${currentPage}`);
 }
 
 function updatePagination() {
@@ -1073,45 +940,26 @@ function updatePagination() {
     if (prevBtn) {
         prevBtn.disabled = currentPage === 1;
         prevBtn.style.opacity = currentPage === 1 ? '0.5' : '1';
-        prevBtn.style.cursor = currentPage === 1 ? 'not-allowed' : 'pointer';
     }
     
     if (nextBtn) {
         nextBtn.disabled = currentPage === totalPages || totalPages === 0;
         nextBtn.style.opacity = (currentPage === totalPages || totalPages === 0) ? '0.5' : '1';
-        nextBtn.style.cursor = (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer';
     }
-    
-    console.log(`📄 Pagination: Page ${currentPage} of ${totalPages} (${filteredSignals.length} total signals)`);
 }
 
 function selectSignal(signal, index) {
-    console.log(`🎯 Selecting signal: ${signal.signal_type} at $${signal.price} on ${formatDateTime(signal.timestamp)}`);
-    
-    // Remove previous selection
     document.querySelectorAll('.signals-table tbody tr').forEach(row => {
         row.classList.remove('selected');
     });
     
-    // Add selection to current row
     const rows = document.querySelectorAll('.signals-table tbody tr');
     if (rows[index]) {
         rows[index].classList.add('selected');
     }
     
-    // Show signal details
     showSignalDetails(signal);
-    
-    // Update chart highlight
     highlightSignalOnChart(signal);
-    
-    // Scroll to details if mobile
-    if (window.innerWidth < 768) {
-        const detailsSection = document.querySelector('.details-section');
-        if (detailsSection) {
-            detailsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
 }
 
 function showSignalDetails(signal) {
@@ -1122,7 +970,6 @@ function showSignalDetails(signal) {
     const confidenceColor = confidenceLevel === 'high' ? '#4CAF50' : 
                            confidenceLevel === 'medium' ? '#FFC107' : '#F44336';
     
-    // Calculate days ago
     const daysAgo = Math.floor((new Date() - signal.timestamp) / (1000 * 60 * 60 * 24));
     
     detailsContainer.innerHTML = `
@@ -1176,7 +1023,7 @@ function showSignalDetails(signal) {
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Signal Age:</span>
-                    <span class="detail-value">${daysAgo} days ago (${getTimeAgo(signal.timestamp)})</span>
+                    <span class="detail-value">${daysAgo} days ago</span>
                 </div>
             </div>
             
@@ -1204,18 +1051,21 @@ function showSignalDetails(signal) {
 }
 
 function highlightSignalOnChart(signal) {
-    // This would highlight the signal point on the chart
-    // For now, just log it
     console.log(`📊 Chart highlight for ${signal.signal_type} at $${signal.price}`);
 }
 
 // ========== CHART FUNCTIONS ==========
 function initializeCharts() {
-    // Main Bitcoin Chart
+    console.log('📊 Initializing charts with REAL Bitcoin price data...');
+    
     const chartCtx = document.getElementById('bitcoinChart')?.getContext('2d');
     if (!chartCtx) {
         console.warn('⚠️ Bitcoin chart canvas not found');
         return;
+    }
+    
+    if (bitcoinChart) {
+        bitcoinChart.destroy();
     }
     
     bitcoinChart = new Chart(chartCtx, {
@@ -1223,14 +1073,15 @@ function initializeCharts() {
         data: {
             datasets: [
                 {
-                    label: 'Bitcoin Price (Estimated)',
+                    label: 'Bitcoin Price (Binance)',
                     data: [],
-                    borderColor: 'rgba(247, 147, 26, 0.8)',
+                    borderColor: 'rgba(247, 147, 26, 0.9)',
                     backgroundColor: 'rgba(247, 147, 26, 0.1)',
                     borderWidth: 2,
                     fill: true,
-                    tension: 0.3,
-                    pointRadius: 0
+                    tension: 0.1,
+                    pointRadius: 0,
+                    pointHoverRadius: 3
                 },
                 {
                     label: 'Peak Signals',
@@ -1281,10 +1132,15 @@ function initializeCharts() {
                         label: function(context) {
                             const datasetLabel = context.dataset.label || '';
                             if (datasetLabel.includes('Bitcoin Price')) {
+                                const dataPoint = context.raw;
+                                let extraInfo = '';
+                                if (dataPoint && dataPoint.volume) {
+                                    extraInfo = ` | Vol: ${(dataPoint.volume / 1000).toFixed(0)}K BTC`;
+                                }
                                 return `Price: $${context.parsed.y.toLocaleString('en-US', { 
                                     minimumFractionDigits: 2, 
                                     maximumFractionDigits: 2 
-                                })}`;
+                                })}${extraInfo}`;
                             } else {
                                 const signal = context.raw?.signal;
                                 if (signal) {
@@ -1302,7 +1158,13 @@ function initializeCharts() {
             scales: {
                 x: {
                     type: 'time',
-                    time: { unit: 'month' },
+                    time: {
+                        unit: 'month',
+                        tooltipFormat: 'MMM dd, yyyy',
+                        displayFormats: {
+                            month: 'MMM yyyy'
+                        }
+                    },
                     grid: { 
                         color: 'rgba(255, 255, 255, 0.1)',
                         drawBorder: false
@@ -1331,49 +1193,45 @@ function initializeCharts() {
         }
     });
     
+    initializeAnalysisCharts();
     console.log('✅ Charts initialized');
+    
     setTimeout(() => {
-        initializeZoomControls();
-    }, 500);    
+        if (bitcoinChart) {
+            initializeZoomControls();
+        }
+    }, 500);
 }
 
 function updateChartsWithData() {
-    if (!bitcoinChart || signalsData.length === 0) {
-        console.warn('⚠️ Cannot update chart: no chart or data');
+    if (!bitcoinChart) {
+        console.warn('⚠️ Cannot update chart: no chart');
         return;
     }
     
-    console.log('📊 Updating charts with actual data...');
-
-    // Debug định dạng thời gian
-    debugTimeFormat();
+    console.log('📊 Updating charts with REAL Bitcoin price data...');
     
-    // Tách peak và dip signals
+    if (historicalPriceData.length === 0) {
+        console.warn('⚠️ No Bitcoin price data available');
+        return;
+    }
+    
     const peakSignals = signalsData.filter(s => s.signal_type === 'PEAK');
     const dipSignals = signalsData.filter(s => s.signal_type === 'DIP');
     
-    console.log(`📊 Data for chart:`);
-    console.log(`- Historical price points: ${historicalPriceData.length}`);
+    console.log(`📊 Chart data:`);
+    console.log(`- Real Bitcoin price points: ${historicalPriceData.length}`);
     console.log(`- Peak signals: ${peakSignals.length}`);
     console.log(`- Dip signals: ${dipSignals.length}`);
     
-    // Kiểm tra dữ liệu mẫu
-    if (peakSignals.length > 0) {
-        console.log(`📊 Sample peak signal:`, {
-            time: peakSignals[0].timestamp,
-            price: peakSignals[0].price,
-            confidence: peakSignals[0].confidence
-        });
-    }
-    
     if (historicalPriceData.length > 0) {
-        console.log(`📊 Sample price data:`, {
-            time: historicalPriceData[0].x,
+        console.log(`📊 Sample Bitcoin price:`, {
+            date: formatDate(historicalPriceData[0].x),
             price: historicalPriceData[0].y
         });
     }
     
-    // Cập nhật biểu đồ chính
+    // Update chart datasets
     bitcoinChart.data.datasets[0].data = historicalPriceData;
     bitcoinChart.data.datasets[1].data = peakSignals.map(signal => ({
         x: signal.timestamp,
@@ -1386,14 +1244,25 @@ function updateChartsWithData() {
         signal: signal
     }));
     
+    // Update chart title to show data source
+    const isSynthetic = historicalPriceData.some(d => d.synthetic);
+    if (isSynthetic) {
+        bitcoinChart.data.datasets[0].label = 'Bitcoin Price (Synthetic Fallback)';
+        bitcoinChart.data.datasets[0].borderColor = 'rgba(255, 152, 0, 0.8)';
+    } else {
+        bitcoinChart.data.datasets[0].label = 'Bitcoin Price (Binance Real Data)';
+    }
+    
     bitcoinChart.update();
     
-    console.log(`✅ Charts updated: ${peakSignals.length} peaks, ${dipSignals.length} dips on chart`);
-	
+    console.log(`✅ Charts updated with REAL Bitcoin price data`);
 }
 
 function initializeAnalysisCharts() {
-    // Type Distribution Chart
+    console.log('📊 Initializing analysis charts...');
+    
+    analysisCharts = [];
+    
     const typeCtx = document.getElementById('typeDistributionChart')?.getContext('2d');
     if (typeCtx) {
         const typeChart = new Chart(typeCtx, {
@@ -1426,7 +1295,6 @@ function initializeAnalysisCharts() {
         analysisCharts.push(typeChart);
     }
     
-    // Confidence Chart
     const confidenceCtx = document.getElementById('confidenceChart')?.getContext('2d');
     if (confidenceCtx) {
         const confidenceChart = new Chart(confidenceCtx, {
@@ -1469,7 +1337,6 @@ function initializeAnalysisCharts() {
         analysisCharts.push(confidenceChart);
     }
     
-    // Time Distribution Chart
     const timeCtx = document.getElementById('timeDistributionChart')?.getContext('2d');
     if (timeCtx) {
         const timeChart = new Chart(timeCtx, {
@@ -1514,41 +1381,35 @@ function initializeAnalysisCharts() {
         });
         analysisCharts.push(timeChart);
     }
+    
+    console.log(`✅ Analysis charts initialized: ${analysisCharts.length} charts`);
 }
 
 function updateAnalysisCharts() {
-    if (analysisCharts.length < 3 || signalsData.length === 0) {
-        console.warn('⚠️ Cannot update analysis charts: insufficient data');
-        return;
-    }
+    if (analysisCharts.length === 0 || signalsData.length === 0) return;
     
-    // Calculate statistics
     const peakCount = signalsData.filter(s => s.signal_type === 'PEAK').length;
     const dipCount = signalsData.filter(s => s.signal_type === 'DIP').length;
     const highConfidence = signalsData.filter(s => s.confidence >= 80).length;
     const mediumConfidence = signalsData.filter(s => s.confidence >= 60 && s.confidence < 80).length;
     const lowConfidence = signalsData.filter(s => s.confidence < 60).length;
     
-    // Monthly distribution
     const monthlyCounts = new Array(12).fill(0);
     signalsData.forEach(signal => {
         const month = signal.timestamp.getMonth();
         monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
     });
     
-    // Update type distribution chart
     if (analysisCharts[0]) {
         analysisCharts[0].data.datasets[0].data = [peakCount, dipCount];
         analysisCharts[0].update();
     }
     
-    // Update confidence distribution chart
     if (analysisCharts[1]) {
         analysisCharts[1].data.datasets[0].data = [highConfidence, mediumConfidence, lowConfidence];
         analysisCharts[1].update();
     }
     
-    // Update time distribution chart
     if (analysisCharts[2]) {
         analysisCharts[2].data.datasets[0].data = monthlyCounts;
         analysisCharts[2].update();
@@ -1556,6 +1417,7 @@ function updateAnalysisCharts() {
     
     console.log('✅ Analysis charts updated');
 }
+
 // ========== ZOOM & TIMELINE FUNCTIONS ==========
 let zoomState = {
     min: null,
@@ -1567,13 +1429,11 @@ let zoomState = {
 function initializeZoomControls() {
     console.log('🔍 Initializing zoom controls...');
     
-    // Kiểm tra xem toolbar đã tồn tại chưa
     if (document.querySelector('.zoom-toolbar')) {
         console.log('✅ Zoom toolbar already exists');
         return;
     }
     
-    // Create zoom toolbar
     const chartSection = document.querySelector('.chart-section');
     if (!chartSection) return;
     
@@ -1614,13 +1474,8 @@ function initializeZoomControls() {
     
     chartSection.querySelector('.chart-container').parentNode.insertBefore(zoomToolbar, chartSection.querySelector('.chart-info'));
     
-    // Add zoom CSS
     addZoomStyles();
-    
-    // Initialize zoom event listeners
     setupZoomEventListeners();
-    
-    // Initialize drag-to-zoom
     setupDragToZoom();
 }
 
@@ -1742,37 +1597,6 @@ function addZoomStyles() {
             z-index: 100;
         }
         
-        .zoom-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.2em;
-            z-index: 50;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-        }
-        
-        .zoom-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        /* Timeframe controls update */
-        .chart-controls {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        
         .timeframe-presets {
             display: flex;
             gap: 5px;
@@ -1806,43 +1630,37 @@ function addZoomStyles() {
 }
 
 function setupZoomEventListeners() {
-    // Zoom In
-    document.getElementById('zoomIn').addEventListener('click', function() {
-        zoomChart(0.8); // Zoom in 20%
+    document.getElementById('zoomIn')?.addEventListener('click', function() {
+        zoomChart(0.8);
     });
     
-    // Zoom Out
-    document.getElementById('zoomOut').addEventListener('click', function() {
-        zoomChart(1.2); // Zoom out 20%
+    document.getElementById('zoomOut')?.addEventListener('click', function() {
+        zoomChart(1.2);
     });
     
-    // Reset Zoom
-    document.getElementById('zoomReset').addEventListener('click', function() {
+    document.getElementById('zoomReset')?.addEventListener('click', function() {
         resetZoom();
     });
     
-    // Pan Mode
-    document.getElementById('zoomPan').addEventListener('click', function() {
+    document.getElementById('zoomPan')?.addEventListener('click', function() {
         togglePanMode();
     });
     
-    // Select Area
-    document.getElementById('zoomSelect').addEventListener('click', function() {
+    document.getElementById('zoomSelect')?.addEventListener('click', function() {
         toggleSelectMode();
     });
     
-    // Timeline Slider
     const timelineSlider = document.getElementById('timelineSlider');
-    timelineSlider.addEventListener('input', function() {
-        updateZoomFromSlider(this.value);
-    });
+    if (timelineSlider) {
+        timelineSlider.addEventListener('input', function() {
+            updateZoomFromSlider(this.value);
+        });
+    }
     
-    // Zoom Back
-    document.getElementById('zoomBack').addEventListener('click', function() {
+    document.getElementById('zoomBack')?.addEventListener('click', function() {
         zoomBack();
     });
     
-    // Add timeframe presets
     addTimeframePresets();
 }
 
@@ -1853,26 +1671,21 @@ function addTimeframePresets() {
     const presetsContainer = document.createElement('div');
     presetsContainer.className = 'timeframe-presets';
     presetsContainer.innerHTML = `
-        <button class="timeframe-preset" data-preset="1h">1H</button>
-        <button class="timeframe-preset" data-preset="4h">4H</button>
-        <button class="timeframe-preset active" data-preset="1d">1D</button>
         <button class="timeframe-preset" data-preset="1w">1W</button>
-        <button class="timeframe-preset" data-preset="1m">1M</button>
+        <button class="timeframe-preset active" data-preset="1m">1M</button>
         <button class="timeframe-preset" data-preset="3m">3M</button>
+        <button class="timeframe-preset" data-preset="6m">6M</button>
         <button class="timeframe-preset" data-preset="1y">1Y</button>
         <button class="timeframe-preset" data-preset="all">ALL</button>
     `;
     
     chartControls.querySelector('.control-btn').parentNode.insertBefore(presetsContainer, chartControls.querySelector('.chart-legend'));
     
-    // Add preset event listeners
     presetsContainer.querySelectorAll('.timeframe-preset').forEach(btn => {
         btn.addEventListener('click', function() {
             presetsContainer.querySelectorAll('.timeframe-preset').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
-            const preset = this.dataset.preset;
-            applyTimeframePreset(preset);
+            applyTimeframePreset(this.dataset.preset);
         });
     });
 }
@@ -1890,47 +1703,37 @@ function applyTimeframePreset(preset) {
     let endDate = new Date(maxDate);
     let unit = 'month';
     
+    const now = new Date();
+    
     switch(preset) {
-        case '1h':
-            unit = 'minute';
-            endDate = new Date();
-            startDate = new Date(endDate);
-            startDate.setHours(startDate.getHours() - 1);
-            break;
-        case '4h':
-            unit = 'hour';
-            endDate = new Date();
-            startDate = new Date(endDate);
-            startDate.setHours(startDate.getHours() - 4);
-            break;
-        case '1d':
-            unit = 'hour';
-            endDate = new Date();
-            startDate = new Date(endDate);
-            startDate.setDate(startDate.getDate() - 1);
-            break;
         case '1w':
             unit = 'day';
-            endDate = new Date();
-            startDate = new Date(endDate);
+            endDate = new Date(now);
+            startDate = new Date(now);
             startDate.setDate(startDate.getDate() - 7);
             break;
         case '1m':
             unit = 'day';
-            endDate = new Date();
-            startDate = new Date(endDate);
+            endDate = new Date(now);
+            startDate = new Date(now);
             startDate.setMonth(startDate.getMonth() - 1);
             break;
         case '3m':
             unit = 'week';
-            endDate = new Date();
-            startDate = new Date(endDate);
+            endDate = new Date(now);
+            startDate = new Date(now);
             startDate.setMonth(startDate.getMonth() - 3);
+            break;
+        case '6m':
+            unit = 'week';
+            endDate = new Date(now);
+            startDate = new Date(now);
+            startDate.setMonth(startDate.getMonth() - 6);
             break;
         case '1y':
             unit = 'month';
-            endDate = new Date();
-            startDate = new Date(endDate);
+            endDate = new Date(now);
+            startDate = new Date(now);
             startDate.setFullYear(startDate.getFullYear() - 1);
             break;
         case 'all':
@@ -1940,21 +1743,17 @@ function applyTimeframePreset(preset) {
             break;
     }
     
-    // Đảm bảo startDate không sớm hơn dữ liệu có sẵn
     if (startDate < minDate) startDate = new Date(minDate);
     
-    // Thêm padding
     const range = endDate - startDate;
     startDate = new Date(startDate.getTime() - range * 0.05);
     endDate = new Date(endDate.getTime() + range * 0.05);
     
-    // Lưu vào history
     zoomState.zoomHistory.push({
         min: bitcoinChart.options.scales.x.min,
         max: bitcoinChart.options.scales.x.max
     });
     
-    // Áp dụng zoom
     bitcoinChart.options.scales.x.min = startDate;
     bitcoinChart.options.scales.x.max = endDate;
     bitcoinChart.options.scales.x.time.unit = unit;
@@ -1966,8 +1765,6 @@ function applyTimeframePreset(preset) {
     bitcoinChart.update();
     updateZoomInfo();
     updateTimelineSlider();
-    
-    console.log(`✅ Preset applied: ${preset} (${formatDateShort(startDate)} to ${formatDateShort(endDate)})`);
 }
 
 function setupDragToZoom() {
@@ -1986,7 +1783,6 @@ function setupDragToZoom() {
         startX = e.clientX - rect.left;
         startY = e.clientY - rect.top;
         
-        // Create selection rectangle
         selectionRect = document.createElement('div');
         selectionRect.className = 'selection-rectangle';
         selectionRect.style.left = startX + 'px';
@@ -2022,11 +1818,8 @@ function setupDragToZoom() {
         
         const rect = chartCanvas.getBoundingClientRect();
         const endX = e.clientX - rect.left;
-        const endY = e.clientY - rect.top;
         
-        // Calculate selected date range
         const xScale = bitcoinChart.scales.x;
-        const chartRect = bitcoinChart.canvas.getBoundingClientRect();
         
         const minPixel = Math.min(startX, endX);
         const maxPixel = Math.max(startX, endX);
@@ -2034,12 +1827,10 @@ function setupDragToZoom() {
         const minDate = xScale.getValueForPixel(minPixel);
         const maxDate = xScale.getValueForPixel(maxPixel);
         
-        // Apply zoom to selected range
         if (minDate && maxDate && (maxDate - minDate) > 0) {
             zoomToRange(minDate, maxDate);
         }
         
-        // Clean up
         if (selectionRect.parentNode) {
             selectionRect.parentNode.removeChild(selectionRect);
         }
@@ -2047,10 +1838,8 @@ function setupDragToZoom() {
         isSelecting = false;
     });
     
-    // Pan functionality
     let isPanning = false;
     let panStartX = 0;
-    let panStartY = 0;
     
     chartCanvas.addEventListener('mousedown', function(e) {
         const panBtn = document.getElementById('zoomPan');
@@ -2058,8 +1847,6 @@ function setupDragToZoom() {
         
         isPanning = true;
         panStartX = e.clientX;
-        panStartY = e.clientY;
-        
         chartCanvas.style.cursor = 'grabbing';
     });
     
@@ -2067,7 +1854,7 @@ function setupDragToZoom() {
         if (!isPanning) return;
         
         const deltaX = e.clientX - panStartX;
-        const panSpeed = 0.5; // Adjust for sensitivity
+        const panSpeed = 0.5;
         
         if (zoomState.min && zoomState.max) {
             const range = zoomState.max - zoomState.min;
@@ -2110,31 +1897,21 @@ function setupDragToZoom() {
 }
 
 function zoomChart(factor) {
-    if (!bitcoinChart || !zoomState.isZoomed) {
-        // If not zoomed, zoom around center
-        const xScale = bitcoinChart.scales.x;
-        const range = xScale.max - xScale.min;
-        const center = xScale.min + range / 2;
-        const newRange = range * factor;
-        
-        zoomState.min = new Date(center - newRange / 2);
-        zoomState.max = new Date(center + newRange / 2);
-    } else {
-        // If already zoomed, zoom around current center
-        const center = zoomState.min.getTime() + (zoomState.max - zoomState.min) / 2;
-        const newRange = (zoomState.max - zoomState.min) * factor;
-        
-        zoomState.min = new Date(center - newRange / 2);
-        zoomState.max = new Date(center + newRange / 2);
-    }
+    if (!bitcoinChart) return;
     
-    // Save to history
+    const xScale = bitcoinChart.scales.x;
+    const range = xScale.max - xScale.min;
+    const center = xScale.min + range / 2;
+    const newRange = range * factor;
+    
+    zoomState.min = new Date(center - newRange / 2);
+    zoomState.max = new Date(center + newRange / 2);
+    
     zoomState.zoomHistory.push({
         min: bitcoinChart.options.scales.x.min,
         max: bitcoinChart.options.scales.x.max
     });
     
-    // Apply zoom
     bitcoinChart.options.scales.x.min = zoomState.min;
     bitcoinChart.options.scales.x.max = zoomState.max;
     zoomState.isZoomed = true;
@@ -2145,13 +1922,11 @@ function zoomChart(factor) {
 }
 
 function zoomToRange(minDate, maxDate) {
-    // Save current state to history
     zoomState.zoomHistory.push({
         min: bitcoinChart.options.scales.x.min,
         max: bitcoinChart.options.scales.x.max
     });
     
-    // Apply new range
     zoomState.min = minDate;
     zoomState.max = maxDate;
     zoomState.isZoomed = true;
@@ -2165,25 +1940,20 @@ function zoomToRange(minDate, maxDate) {
 }
 
 function resetZoom() {
-    if (!zoomState.isZoomed) return;
+    if (!zoomState.isZoomed || historicalPriceData.length === 0) return;
     
-    // Save to history
     zoomState.zoomHistory.push({
         min: bitcoinChart.options.scales.x.min,
         max: bitcoinChart.options.scales.x.max
     });
     
-    // Reset to full range
     const fullData = historicalPriceData;
-    if (fullData.length > 0) {
-        zoomState.min = new Date(Math.min(...fullData.map(d => d.x)));
-        zoomState.max = new Date(Math.max(...fullData.map(d => d.x)));
-        
-        // Add 5% padding
-        const range = zoomState.max - zoomState.min;
-        zoomState.min = new Date(zoomState.min.getTime() - range * 0.05);
-        zoomState.max = new Date(zoomState.max.getTime() + range * 0.05);
-    }
+    zoomState.min = new Date(Math.min(...fullData.map(d => d.x)));
+    zoomState.max = new Date(Math.max(...fullData.map(d => d.x)));
+    
+    const range = zoomState.max - zoomState.min;
+    zoomState.min = new Date(zoomState.min.getTime() - range * 0.05);
+    zoomState.max = new Date(zoomState.max.getTime() + range * 0.05);
     
     bitcoinChart.options.scales.x.min = zoomState.min;
     bitcoinChart.options.scales.x.max = zoomState.max;
@@ -2241,17 +2011,19 @@ function toggleSelectMode() {
 }
 
 function updateZoomFromSlider(value) {
+    if (historicalPriceData.length === 0) return;
+    
     const fullData = historicalPriceData;
-    if (fullData.length === 0) return;
+    const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
+    const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
+    const fullRange = fullMax - fullMin;
     
-    const fullRange = Math.max(...fullData.map(d => d.x)) - Math.min(...fullData.map(d => d.x));
     const visiblePercentage = value / 100;
+    const visibleRange = fullRange * visiblePercentage;
     
-    // Calculate visible range
-    const minDate = new Date(Math.min(...fullData.map(d => d.x)) + fullRange * (1 - visiblePercentage));
-    const maxDate = new Date(Math.max(...fullData.map(d => d.x)));
+    const endDate = fullMax;
+    const startDate = new Date(fullMax.getTime() - visibleRange);
     
-    // Save to history
     if (zoomState.isZoomed) {
         zoomState.zoomHistory.push({
             min: bitcoinChart.options.scales.x.min,
@@ -2259,13 +2031,12 @@ function updateZoomFromSlider(value) {
         });
     }
     
-    // Apply zoom
-    zoomState.min = minDate;
-    zoomState.max = maxDate;
+    zoomState.min = startDate;
+    zoomState.max = endDate;
     zoomState.isZoomed = value < 100;
     
-    bitcoinChart.options.scales.x.min = minDate;
-    bitcoinChart.options.scales.x.max = maxDate;
+    bitcoinChart.options.scales.x.min = startDate;
+    bitcoinChart.options.scales.x.max = endDate;
     
     bitcoinChart.update();
     updateZoomInfo();
@@ -2284,14 +2055,12 @@ function updateTimelineSlider() {
     const currentMin = zoomState.min || fullMin;
     const currentMax = zoomState.max || fullMax;
     
-    // Calculate slider value (0-100)
     const fullRange = fullMax - fullMin;
     const visibleRange = currentMax - currentMin;
     const sliderValue = (visibleRange / fullRange) * 100;
     
     slider.value = Math.min(100, Math.max(0, sliderValue));
     
-    // Update labels
     if (startLabel) {
         startLabel.textContent = formatDateShort(currentMin);
     }
@@ -2316,48 +2085,11 @@ function updateZoomInfo() {
     zoomInfo.textContent = `${formatDateShort(startDate)} - ${formatDateShort(endDate)} (${rangeDays} days)`;
 }
 
-function formatDateShort(date) {
-    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-        return 'Invalid Date';
-    }
-    
-    const now = new Date();
-    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-        return 'Today';
-    } else if (diffDays === 1) {
-        return 'Yesterday';
-    } else if (diffDays < 7) {
-        return `${diffDays}d ago`;
-    } else if (diffDays < 30) {
-        return `${Math.floor(diffDays / 7)}w ago`;
-    } else {
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            year: 'numeric'
-        });
-    }
-}
-
-// Cập nhật hàm initializeCharts để gọi initializeZoomControls
-function initializeCharts() {
-    // ... existing chart initialization code ...
-    
-    console.log('✅ Charts initialized');
-    
-    // Initialize zoom controls after chart is ready
-    setTimeout(() => {
-        initializeZoomControls();
-    }, 500);
-}
-
 function updateChartTimeframe(timeframe) {
     if (!bitcoinChart || historicalPriceData.length === 0) return;
     
     console.log(`📈 Updating chart timeframe to: ${timeframe}`);
     
-    // Lấy phạm vi dữ liệu đầy đủ
     const fullData = historicalPriceData;
     const minDate = new Date(Math.min(...fullData.map(d => d.x)));
     const maxDate = new Date(Math.max(...fullData.map(d => d.x)));
@@ -2365,78 +2097,63 @@ function updateChartTimeframe(timeframe) {
     let startDate = new Date(minDate);
     let endDate = new Date(maxDate);
     let unit = 'month';
-    let displayFormats = {};
     
-    // Tính toán phạm vi dựa trên timeframe
+    const now = new Date();
+    
     switch(timeframe) {
         case '1d':
             unit = 'hour';
-            displayFormats.hour = 'HH:mm';
-            endDate = new Date();
-            startDate = new Date(endDate);
+            endDate = new Date(now);
+            startDate = new Date(now);
             startDate.setDate(startDate.getDate() - 1);
             break;
         case '7d':
             unit = 'day';
-            displayFormats.day = 'MMM dd';
-            endDate = new Date();
-            startDate = new Date(endDate);
+            endDate = new Date(now);
+            startDate = new Date(now);
             startDate.setDate(startDate.getDate() - 7);
             break;
         case '30d':
             unit = 'day';
-            displayFormats.day = 'MMM dd';
-            endDate = new Date();
-            startDate = new Date(endDate);
+            endDate = new Date(now);
+            startDate = new Date(now);
             startDate.setDate(startDate.getDate() - 30);
             break;
         case '90d':
             unit = 'week';
-            displayFormats.week = 'MMM dd';
-            endDate = new Date();
-            startDate = new Date(endDate);
+            endDate = new Date(now);
+            startDate = new Date(now);
             startDate.setDate(startDate.getDate() - 90);
             break;
         default:
-            // 'all' hoặc mặc định
             startDate = minDate;
             endDate = maxDate;
             unit = 'month';
     }
     
-    // Đảm bảo startDate không sớm hơn dữ liệu có sẵn
     if (startDate < minDate) startDate = new Date(minDate);
     
-    // Thêm padding 5% để tránh cắt mất dữ liệu
     const range = endDate - startDate;
     startDate = new Date(startDate.getTime() - range * 0.05);
     endDate = new Date(endDate.getTime() + range * 0.05);
     
-    // Cập nhật cấu hình biểu đồ
     bitcoinChart.options.scales.x.min = startDate;
     bitcoinChart.options.scales.x.max = endDate;
     bitcoinChart.options.scales.x.time.unit = unit;
-    bitcoinChart.options.scales.x.time.displayFormats = displayFormats;
     
-    // Cập nhật trạng thái zoom
     zoomState.min = startDate;
     zoomState.max = endDate;
     zoomState.isZoomed = timeframe !== 'all';
     
-    // Cập nhật biểu đồ
     bitcoinChart.update();
-    
-    // Cập nhật slider và thông tin zoom
     updateZoomInfo();
     updateTimelineSlider();
-    
-    console.log(`✅ Chart timeframe updated: ${formatDateShort(startDate)} to ${formatDateShort(endDate)} (${unit})`);
 }
+
 // ========== EVENT HANDLERS ==========
 function setupEventListeners() {
     console.log('🔧 Setting up event listeners...');
     
-    // Filter buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             if (signalsData.length === 0) {
@@ -2448,13 +2165,11 @@ function setupEventListeners() {
             this.classList.add('active');
             currentFilter = this.dataset.filter;
             
-            console.log(`🔍 Filter changed to: ${currentFilter}`);
             filterSignals();
             renderTable();
         });
     });
     
-    // Search input
     const searchInput = document.getElementById('signalSearch');
     if (searchInput) {
         let searchTimeout;
@@ -2466,14 +2181,12 @@ function setupEventListeners() {
                     return;
                 }
                 
-                console.log(`🔍 Search: "${this.value}"`);
                 filterSignals();
                 renderTable();
             }, 300);
         });
     }
     
-    // Pagination
     const prevBtn = document.getElementById('prevPage');
     const nextBtn = document.getElementById('nextPage');
     
@@ -2484,7 +2197,6 @@ function setupEventListeners() {
             if (currentPage > 1) {
                 currentPage--;
                 renderTable();
-                console.log(`📄 Previous page: ${currentPage}`);
             }
         });
     }
@@ -2497,24 +2209,20 @@ function setupEventListeners() {
             if (currentPage < totalPages) {
                 currentPage++;
                 renderTable();
-                console.log(`📄 Next page: ${currentPage}`);
             }
         });
     }
     
-    // Timeframe controls
     document.querySelectorAll('.control-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             
             const timeframe = this.dataset.timeframe;
-            console.log(`📈 Timeframe changed to: ${timeframe}`);
             updateChartTimeframe(timeframe);
         });
     });
     
-    // Refresh data button
     const refreshBtn = document.getElementById('refreshData');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', function() {
@@ -2522,23 +2230,6 @@ function setupEventListeners() {
         });
     }
     
-    // CSV upload
-    //const uploadBtn = document.getElementById('uploadCsv');
-    //const fileInput = document.getElementById('csvFileInput');
-    
-    /*if (uploadBtn && fileInput) {
-        uploadBtn.addEventListener('click', function() {
-            fileInput.click();
-        });
-        
-        fileInput.addEventListener('change', function(e) {
-            if (e.target.files[0]) {
-                handleCsvUpload(e.target.files[0]);
-            }
-        });
-    }*/
-    
-    // Add keyboard shortcuts
     document.addEventListener('keydown', function(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         
@@ -2562,22 +2253,20 @@ function setupEventListeners() {
                 break;
         }
     });
-    // Thêm event listener cho nút Reset
+    
     const resetBtn = document.getElementById('resetViewBtn');
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
-            console.log('🔄 Reset view button clicked');
-            resetChartView();
+            resetZoom();
         });
-    }    
+    }
+    
     console.log('✅ Event listeners setup complete');
 }
 
-// Thêm ngay sau hàm setupEventListeners() hoặc trước DOMContentLoaded
 function setupTableDragScroll() {
     const logContainer = document.querySelector('.log-container');
     if (!logContainer) {
-        console.log('⏳ Waiting for log container...');
         setTimeout(setupTableDragScroll, 500);
         return;
     }
@@ -2588,7 +2277,6 @@ function setupTableDragScroll() {
     let startX;
     let scrollLeft;
     
-    // Mouse events
     logContainer.addEventListener('mousedown', (e) => {
         isDragging = true;
         startX = e.pageX - logContainer.offsetLeft;
@@ -2613,12 +2301,10 @@ function setupTableDragScroll() {
         if (!isDragging) return;
         e.preventDefault();
         const x = e.pageX - logContainer.offsetLeft;
-        const walk = (x - startX) * 2; // Tốc độ kéo
+        const walk = (x - startX) * 2;
         logContainer.scrollLeft = scrollLeft - walk;
-        updateScrollIndicators();
     });
     
-    // Touch events for mobile
     logContainer.addEventListener('touchstart', (e) => {
         isDragging = true;
         startX = e.touches[0].pageX - logContainer.offsetLeft;
@@ -2634,33 +2320,76 @@ function setupTableDragScroll() {
         const x = e.touches[0].pageX - logContainer.offsetLeft;
         const walk = (x - startX) * 1.5;
         logContainer.scrollLeft = scrollLeft - walk;
-        updateScrollIndicators();
     });
     
-    // Update scroll indicators
-    function updateScrollIndicators() {
-        const scrollLeft = logContainer.scrollLeft;
-        const scrollWidth = logContainer.scrollWidth;
-        const clientWidth = logContainer.clientWidth;
-        
-        logContainer.classList.remove('scrolled-left', 'scrolled-right', 'scrolled-both');
-        
-        if (scrollLeft > 10 && scrollLeft < (scrollWidth - clientWidth - 10)) {
-            logContainer.classList.add('scrolled-both');
-        } else if (scrollLeft > 10) {
-            logContainer.classList.add('scrolled-left');
-        } else if (scrollLeft < (scrollWidth - clientWidth - 10)) {
-            logContainer.classList.add('scrolled-right');
-        }
-    }
-    
-    // Update on resize
-    window.addEventListener('resize', updateScrollIndicators);
-    
-    // Initial update
-    setTimeout(updateScrollIndicators, 100);
-    
     console.log('✅ Table drag scroll setup complete');
+}
+
+function setupTableScroll() {
+    const logContainer = document.querySelector('.log-container');
+    if (!logContainer) return;
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        .log-container {
+            overflow-x: auto;
+            margin-bottom: 25px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: var(--wave-trough) rgba(0, 0, 0, 0.3);
+            cursor: grab;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+        }
+        
+        .log-container:active {
+            cursor: grabbing;
+        }
+        
+        .log-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .log-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+        
+        .log-container::-webkit-scrollbar-thumb {
+            background: var(--wave-trough);
+            border-radius: 4px;
+        }
+        
+        .log-container::-webkit-scrollbar-thumb:hover {
+            background: var(--wave-mid);
+        }
+        
+        .signals-table {
+            min-width: 900px;
+        }
+        
+        @media (max-width: 768px) {
+            .log-container {
+                max-width: 100vw;
+                margin-left: -20px;
+                margin-right: -20px;
+                padding: 10px 20px;
+                border-radius: 0;
+            }
+            
+            .signals-table {
+                min-width: 1000px;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    window.addEventListener('resize', () => {
+        // No-op, just keep the function
+    });
+    
+    console.log('✅ Table scroll setup complete');
 }
 
 function refreshData() {
@@ -2668,35 +2397,34 @@ function refreshData() {
     if (!refreshBtn) return;
     
     const originalHTML = refreshBtn.innerHTML;
-    const originalText = refreshBtn.textContent;
     
-    // Show loading state
     refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
     refreshBtn.disabled = true;
     
     showNotification('Refreshing data from CSV...', 'info');
     console.log('🔄 Manual refresh triggered');
     
-    // Clear cache and reload
     signalsData = [];
     filteredSignals = [];
     currentPage = 1;
     
-    // Force reload from server (no cache)
-    fetch('signals.csv?' + new Date().getTime(), {
-        cache: 'no-store',
-        headers: {
-            'Cache-Control': 'no-cache'
-        }
-    })
-    .then(response => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.text();
-    })
-    .then(csvText => {
-        parseCSVData(csvText);
+    Promise.all([
+        fetch('data/signals.csv?' + new Date().getTime(), { cache: 'no-store' }),
+        fetch('data/Binance_BTCUSDT_d.csv?' + new Date().getTime(), { cache: 'no-store' })
+    ])
+    .then(async ([signalsRes, bitcoinRes]) => {
+        if (!signalsRes.ok) throw new Error(`Signals CSV HTTP ${signalsRes.status}`);
         
-        // Restore button
+        const signalsText = await signalsRes.text();
+        parseCSVData(signalsText);
+        
+        if (bitcoinRes.ok) {
+            const bitcoinText = await bitcoinRes.text();
+            parseBitcoinPriceData(bitcoinText);
+        } else {
+            console.warn('⚠️ Could not refresh Bitcoin data, using existing');
+        }
+        
         refreshBtn.innerHTML = originalHTML;
         refreshBtn.disabled = false;
         
@@ -2706,15 +2434,31 @@ function refreshData() {
     .catch(error => {
         console.error('❌ Manual refresh failed:', error);
         
-        // Try regular load as fallback
         loadRealCSVData();
+        loadBitcoinPriceData();
         
-        // Restore button
         refreshBtn.innerHTML = originalHTML;
         refreshBtn.disabled = false;
         
         showNotification('Refresh failed, using cached data', 'warning');
     });
+}
+
+function addManualZoomButton() {
+    const chartSection = document.querySelector('.chart-section');
+    if (!chartSection || document.querySelector('#manualZoomBtn')) return;
+    
+    const manualBtn = document.createElement('button');
+    manualBtn.id = 'manualZoomBtn';
+    manualBtn.className = 'csv-btn';
+    manualBtn.innerHTML = '<i class="fas fa-search"></i> Activate Zoom Controls';
+    manualBtn.style.margin = '10px 0';
+    manualBtn.onclick = function() {
+        initializeZoomControls();
+        this.style.display = 'none';
+    };
+    
+    chartSection.querySelector('.chart-controls').appendChild(manualBtn);
 }
 
 // ========== HELPER FUNCTIONS ==========
@@ -2744,6 +2488,30 @@ function formatTime(date) {
 
 function formatDateTime(date) {
     return `${formatDate(date)} ${formatTime(date)}`;
+}
+
+function formatDateShort(date) {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+        return 'Invalid Date';
+    }
+    
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+        return 'Today';
+    } else if (diffDays === 1) {
+        return 'Yesterday';
+    } else if (diffDays < 7) {
+        return `${diffDays}d ago`;
+    } else if (diffDays < 30) {
+        return `${Math.floor(diffDays / 7)}w ago`;
+    } else {
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric'
+        });
+    }
 }
 
 function getTimeAgo(date) {
@@ -2792,7 +2560,7 @@ function getRecommendation(signal) {
         if (signal.confidence >= 80) return 'Consider taking profits';
         if (signal.confidence >= 60) return 'Monitor for reversal';
         return 'Wait for confirmation';
-    } else { // DIP
+    } else {
         if (signal.confidence >= 80) return 'Consider accumulation';
         if (signal.confidence >= 60) return 'Monitor for entry';
         return 'Wait for stronger signal';
@@ -2808,7 +2576,6 @@ function showNotification(message, type = 'info', duration = 3000) {
         'info': 'info-circle'
     };
     
-    // Remove existing notifications
     document.querySelectorAll('.notification').forEach(notif => {
         if (notif.parentNode) {
             notif.style.animation = 'fadeOut 0.3s ease forwards';
@@ -2827,7 +2594,6 @@ function showNotification(message, type = 'info', duration = 3000) {
     
     document.body.appendChild(notification);
     
-    // Auto remove after duration
     setTimeout(() => {
         if (notification.parentNode) {
             notification.style.animation = 'fadeOut 0.3s ease forwards';
@@ -2907,7 +2673,6 @@ notificationStyle.textContent = `
     }
 }
 
-/* Additional styles for error messages */
 .no-results .error-message {
     color: #f44336;
     font-weight: bold;
@@ -2922,412 +2687,15 @@ notificationStyle.textContent = `
 document.head.appendChild(notificationStyle);
 
 // ========== INITIAL LOAD ==========
-// Check for existing CSV data
 if (window.realCsvData && typeof window.realCsvData === 'string') {
     console.log('📁 Found pre-loaded CSV data, parsing immediately...');
     parseCSVData(window.realCsvData);
 }
 
-console.log('✅ signals.js (ACTUAL DATA VERSION) loaded successfully');
-console.log('ℹ️  This version reads ONLY actual data from CSV - NO demo data generation');
-// Thêm vào cuối file signals.js (trước dòng cuối cùng)
-
-// ========== DATA INTEGRITY CHECK ==========
-function validateDataIntegrity() {
-    console.log('🔍 Validating data integrity...');
-    
-    const issues = [];
-    
-    // Check for duplicate timestamps
-    const timestampMap = {};
-    signalsData.forEach((signal, index) => {
-        const timeKey = signal.timestamp.getTime();
-        if (timestampMap[timeKey]) {
-            issues.push(`Duplicate timestamp at row ${index}: ${formatDateTime(signal.timestamp)}`);
-        }
-        timestampMap[timeKey] = true;
-    });
-    
-    // Check for invalid prices
-    signalsData.forEach((signal, index) => {
-        if (signal.price <= 0 || signal.price > 1000000) {
-            issues.push(`Suspicious price at row ${index}: $${signal.price}`);
-        }
-    });
-    
-    // Check for invalid confidence
-    signalsData.forEach((signal, index) => {
-        if (signal.confidence < 0 || signal.confidence > 100) {
-            issues.push(`Invalid confidence at row ${index}: ${signal.confidence}%`);
-        }
-    });
-    
-    if (issues.length > 0) {
-        console.warn('⚠️ Data integrity issues found:', issues);
-        
-        // Show warning but continue
-        if (issues.length <= 3) {
-            showNotification(`Found ${issues.length} data issues`, 'warning');
-        }
-    } else {
-        console.log('✅ Data integrity check passed');
-    }
-    
-    return issues;
+if (window.bitcoinPriceData && typeof window.bitcoinPriceData === 'string') {
+    console.log('💰 Found pre-loaded Bitcoin price data, parsing immediately...');
+    parseBitcoinPriceData(window.bitcoinPriceData);
 }
 
-// ========== MISSING FUNCTIONS ==========
-
-// Thêm hàm này để khởi tạo phân tích biểu đồ
-function initializeAnalysisCharts() {
-    console.log('📊 Initializing analysis charts...');
-    
-    // Type Distribution Chart
-    const typeCtx = document.getElementById('typeDistributionChart')?.getContext('2d');
-    if (typeCtx) {
-        const typeChart = new Chart(typeCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Peak Signals', 'Dip Signals'],
-                datasets: [{
-                    data: [0, 0],
-                    backgroundColor: ['#ff2e63', '#00d4ff'],
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.label}: ${context.parsed} signals`;
-                            }
-                        }
-                    }
-                },
-                cutout: '70%'
-            }
-        });
-        analysisCharts.push(typeChart);
-    }
-    
-    // Confidence Chart
-    const confidenceCtx = document.getElementById('confidenceChart')?.getContext('2d');
-    if (confidenceCtx) {
-        const confidenceChart = new Chart(confidenceCtx, {
-            type: 'bar',
-            data: {
-                labels: ['High (80-100)', 'Medium (60-79)', 'Low (<60)'],
-                datasets: [{
-                    data: [0, 0, 0],
-                    backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
-                    borderWidth: 0,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.label}: ${context.parsed} signals`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: { 
-                        display: false,
-                        grid: { display: false }
-                    },
-                    y: { 
-                        display: false,
-                        beginAtZero: true,
-                        grid: { display: false }
-                    }
-                }
-            }
-        });
-        analysisCharts.push(confidenceChart);
-    }
-    
-    // Time Distribution Chart
-    const timeCtx = document.getElementById('timeDistributionChart')?.getContext('2d');
-    if (timeCtx) {
-        const timeChart = new Chart(timeCtx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                datasets: [{
-                    label: 'Signals',
-                    data: new Array(12).fill(0),
-                    borderColor: '#f7931a',
-                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `Signals: ${context.parsed.y}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: { 
-                        display: false,
-                        grid: { display: false }
-                    },
-                    y: { 
-                        display: false,
-                        beginAtZero: true,
-                        grid: { display: false }
-                    }
-                }
-            }
-        });
-        analysisCharts.push(timeChart);
-    }
-    
-    console.log(`✅ Analysis charts initialized: ${analysisCharts.length} charts`);
-}
-
-// Thêm hàm này để cập nhật khoảng cách hiển thị
-function updateAnalysisCharts() {
-    if (analysisCharts.length === 0 || signalsData.length === 0) {
-        console.warn('⚠️ Cannot update analysis charts: insufficient data');
-        return;
-    }
-    
-    // Tính toán thống kê
-    const peakCount = signalsData.filter(s => s.signal_type === 'PEAK').length;
-    const dipCount = signalsData.filter(s => s.signal_type === 'DIP').length;
-    const highConfidence = signalsData.filter(s => s.confidence >= 80).length;
-    const mediumConfidence = signalsData.filter(s => s.confidence >= 60 && s.confidence < 80).length;
-    const lowConfidence = signalsData.filter(s => s.confidence < 60).length;
-    
-    // Phân phối theo tháng
-    const monthlyCounts = new Array(12).fill(0);
-    signalsData.forEach(signal => {
-        const month = signal.timestamp.getMonth();
-        monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
-    });
-    
-    // Cập nhật biểu đồ phân phối loại
-    if (analysisCharts[0]) {
-        analysisCharts[0].data.datasets[0].data = [peakCount, dipCount];
-        analysisCharts[0].update();
-    }
-    
-    // Cập nhật biểu đồ độ tin cậy
-    if (analysisCharts[1]) {
-        analysisCharts[1].data.datasets[0].data = [highConfidence, mediumConfidence, lowConfidence];
-        analysisCharts[1].update();
-    }
-    
-    // Cập nhật biểu đồ phân phối thời gian
-    if (analysisCharts[2]) {
-        analysisCharts[2].data.datasets[0].data = monthlyCounts;
-        analysisCharts[2].update();
-    }
-    
-    console.log('✅ Analysis charts updated');
-}
-// Sửa hàm initializeCharts để khởi tạo đúng cách
-function initializeCharts() {
-    console.log('📊 Initializing charts...');
-    
-    // Main Bitcoin Chart
-    const chartCtx = document.getElementById('bitcoinChart')?.getContext('2d');
-    if (!chartCtx) {
-        console.warn('⚠️ Bitcoin chart canvas not found');
-        return;
-    }
-    
-    // Xóa chart cũ nếu tồn tại
-    if (bitcoinChart) {
-        bitcoinChart.destroy();
-    }
-    
-    bitcoinChart = new Chart(chartCtx, {
-        type: 'line',
-        data: {
-            datasets: [
-                {
-                    label: 'Bitcoin Price (Estimated)',
-                    data: [],
-                    borderColor: 'rgba(247, 147, 26, 0.8)',
-                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3,
-                    pointRadius: 0
-                },
-                {
-                    label: 'Peak Signals',
-                    data: [],
-                    borderColor: '#ff2e63',
-                    backgroundColor: '#ff2e63',
-                    borderWidth: 0,
-                    pointRadius: 6,
-                    pointStyle: 'triangle',
-                    pointRotation: 180,
-                    showLine: false
-                },
-                {
-                    label: 'Dip Signals',
-                    data: [],
-                    borderColor: '#00d4ff',
-                    backgroundColor: '#00d4ff',
-                    borderWidth: 0,
-                    pointRadius: 6,
-                    pointStyle: 'triangle',
-                    showLine: false
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            },
-            plugins: {
-                legend: { 
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        font: { size: 12 }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                    titleColor: '#f7931a',
-                    bodyColor: 'rgba(255, 255, 255, 0.8)',
-                    borderColor: 'rgba(247, 147, 26, 0.3)',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            const datasetLabel = context.dataset.label || '';
-                            if (datasetLabel.includes('Bitcoin Price')) {
-                                return `Price: $${context.parsed.y.toLocaleString('en-US', { 
-                                    minimumFractionDigits: 2, 
-                                    maximumFractionDigits: 2 
-                                })}`;
-                            } else {
-                                const signal = context.raw?.signal;
-                                if (signal) {
-                                    return `${signal.signal_type}: $${signal.price.toLocaleString('en-US', { 
-                                        minimumFractionDigits: 2, 
-                                        maximumFractionDigits: 2 
-                                    })} (${signal.confidence}%)`;
-                                }
-                                return datasetLabel;
-                            }
-                        }
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'month',
-                        tooltipFormat: 'MMM dd, yyyy HH:mm'
-                    },
-                    grid: { 
-                        color: 'rgba(255, 255, 255, 0.1)',
-                        drawBorder: false
-                    },
-                    ticks: { 
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        maxTicksLimit: 8
-                    }
-                },
-                y: {
-                    grid: { 
-                        color: 'rgba(255, 255, 255, 0.1)',
-                        drawBorder: false
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        callback: function(value) {
-                            return '$' + value.toLocaleString('en-US', { 
-                                minimumFractionDigits: 0, 
-                                maximumFractionDigits: 0 
-                            });
-                        }
-                    }
-                }
-            }
-        }
-    });
-    
-    // Khởi tạo phân tích biểu đồ
-    initializeAnalysisCharts();
-    
-    console.log('✅ Charts initialized');
-    
-    // Khởi tạo zoom controls sau khi chart đã sẵn sàng
-    setTimeout(() => {
-        if (bitcoinChart) {
-            initializeZoomControls();
-        }
-    }, 500);
-}
-
-// Thêm nút để kích hoạt zoom thủ công nếu cần
-function addManualZoomButton() {
-    const chartSection = document.querySelector('.chart-section');
-    if (!chartSection || document.querySelector('#manualZoomBtn')) return;
-    
-    const manualBtn = document.createElement('button');
-    manualBtn.id = 'manualZoomBtn';
-    manualBtn.className = 'csv-btn';
-    manualBtn.innerHTML = '<i class="fas fa-search"></i> Activate Zoom Controls';
-    manualBtn.style.margin = '10px 0';
-    manualBtn.onclick = function() {
-        initializeZoomControls();
-        this.style.display = 'none';
-    };
-    
-    chartSection.querySelector('.chart-controls').appendChild(manualBtn);
-}
-
-function debugTimeFormat() {
-    console.log('⏰ Time Format Debug:');
-    
-    if (signalsData.length > 0) {
-        console.log('First signal timestamp:', signalsData[0].timestamp);
-        console.log('Type:', typeof signalsData[0].timestamp);
-        console.log('Is Date?', signalsData[0].timestamp instanceof Date);
-        console.log('Valid?', !isNaN(signalsData[0].timestamp.getTime()));
-    }
-    
-    if (historicalPriceData.length > 0) {
-        console.log('First price data timestamp:', historicalPriceData[0].x);
-        console.log('Type:', typeof historicalPriceData[0].x);
-        console.log('Is Date?', historicalPriceData[0].x instanceof Date);
-    }
-}
-
-// Gọi hàm này sau khi parseCSVData
-// Trong parseCSVData, sau khi parse xong, thêm:
-// validateDataIntegrity();
+console.log('✅ signals.js (REAL BITCOIN PRICE DATA VERSION) loaded successfully');
+console.log('ℹ️  This version uses REAL Bitcoin price data from Binance CSV');
