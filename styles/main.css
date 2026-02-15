@@ -1536,3 +1536,39 @@ footer {
         padding: 10px 0;
     }
 }
+
+/* Fix màu chữ cho articles - Thêm vào cuối file main.css */
+
+/* Tiêu đề articles */
+.learn-card h3 {
+    color: #ffffff !important;
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Mô tả articles */
+.learn-card p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    line-height: 1.6;
+}
+
+/* Meta info */
+.card-meta {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Level badge */
+.card-meta span:last-child {
+    background: rgba(0, 212, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 20px;
+    color: #00d4ff !important;
+    font-weight: 600;
+}
+
+/* Icon */
+.card-icon i {
+    color: #00d4ff !important;
+}
