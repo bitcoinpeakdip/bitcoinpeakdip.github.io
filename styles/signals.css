@@ -1601,3 +1601,387 @@
     white-space: nowrap;
     overflow-x: auto;
 }
+
+/* ========== CLICK-TO-ZOOM STYLES ========== */
+.click-zoom-instructions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid var(--wave-trough);
+    border-radius: 10px;
+    padding: 15px;
+    width: 280px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.7);
+    animation: slideInRight 0.3s ease;
+    border-left: 4px solid var(--wave-trough);
+}
+
+.instructions-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.instructions-header i {
+    color: var(--wave-trough);
+    font-size: 1.2em;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.instructions-header span {
+    flex: 1;
+    font-weight: bold;
+    color: white;
+    font-size: 1.1em;
+    letter-spacing: 0.5px;
+}
+
+.close-instructions {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.close-instructions:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg);
+}
+
+.instructions-body {
+    margin-bottom: 15px;
+}
+
+.instructions-body p {
+    color: rgba(255, 255, 255, 0.9);
+    margin: 10px 0;
+    font-size: 0.95em;
+    line-height: 1.5;
+}
+
+.instructions-body p i {
+    color: var(--wave-trough);
+    margin-right: 6px;
+}
+
+.instruction-status {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    text-align: center;
+    font-weight: 500;
+    animation: statusPulse 2s infinite;
+}
+
+.status-waiting {
+    background: rgba(255, 193, 7, 0.15);
+    border: 1px solid #ffc107;
+    color: #ffc107;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.2);
+}
+
+.status-success {
+    background: rgba(40, 167, 69, 0.15);
+    border: 1px solid #28a745;
+    color: #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.2);
+}
+
+.status-error {
+    background: rgba(220, 53, 69, 0.15);
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    box-shadow: 0 0 10px rgba(220, 53, 69, 0.2);
+}
+
+.status-info {
+    background: rgba(23, 162, 184, 0.15);
+    border: 1px solid #17a2b8;
+    color: #17a2b8;
+    box-shadow: 0 0 10px rgba(23, 162, 184, 0.2);
+}
+
+@keyframes statusPulse {
+    0% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.8;
+    }
+}
+
+.instructions-footer {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.reset-zoom-btn, .exit-zoom-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.reset-zoom-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.reset-zoom-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.reset-zoom-btn i {
+    color: var(--wave-trough);
+}
+
+.exit-zoom-btn {
+    background: var(--wave-trough);
+    color: white;
+    border: 1px solid var(--wave-trough);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.exit-zoom-btn:hover {
+    background: var(--wave-mid);
+    border-color: var(--wave-mid);
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+}
+
+/* Click Markers */
+.click-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, 
+        transparent 0%,
+        rgba(255, 255, 255, 0.8) 20%,
+        rgba(255, 255, 255, 0.8) 80%,
+        transparent 100%);
+    pointer-events: none;
+    z-index: 100;
+    animation: markerAppear 0.5s ease;
+}
+
+.click-marker span {
+    position: absolute;
+    top: 20px;
+    left: -12px;
+    background: var(--wave-trough);
+    color: white;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+    font-weight: bold;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    border: 2px solid white;
+    animation: markerBounce 0.5s ease;
+}
+
+.marker-2 span {
+    background: #ff2e63;
+    box-shadow: 0 0 15px rgba(255, 46, 99, 0.5);
+}
+
+@keyframes markerAppear {
+    0% {
+        opacity: 0;
+        transform: scaleY(0);
+    }
+    100% {
+        opacity: 1;
+        transform: scaleY(1);
+    }
+}
+
+@keyframes markerBounce {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Chart Flash Effect */
+.chart-flash {
+    animation: chartFlash 0.5s ease;
+}
+
+@keyframes chartFlash {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
+    }
+    20% {
+        box-shadow: 0 0 30px 15px rgba(0, 212, 255, 0.7);
+    }
+    40% {
+        box-shadow: 0 0 50px 25px rgba(0, 212, 255, 0.5);
+    }
+    60% {
+        box-shadow: 0 0 30px 15px rgba(0, 212, 255, 0.3);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
+    }
+}
+
+/* Zoom Click Button Active State */
+#zoomClick.active {
+    background: var(--wave-trough);
+    color: white;
+    border-color: var(--wave-trough);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.7);
+    animation: buttonPulse 2s infinite;
+}
+
+@keyframes buttonPulse {
+    0% {
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.9);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    }
+}
+
+/* Responsive for mobile */
+@media (max-width: 768px) {
+    .click-zoom-instructions {
+        width: 240px;
+        top: 5px;
+        right: 5px;
+        padding: 12px;
+    }
+    
+    .instructions-header span {
+        font-size: 1em;
+    }
+    
+    .instructions-body p {
+        font-size: 0.85em;
+        margin: 8px 0;
+    }
+    
+    .instruction-status {
+        font-size: 0.85em;
+        padding: 8px;
+    }
+    
+    .reset-zoom-btn, .exit-zoom-btn {
+        padding: 8px;
+        font-size: 0.85em;
+    }
+    
+    .click-marker span {
+        width: 22px;
+        height: 22px;
+        font-size: 0.8em;
+        left: -10px;
+    }
+}
+
+/* Animation for slide in */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Tooltip cho zoom buttons */
+.zoom-btn[title] {
+    position: relative;
+}
+
+.zoom-btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    border: 1px solid var(--wave-trough);
+    z-index: 1000;
+}
+
+/* Cập nhật chart-container để hỗ trợ absolute positioning */
+.chart-container {
+    position: relative;
+}
+
+/* Style cho nút Active Zoom Controls */
+#manualZoomBtn {
+    background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    animation: glowPulse 2s infinite;
+}
+
+#manualZoomBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.7);
+}
+
+@keyframes glowPulse {
+    0% {
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.7);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    }
+}

@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (USES REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.7 - Real Bitcoin Price Data Integration
+// Version: 1.4.8 - Real Bitcoin Price Data Integration
 
 let signalsData = [];
 let currentPage = 1;
@@ -14,7 +14,7 @@ let csvDataLoaded = false;
 let lastUpdateTime = null;
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.7'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
+const APP_VERSION = '1.4.8'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi
@@ -2459,6 +2459,10 @@ function addManualZoomButton() {
     manualBtn.onclick = function() {
         initializeZoomControls();
         this.style.display = 'none';
+        // Kích hoạt click-to-zoom ngay sau khi khởi tạo
+        setTimeout(() => {
+            activateClickZoomMode();
+        }, 100);
     };
     
     chartSection.querySelector('.chart-controls').appendChild(manualBtn);
@@ -2933,7 +2937,6 @@ function closeClickZoomInstructions() {
     exitClickZoomMode();
 }
 
-// Cập nhật hàm initializeZoomControls để thêm nút kích hoạt
 function initializeZoomControls() {
     console.log('🔍 Initializing zoom controls...');
     
@@ -2964,7 +2967,7 @@ function initializeZoomControls() {
             <button class="zoom-btn" id="zoomSelect" title="Select Area">
                 <i class="fas fa-vector-square"></i>
             </button>
-            <button class="zoom-btn active" id="zoomClick" title="Click to Zoom (2 clicks)">
+            <button class="zoom-btn" id="zoomClick" title="Click to Zoom (2 clicks)">
                 <i class="fas fa-mouse-pointer"></i>
             </button>
         </div>
@@ -2988,6 +2991,9 @@ function initializeZoomControls() {
     addZoomStyles();
     setupZoomEventListeners();
     setupDragToZoom();
+    
+    // QUAN TRỌNG: Gọi hàm này để tạo instructions
+    createClickZoomInstructions();
     
     // Mặc định kích hoạt chế độ click-to-zoom
     activateClickZoomMode();
@@ -3299,3 +3305,7 @@ function addClickZoomStyles() {
     `;
     document.head.appendChild(style);
 }
+
+window.closeClickZoomInstructions = closeClickZoomInstructions;
+window.resetZoomFromInstructions = resetZoomFromInstructions;
+window.exitClickZoomMode = exitClickZoomMode;
