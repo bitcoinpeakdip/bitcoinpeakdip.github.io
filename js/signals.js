@@ -1,6 +1,6 @@
-// EWS Signals Page JavaScript - FIXED VERSION (USES REAL BITCOIN PRICE DATA)
+// EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.11 - Real Bitcoin Price Data Integration
+// Version: 1.4.12 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -13,8 +13,21 @@ let historicalPriceData = [];
 let csvDataLoaded = false;
 let lastUpdateTime = null;
 
+// ========== CLICK-TO-ZOOM FEATURE (SINGLE VERSION) ==========
+let clickZoomPoints = [];
+let clickZoomInstructions = null;
+let clickZoomMode = false;
+
+// ========== ZOOM STATE ==========
+let zoomState = {
+    min: null,
+    max: null,
+    isZoomed: false,
+    zoomHistory: []
+};
+
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.11'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
+const APP_VERSION = '1.4.12';
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi
@@ -128,11 +141,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Thêm nút zoom thủ công sau 3 giây
     setTimeout(addManualZoomButton, 3000);
     
-    // Thêm dòng này để setup drag scroll
+    // Setup drag scroll
     setTimeout(setupTableDragScroll, 1000);
-
-    // Thêm CSS cho click zoom
-    addClickZoomStyles();    
+    
+    // Add click zoom styles
+    addClickZoomStyles();
 });
 
 // ========== BITCOIN PRICE DATA LOADING ==========
@@ -1422,13 +1435,6 @@ function updateAnalysisCharts() {
 }
 
 // ========== ZOOM & TIMELINE FUNCTIONS ==========
-let zoomState = {
-    min: null,
-    max: null,
-    isZoomed: false,
-    zoomHistory: []
-};
-
 function initializeZoomControls() {
     console.log('🔍 Initializing zoom controls...');
     
@@ -1442,6 +1448,7 @@ function initializeZoomControls() {
     
     const zoomToolbar = document.createElement('div');
     zoomToolbar.className = 'zoom-toolbar';
+    zoomToolbar.id = 'zoomToolbar';
     zoomToolbar.innerHTML = `
         <div class="zoom-controls">
             <button class="zoom-btn" id="zoomIn" title="Zoom In">
@@ -1458,6 +1465,9 @@ function initializeZoomControls() {
             </button>
             <button class="zoom-btn" id="zoomSelect" title="Select Area">
                 <i class="fas fa-vector-square"></i>
+            </button>
+            <button class="zoom-btn" id="zoomClick" title="Click to Zoom (2 clicks)">
+                <i class="fas fa-mouse-pointer"></i>
             </button>
         </div>
         <div class="timeline-controls">
@@ -1480,6 +1490,12 @@ function initializeZoomControls() {
     addZoomStyles();
     setupZoomEventListeners();
     setupDragToZoom();
+    
+    // Tạo instructions panel
+    createClickZoomInstructions();
+    
+    // Kích hoạt click-to-zoom
+    activateClickZoomMode();
 }
 
 function addZoomStyles() {
@@ -1634,28 +1650,49 @@ function addZoomStyles() {
 
 function setupZoomEventListeners() {
     document.getElementById('zoomIn')?.addEventListener('click', function() {
+        deactivateAllModes();
         zoomChart(0.8);
     });
     
     document.getElementById('zoomOut')?.addEventListener('click', function() {
+        deactivateAllModes();
         zoomChart(1.2);
     });
     
     document.getElementById('zoomReset')?.addEventListener('click', function() {
+        deactivateAllModes();
         resetZoom();
     });
     
     document.getElementById('zoomPan')?.addEventListener('click', function() {
         togglePanMode();
+        if (clickZoomInstructions) clickZoomInstructions.style.display = 'none';
+        clickZoomMode = false;
     });
     
     document.getElementById('zoomSelect')?.addEventListener('click', function() {
         toggleSelectMode();
+        if (clickZoomInstructions) clickZoomInstructions.style.display = 'none';
+        clickZoomMode = false;
+    });
+    
+    document.getElementById('zoomClick')?.addEventListener('click', function() {
+        const panBtn = document.getElementById('zoomPan');
+        const selectBtn = document.getElementById('zoomSelect');
+        
+        if (panBtn) panBtn.classList.remove('active');
+        if (selectBtn) selectBtn.classList.remove('active');
+        
+        this.classList.add('active');
+        
+        // Kích hoạt click-to-zoom
+        activateClickZoomMode();
     });
     
     const timelineSlider = document.getElementById('timelineSlider');
     if (timelineSlider) {
         timelineSlider.addEventListener('input', function() {
+            deactivateAllModes();
             updateZoomFromSlider(this.value);
         });
     }
@@ -2128,7 +2165,6 @@ function updateChartTimeframe(timeframe) {
             startDate = new Date(now);
             startDate.setDate(startDate.getDate() - 90);
             break;
-        // THÊM CÁC CASE MỚI TỪ ĐÂY
         case '180d':
             unit = 'week';
             endDate = new Date(now);
@@ -2170,6 +2206,596 @@ function updateChartTimeframe(timeframe) {
     bitcoinChart.update();
     updateZoomInfo();
     updateTimelineSlider();
+}
+
+// ========== CLICK-TO-ZOOM IMPLEMENTATION ==========
+function createClickZoomInstructions() {
+    // Xóa instruction cũ nếu có
+    const oldInstructions = document.getElementById('clickZoomInstructions');
+    if (oldInstructions) oldInstructions.remove();
+    
+    // Tạo instruction mới
+    clickZoomInstructions = document.createElement('div');
+    clickZoomInstructions.id = 'clickZoomInstructions';
+    clickZoomInstructions.className = 'click-zoom-instructions';
+    clickZoomInstructions.style.cssText = `
+        position: fixed;
+        top: 120px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.95);
+        border: 1px solid var(--wave-trough);
+        border-radius: 10px;
+        padding: 15px;
+        width: 300px;
+        z-index: 10000;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.7);
+        border-left: 4px solid var(--wave-trough);
+    `;
+    clickZoomInstructions.innerHTML = `
+        <div class="instructions-header">
+            <i class="fas fa-mouse-pointer"></i>
+            <span>Active Zoom Controls</span>
+            <button class="close-instructions" onclick="closeClickZoomInstructions()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="instructions-body">
+            <p><i class="fas fa-hand-pointer"></i> Click vào hai điểm bất kỳ trên biểu đồ</p>
+            <p><i class="fas fa-chart-line"></i> Chart sẽ tự động zoom vào khoảng thời gian giữa hai lần click</p>
+            <div class="instruction-status status-waiting" id="clickZoomStatus">
+                <i class="fas fa-hourglass-half"></i> Chờ click lần 1...
+            </div>
+        </div>
+        <div class="instructions-footer">
+            <button class="reset-zoom-btn" onclick="resetZoomFromInstructions()">
+                <i class="fas fa-undo-alt"></i> Reset Zoom
+            </button>
+            <button class="exit-zoom-btn" onclick="exitClickZoomMode()">
+                <i class="fas fa-sign-out-alt"></i> Thoát
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(clickZoomInstructions);
+    
+    // Gán event listener cho chart
+    setupChartClickEvents();
+}
+
+function setupChartClickEvents() {
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (!chartCanvas || !bitcoinChart) return;
+    
+    // Xóa event cũ nếu có
+    if (window._chartClickHandler) {
+        chartCanvas.removeEventListener('click', window._chartClickHandler);
+    }
+    
+    // Tạo handler mới
+    window._chartClickHandler = function(e) {
+        if (!clickZoomMode) return;
+        
+        const points = bitcoinChart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, true);
+        
+        if (points && points.length > 0) {
+            const firstPoint = points[0];
+            const datasetIndex = firstPoint.datasetIndex;
+            const index = firstPoint.index;
+            
+            // Lấy timestamp từ data
+            let clickDate;
+            if (bitcoinChart.data.datasets[datasetIndex] && bitcoinChart.data.datasets[datasetIndex].data[index]) {
+                const dataPoint = bitcoinChart.data.datasets[datasetIndex].data[index];
+                clickDate = dataPoint.x;
+            } else {
+                // Fallback: dùng xScale
+                const xScale = bitcoinChart.scales.x;
+                const rect = chartCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                clickDate = xScale.getValueForPixel(x);
+            }
+            
+            if (!clickDate) {
+                updateClickZoomStatus('Không thể xác định thời gian!', 'error');
+                return;
+            }
+            
+            console.log(`📌 Clicked at: ${new Date(clickDate).toLocaleString()}`);
+            
+            // Thêm vào danh sách điểm click
+            clickZoomPoints.push({
+                date: clickDate,
+                time: clickDate.getTime()
+            });
+            
+            // Hiển thị marker trên chart
+            showClickMarker(e.clientX, clickZoomPoints.length);
+            
+            // Cập nhật status
+            if (clickZoomPoints.length === 1) {
+                updateClickZoomStatus('Đã ghi nhận điểm 1, chờ điểm 2...', 'success');
+            } else if (clickZoomPoints.length === 2) {
+                // Thực hiện zoom
+                performClickZoom();
+            }
+        } else {
+            updateClickZoomStatus('Không tìm thấy điểm dữ liệu!', 'error');
+        }
+    };
+    
+    chartCanvas.addEventListener('click', window._chartClickHandler);
+    console.log('✅ Click events attached to chart');
+}
+
+function showClickMarker(clientX, pointNumber) {
+    const chartCanvas = document.getElementById('bitcoinChart');
+    const chartContainer = document.querySelector('.chart-container');
+    if (!chartCanvas || !chartContainer) return;
+    
+    const rect = chartCanvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    
+    // Xóa marker cũ nếu có
+    const oldMarkers = chartContainer.querySelectorAll('.click-marker');
+    if (pointNumber === 1) {
+        oldMarkers.forEach(m => m.remove());
+    } else {
+        // Chỉ xóa marker cũ cùng số
+        oldMarkers.forEach(m => {
+            if (m.classList.contains(`marker-${pointNumber}`)) {
+                m.remove();
+            }
+        });
+    }
+    
+    const marker = document.createElement('div');
+    marker.className = `click-marker marker-${pointNumber}`;
+    marker.style.cssText = `
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: ${x}px;
+        width: 2px;
+        background: linear-gradient(to bottom, 
+            transparent 0%,
+            rgba(255,255,255,0.8) 20%,
+            rgba(255,255,255,0.8) 80%,
+            transparent 100%);
+        pointer-events: none;
+        z-index: 100;
+        animation: markerAppear 0.5s ease;
+    `;
+    
+    const markerNumber = document.createElement('span');
+    markerNumber.style.cssText = `
+        position: absolute;
+        top: 20px;
+        left: -12px;
+        background: ${pointNumber === 1 ? 'var(--wave-trough)' : '#ff2e63'};
+        color: white;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9em;
+        font-weight: bold;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        border: 2px solid white;
+        animation: markerBounce 0.5s ease;
+    `;
+    markerNumber.innerText = pointNumber;
+    
+    marker.appendChild(markerNumber);
+    chartContainer.appendChild(marker);
+}
+
+function updateClickZoomStatus(message, type = 'waiting') {
+    const statusEl = document.getElementById('clickZoomStatus');
+    if (!statusEl) return;
+    
+    const icons = {
+        'waiting': 'hourglass-half',
+        'success': 'check-circle',
+        'error': 'exclamation-circle',
+        'info': 'info-circle'
+    };
+    
+    statusEl.innerHTML = `<i class="fas fa-${icons[type] || 'hourglass-half'}"></i> ${message}`;
+    statusEl.className = `instruction-status status-${type}`;
+}
+
+function performClickZoom() {
+    if (clickZoomPoints.length !== 2) return;
+    
+    // Sắp xếp điểm theo thời gian
+    const points = [...clickZoomPoints].sort((a, b) => a.time - b.time);
+    const startPoint = points[0];
+    const endPoint = points[1];
+    
+    // Thêm padding 5% mỗi bên
+    const range = endPoint.time - startPoint.time;
+    const padding = range * 0.05;
+    
+    const startDate = new Date(startPoint.time - padding);
+    const endDate = new Date(endPoint.time + padding);
+    
+    // Lưu vào history
+    zoomState.zoomHistory.push({
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max
+    });
+    
+    // Áp dụng zoom
+    bitcoinChart.options.scales.x.min = startDate;
+    bitcoinChart.options.scales.x.max = endDate;
+    bitcoinChart.options.scales.x.time.unit = determineTimeUnit(range);
+    
+    zoomState.isZoomed = true;
+    zoomState.min = startDate;
+    zoomState.max = endDate;
+    
+    bitcoinChart.update();
+    
+    // Hiển thị thông tin zoom
+    const days = Math.ceil(range / (1000 * 60 * 60 * 24));
+    updateClickZoomStatus(`✅ Đã zoom ${days} ngày (${formatDate(startDate)} - ${formatDate(endDate)})`, 'success');
+    
+    // Cập nhật zoom info và slider
+    updateZoomInfo();
+    updateTimelineSlider();
+    
+    // Xóa các điểm click
+    clickZoomPoints = [];
+    
+    // Hiệu ứng flash
+    flashChart();
+}
+
+function determineTimeUnit(rangeMs) {
+    const days = rangeMs / (1000 * 60 * 60 * 24);
+    if (days <= 1) return 'hour';
+    if (days <= 7) return 'day';
+    if (days <= 30) return 'week';
+    return 'month';
+}
+
+function flashChart() {
+    const chartContainer = document.querySelector('.chart-container');
+    if (!chartContainer) return;
+    
+    chartContainer.classList.add('chart-flash');
+    setTimeout(() => {
+        chartContainer.classList.remove('chart-flash');
+    }, 500);
+}
+
+function resetZoomFromInstructions() {
+    resetZoom();
+    updateClickZoomStatus('Đã reset zoom, chờ click lần 1...', 'waiting');
+    clickZoomPoints = [];
+    
+    // Xóa markers
+    const chartContainer = document.querySelector('.chart-container');
+    if (chartContainer) {
+        const markers = chartContainer.querySelectorAll('.click-marker');
+        markers.forEach(m => m.remove());
+    }
+}
+
+function exitClickZoomMode() {
+    clickZoomMode = false;
+    
+    if (clickZoomInstructions) {
+        clickZoomInstructions.remove();
+        clickZoomInstructions = null;
+    }
+    
+    // Deactivate button
+    const clickBtn = document.getElementById('zoomClick');
+    if (clickBtn) {
+        clickBtn.classList.remove('active');
+    }
+    
+    // Reset cursor
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (chartCanvas) {
+        chartCanvas.style.cursor = '';
+    }
+    
+    // Xóa markers
+    const chartContainer = document.querySelector('.chart-container');
+    if (chartContainer) {
+        const markers = chartContainer.querySelectorAll('.click-marker');
+        markers.forEach(m => m.remove());
+    }
+    
+    clickZoomPoints = [];
+    
+    showNotification('Đã thoát chế độ click-to-zoom', 'info');
+}
+
+function closeClickZoomInstructions() {
+    exitClickZoomMode();
+}
+
+function activateClickZoomMode() {
+    clickZoomMode = true;
+    
+    // Hiển thị instructions
+    if (!clickZoomInstructions || !document.body.contains(clickZoomInstructions)) {
+        createClickZoomInstructions();
+    } else {
+        clickZoomInstructions.style.display = 'block';
+    }
+    
+    // Reset points
+    clickZoomPoints = [];
+    updateClickZoomStatus('Chờ click lần 1...', 'waiting');
+    
+    // Update cursor
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (chartCanvas) {
+        chartCanvas.style.cursor = 'crosshair';
+    }
+    
+    showNotification('Chế độ click-to-zoom: Click 2 điểm bất kỳ trên biểu đồ để zoom', 'info', 4000);
+}
+
+function deactivateAllModes() {
+    const panBtn = document.getElementById('zoomPan');
+    const selectBtn = document.getElementById('zoomSelect');
+    const clickBtn = document.getElementById('zoomClick');
+    
+    if (panBtn) panBtn.classList.remove('active');
+    if (selectBtn) selectBtn.classList.remove('active');
+    if (clickBtn) clickBtn.classList.remove('active');
+    
+    clickZoomMode = false;
+    
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (chartCanvas) {
+        chartCanvas.style.cursor = '';
+    }
+    
+    if (clickZoomInstructions) {
+        clickZoomInstructions.style.display = 'none';
+    }
+    
+    clickZoomPoints = [];
+}
+
+function addClickZoomStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .click-zoom-instructions {
+            animation: slideInRight 0.3s ease;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .click-marker {
+            animation: markerAppear 0.5s ease;
+        }
+        
+        .click-marker span {
+            animation: markerBounce 0.5s ease;
+        }
+        
+        @keyframes markerAppear {
+            0% {
+                opacity: 0;
+                transform: scaleY(0);
+            }
+            100% {
+                opacity: 1;
+                transform: scaleY(1);
+            }
+        }
+        
+        @keyframes markerBounce {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .chart-flash {
+            animation: chartFlash 0.5s ease;
+        }
+        
+        @keyframes chartFlash {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
+            }
+            20% {
+                box-shadow: 0 0 30px 15px rgba(0, 212, 255, 0.7);
+            }
+            40% {
+                box-shadow: 0 0 50px 25px rgba(0, 212, 255, 0.5);
+            }
+            60% {
+                box-shadow: 0 0 30px 15px rgba(0, 212, 255, 0.3);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
+            }
+        }
+        
+        .status-waiting {
+            background: rgba(255, 193, 7, 0.15);
+            border: 1px solid #ffc107;
+            color: #ffc107;
+        }
+        
+        .status-success {
+            background: rgba(40, 167, 69, 0.15);
+            border: 1px solid #28a745;
+            color: #28a745;
+        }
+        
+        .status-error {
+            background: rgba(220, 53, 69, 0.15);
+            border: 1px solid #dc3545;
+            color: #dc3545;
+        }
+        
+        .status-info {
+            background: rgba(23, 162, 184, 0.15);
+            border: 1px solid #17a2b8;
+            color: #17a2b8;
+        }
+        
+        .instruction-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            text-align: center;
+            font-weight: 500;
+            animation: statusPulse 2s infinite;
+        }
+        
+        @keyframes statusPulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+        
+        .instructions-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .instructions-header i {
+            color: var(--wave-trough);
+            font-size: 1.2em;
+        }
+        
+        .instructions-header span {
+            flex: 1;
+            font-weight: bold;
+            color: white;
+            font-size: 1.1em;
+        }
+        
+        .close-instructions {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .close-instructions:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(90deg);
+        }
+        
+        .instructions-footer {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .reset-zoom-btn, .exit-zoom-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .reset-zoom-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .reset-zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .exit-zoom-btn {
+            background: var(--wave-trough);
+            color: white;
+            border: 1px solid var(--wave-trough);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+        
+        .exit-zoom-btn:hover {
+            background: var(--wave-mid);
+            border-color: var(--wave-mid);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+        
+        #zoomClick.active {
+            background: var(--wave-trough);
+            color: white;
+            border-color: var(--wave-trough);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.7);
+            animation: buttonPulse 2s infinite;
+        }
+        
+        @keyframes buttonPulse {
+            0% { box-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.9); }
+            100% { box-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function addManualZoomButton() {
+    const chartSection = document.querySelector('.chart-section');
+    if (!chartSection || document.querySelector('#manualZoomBtn')) return;
+    
+    const manualBtn = document.createElement('button');
+    manualBtn.id = 'manualZoomBtn';
+    manualBtn.className = 'csv-btn';
+    manualBtn.innerHTML = '<i class="fas fa-search"></i> Activate Zoom Controls';
+    manualBtn.style.margin = '10px 0';
+    manualBtn.onclick = function() {
+        initializeZoomControls();
+        this.style.display = 'none';
+    };
+    
+    const chartControls = chartSection.querySelector('.chart-controls');
+    if (chartControls) {
+        chartControls.appendChild(manualBtn);
+    }
 }
 
 // ========== EVENT HANDLERS ==========
@@ -2407,9 +3033,7 @@ function setupTableScroll() {
     `;
     document.head.appendChild(style);
     
-    window.addEventListener('resize', () => {
-        // No-op, just keep the function
-    });
+    window.addEventListener('resize', () => {});
     
     console.log('✅ Table scroll setup complete');
 }
@@ -2464,27 +3088,6 @@ function refreshData() {
         
         showNotification('Refresh failed, using cached data', 'warning');
     });
-}
-
-function addManualZoomButton() {
-    const chartSection = document.querySelector('.chart-section');
-    if (!chartSection || document.querySelector('#manualZoomBtn')) return;
-    
-    const manualBtn = document.createElement('button');
-    manualBtn.id = 'manualZoomBtn';
-    manualBtn.className = 'csv-btn';
-    manualBtn.innerHTML = '<i class="fas fa-search"></i> Activate Zoom Controls';
-    manualBtn.style.margin = '10px 0';
-    manualBtn.onclick = function() {
-        initializeZoomControls();
-        this.style.display = 'none';
-        // Kích hoạt click-to-zoom ngay sau khi khởi tạo
-        setTimeout(() => {
-            activateClickZoomMode();
-        }, 100);
-    };
-    
-    chartSection.querySelector('.chart-controls').appendChild(manualBtn);
 }
 
 // ========== HELPER FUNCTIONS ==========
@@ -2712,6 +3315,11 @@ notificationStyle.textContent = `
 `;
 document.head.appendChild(notificationStyle);
 
+// ========== GLOBAL EXPORTS ==========
+window.closeClickZoomInstructions = closeClickZoomInstructions;
+window.resetZoomFromInstructions = resetZoomFromInstructions;
+window.exitClickZoomMode = exitClickZoomMode;
+
 // ========== INITIAL LOAD ==========
 if (window.realCsvData && typeof window.realCsvData === 'string') {
     console.log('📁 Found pre-loaded CSV data, parsing immediately...');
@@ -2725,1734 +3333,3 @@ if (window.bitcoinPriceData && typeof window.bitcoinPriceData === 'string') {
 
 console.log('✅ signals.js (REAL BITCOIN PRICE DATA VERSION) loaded successfully');
 console.log('ℹ️  This version uses REAL Bitcoin price data from Binance CSV');
-
-// ========== CLICK-TO-ZOOM FEATURE ==========
-let clickZoomPoints = [];
-let clickZoomInstructions = null;
-
-function initializeClickToZoom() {
-    console.log('🔍 Initializing click-to-zoom feature...');
-    
-    // Tạo instruction panel
-    createClickZoomInstructions();
-    
-    // Thêm event listener cho chart
-    const chartCanvas = document.getElementById('bitcoinChart');
-    if (!chartCanvas) return;
-    
-    // Xóa event listener cũ nếu có
-    chartCanvas.removeEventListener('click', handleChartClick);
-    chartCanvas.addEventListener('click', handleChartClick);
-}
-
-function createClickZoomInstructions() {
-    // Xóa instruction cũ nếu có
-    const oldInstructions = document.getElementById('clickZoomInstructions');
-    if (oldInstructions) oldInstructions.remove();
-    
-    // Tạo instruction mới
-    clickZoomInstructions = document.createElement('div');
-    clickZoomInstructions.id = 'clickZoomInstructions';
-    clickZoomInstructions.className = 'click-zoom-instructions';
-    clickZoomInstructions.innerHTML = `
-        <div class="instructions-header">
-            <i class="fas fa-mouse-pointer"></i>
-            <span>Click-to-Zoom Mode</span>
-            <button class="close-instructions" onclick="closeClickZoomInstructions()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="instructions-body">
-            <p>👆 <strong>Hướng dẫn:</strong> Click vào hai điểm bất kỳ trên biểu đồ</p>
-            <p>📊 Chart sẽ tự động zoom vào khoảng thời gian giữa hai lần click</p>
-            <p class="instruction-status" id="clickZoomStatus">
-                ⏳ Chờ click lần 1...
-            </p>
-        </div>
-        <div class="instructions-footer">
-            <button class="reset-zoom-btn" onclick="resetZoomFromInstructions()">
-                <i class="fas fa-undo"></i> Reset Zoom
-            </button>
-            <button class="exit-zoom-btn" onclick="exitClickZoomMode()">
-                <i class="fas fa-sign-out-alt"></i> Thoát
-            </button>
-        </div>
-    `;
-    
-    // Thêm vào chart section
-    const chartSection = document.querySelector('.chart-section');
-    if (chartSection) {
-        chartSection.appendChild(clickZoomInstructions);
-    }
-    
-    updateClickZoomStatus('Chờ click lần 1...', 'waiting');
-}
-
-function updateClickZoomStatus(message, type = 'info') {
-    const statusEl = document.getElementById('clickZoomStatus');
-    if (!statusEl) return;
-    
-    statusEl.innerHTML = '';
-    statusEl.className = 'instruction-status';
-    
-    if (type === 'success') {
-        statusEl.classList.add('status-success');
-        statusEl.innerHTML = `✅ ${message}`;
-    } else if (type === 'error') {
-        statusEl.classList.add('status-error');
-        statusEl.innerHTML = `❌ ${message}`;
-    } else if (type === 'info') {
-        statusEl.classList.add('status-info');
-        statusEl.innerHTML = `ℹ️ ${message}`;
-    } else if (type === 'waiting') {
-        statusEl.classList.add('status-waiting');
-        statusEl.innerHTML = `⏳ ${message}`;
-    }
-}
-
-function handleChartClick(event) {
-    // Chỉ xử lý khi đang ở chế độ click-to-zoom
-    if (!clickZoomInstructions || clickZoomInstructions.style.display === 'none') return;
-    
-    const chartCanvas = document.getElementById('bitcoinChart');
-    if (!chartCanvas || !bitcoinChart) return;
-    
-    // Lấy tọa độ click
-    const rect = chartCanvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    
-    // Chuyển đổi tọa độ pixel thành thời gian
-    const xScale = bitcoinChart.scales.x;
-    const clickDate = xScale.getValueForPixel(x);
-    
-    if (!clickDate) return;
-    
-    // Thêm điểm click vào mảng
-    clickZoomPoints.push({
-        date: clickDate,
-        x: x,
-        time: clickDate.getTime()
-    });
-    
-    // Hiển thị marker tạm thời
-    showClickMarker(x, clickZoomPoints.length);
-    
-    // Cập nhật trạng thái
-    if (clickZoomPoints.length === 1) {
-        updateClickZoomStatus('Đã ghi nhận điểm 1, chờ điểm 2...', 'success');
-    } else if (clickZoomPoints.length === 2) {
-        // Thực hiện zoom
-        performClickZoom();
-    }
-}
-
-function showClickMarker(x, pointNumber) {
-    const chartContainer = document.querySelector('.chart-container');
-    if (!chartContainer) return;
-    
-    const marker = document.createElement('div');
-    marker.className = `click-marker marker-${pointNumber}`;
-    marker.style.left = `${x}px`;
-    marker.innerHTML = `<span>${pointNumber}</span>`;
-    
-    chartContainer.appendChild(marker);
-    
-    // Xóa marker sau 2 giây
-    setTimeout(() => {
-        if (marker.parentNode) {
-            marker.remove();
-        }
-    }, 2000);
-}
-
-function performClickZoom() {
-    if (clickZoomPoints.length !== 2) return;
-    
-    // Lấy hai thời điểm
-    const time1 = clickZoomPoints[0].time;
-    const time2 = clickZoomPoints[1].time;
-    
-    // Xác định min và max (không phân biệt thứ tự)
-    const minTime = Math.min(time1, time2);
-    const maxTime = Math.max(time1, time2);
-    
-    // Thêm padding 5% mỗi bên
-    const range = maxTime - minTime;
-    const padding = range * 0.05;
-    
-    const startDate = new Date(minTime - padding);
-    const endDate = new Date(maxTime + padding);
-    
-    // Lưu vào history
-    zoomState.zoomHistory.push({
-        min: bitcoinChart.options.scales.x.min,
-        max: bitcoinChart.options.scales.x.max
-    });
-    
-    // Áp dụng zoom
-    bitcoinChart.options.scales.x.min = startDate;
-    bitcoinChart.options.scales.x.max = endDate;
-    bitcoinChart.options.scales.x.time.unit = determineTimeUnit(range);
-    zoomState.isZoomed = true;
-    zoomState.min = startDate;
-    zoomState.max = endDate;
-    
-    bitcoinChart.update();
-    
-    // Hiển thị thông tin zoom
-    const days = Math.ceil(range / (1000 * 60 * 60 * 24));
-    updateClickZoomStatus(`Đã zoom ${days} ngày (${formatDate(startDate)} - ${formatDate(endDate)})`, 'success');
-    
-    // Cập nhật zoom info và slider
-    updateZoomInfo();
-    updateTimelineSlider();
-    
-    // Xóa các điểm click
-    clickZoomPoints = [];
-    
-    // Hiệu ứng flash
-    flashChart();
-}
-
-function determineTimeUnit(rangeMs) {
-    const days = rangeMs / (1000 * 60 * 60 * 24);
-    
-    if (days <= 1) return 'hour';
-    if (days <= 7) return 'day';
-    if (days <= 30) return 'week';
-    if (days <= 90) return 'month';
-    return 'month';
-}
-
-function flashChart() {
-    const chartContainer = document.querySelector('.chart-container');
-    if (!chartContainer) return;
-    
-    chartContainer.classList.add('chart-flash');
-    setTimeout(() => {
-        chartContainer.classList.remove('chart-flash');
-    }, 300);
-}
-
-function resetZoomFromInstructions() {
-    resetZoom();
-    updateClickZoomStatus('Đã reset zoom, chờ click lần 1...', 'waiting');
-    clickZoomPoints = [];
-}
-
-function exitClickZoomMode() {
-    if (clickZoomInstructions) {
-        clickZoomInstructions.style.display = 'none';
-    }
-    clickZoomPoints = [];
-    
-    // Reset cursor
-    document.getElementById('bitcoinChart').style.cursor = '';
-    
-    showNotification('Đã thoát chế độ click-to-zoom', 'info');
-}
-
-function closeClickZoomInstructions() {
-    exitClickZoomMode();
-}
-
-function initializeZoomControls() {
-    console.log('🔍 Initializing zoom controls...');
-    
-    if (document.querySelector('.zoom-toolbar')) {
-        console.log('✅ Zoom toolbar already exists');
-        return;
-    }
-    
-    const chartSection = document.querySelector('.chart-section');
-    if (!chartSection) return;
-    
-    const zoomToolbar = document.createElement('div');
-    zoomToolbar.className = 'zoom-toolbar';
-    zoomToolbar.innerHTML = `
-        <div class="zoom-controls">
-            <button class="zoom-btn" id="zoomIn" title="Zoom In">
-                <i class="fas fa-search-plus"></i>
-            </button>
-            <button class="zoom-btn" id="zoomOut" title="Zoom Out">
-                <i class="fas fa-search-minus"></i>
-            </button>
-            <button class="zoom-btn" id="zoomReset" title="Reset Zoom">
-                <i class="fas fa-expand-alt"></i>
-            </button>
-            <button class="zoom-btn" id="zoomPan" title="Pan Mode">
-                <i class="fas fa-arrows-alt"></i>
-            </button>
-            <button class="zoom-btn" id="zoomSelect" title="Select Area">
-                <i class="fas fa-vector-square"></i>
-            </button>
-            <button class="zoom-btn" id="zoomClick" title="Click to Zoom (2 clicks)">
-                <i class="fas fa-mouse-pointer"></i>
-            </button>
-        </div>
-        <div class="timeline-controls">
-            <input type="range" id="timelineSlider" min="0" max="100" value="100" class="timeline-slider">
-            <div class="timeline-labels">
-                <span id="zoomStartLabel">Start</span>
-                <span id="zoomEndLabel">End</span>
-            </div>
-        </div>
-        <div class="zoom-info">
-            <span id="zoomInfo">Full Range</span>
-            <button class="zoom-history-btn" id="zoomBack" title="Back">
-                <i class="fas fa-undo"></i>
-            </button>
-        </div>
-    `;
-    
-    chartSection.querySelector('.chart-container').parentNode.insertBefore(zoomToolbar, chartSection.querySelector('.chart-info'));
-    
-    addZoomStyles();
-    setupZoomEventListeners();
-    setupDragToZoom();
-    
-    // QUAN TRỌNG: Gọi hàm này để tạo instructions
-    createClickZoomInstructions();
-    
-    // Mặc định kích hoạt chế độ click-to-zoom
-    activateClickZoomMode();
-}
-
-function activateClickZoomMode() {
-    // Deactivate các chế độ khác
-    const panBtn = document.getElementById('zoomPan');
-    const selectBtn = document.getElementById('zoomSelect');
-    const clickBtn = document.getElementById('zoomClick');
-    
-    if (panBtn) panBtn.classList.remove('active');
-    if (selectBtn) selectBtn.classList.remove('active');
-    
-    if (clickBtn) {
-        clickBtn.classList.add('active');
-    }
-    
-    // Hiển thị instructions
-    if (clickZoomInstructions) {
-        clickZoomInstructions.style.display = 'block';
-    } else {
-        initializeClickToZoom();
-    }
-    
-    // Reset points
-    clickZoomPoints = [];
-    
-    // Update cursor
-    document.getElementById('bitcoinChart').style.cursor = 'crosshair';
-    
-    showNotification('Chế độ click-to-zoom: Click 2 điểm bất kỳ trên biểu đồ để zoom', 'info', 4000);
-}
-
-// Cập nhật setupZoomEventListeners
-function setupZoomEventListeners() {
-    document.getElementById('zoomIn')?.addEventListener('click', function() {
-        deactivateAllModes();
-        zoomChart(0.8);
-    });
-    
-    document.getElementById('zoomOut')?.addEventListener('click', function() {
-        deactivateAllModes();
-        zoomChart(1.2);
-    });
-    
-    document.getElementById('zoomReset')?.addEventListener('click', function() {
-        deactivateAllModes();
-        resetZoom();
-    });
-    
-    document.getElementById('zoomPan')?.addEventListener('click', function() {
-        togglePanMode();
-        if (clickZoomInstructions) clickZoomInstructions.style.display = 'none';
-    });
-    
-    document.getElementById('zoomSelect')?.addEventListener('click', function() {
-        toggleSelectMode();
-        if (clickZoomInstructions) clickZoomInstructions.style.display = 'none';
-    });
-    
-    document.getElementById('zoomClick')?.addEventListener('click', function() {
-        const panBtn = document.getElementById('zoomPan');
-        const selectBtn = document.getElementById('zoomSelect');
-        
-        if (panBtn) panBtn.classList.remove('active');
-        if (selectBtn) selectBtn.classList.remove('active');
-        
-        this.classList.add('active');
-        document.getElementById('bitcoinChart').style.cursor = 'crosshair';
-        
-        activateClickZoomMode();
-    });
-    
-    const timelineSlider = document.getElementById('timelineSlider');
-    if (timelineSlider) {
-        timelineSlider.addEventListener('input', function() {
-            deactivateAllModes();
-            updateZoomFromSlider(this.value);
-        });
-    }
-    
-    document.getElementById('zoomBack')?.addEventListener('click', function() {
-        zoomBack();
-    });
-    
-    addTimeframePresets();
-}
-
-function deactivateAllModes() {
-    const panBtn = document.getElementById('zoomPan');
-    const selectBtn = document.getElementById('zoomSelect');
-    const clickBtn = document.getElementById('zoomClick');
-    
-    if (panBtn) panBtn.classList.remove('active');
-    if (selectBtn) selectBtn.classList.remove('active');
-    if (clickBtn) clickBtn.classList.remove('active');
-    
-    document.getElementById('bitcoinChart').style.cursor = '';
-    
-    if (clickZoomInstructions) {
-        clickZoomInstructions.style.display = 'none';
-    }
-    
-    clickZoomPoints = [];
-}
-
-// Thêm CSS cho click markers và instructions
-function addClickZoomStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .click-zoom-instructions {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.9);
-            border: 1px solid var(--wave-trough);
-            border-radius: 10px;
-            padding: 15px;
-            width: 280px;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-            animation: slideInRight 0.3s ease;
-        }
-        
-        .instructions-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .instructions-header i {
-            color: var(--wave-trough);
-            font-size: 1.2em;
-        }
-        
-        .instructions-header span {
-            flex: 1;
-            font-weight: bold;
-            color: white;
-        }
-        
-        .close-instructions {
-            background: transparent;
-            border: none;
-            color: rgba(255, 255, 255, 0.5);
-            cursor: pointer;
-            padding: 5px;
-        }
-        
-        .close-instructions:hover {
-            color: white;
-        }
-        
-        .instructions-body {
-            margin-bottom: 15px;
-        }
-        
-        .instructions-body p {
-            color: rgba(255, 255, 255, 0.9);
-            margin: 8px 0;
-            font-size: 0.9em;
-        }
-        
-        .instruction-status {
-            margin-top: 10px;
-            padding: 8px;
-            border-radius: 5px;
-            font-size: 0.9em;
-            text-align: center;
-        }
-        
-        .status-waiting {
-            background: rgba(255, 193, 7, 0.2);
-            border: 1px solid #ffc107;
-            color: #ffc107;
-        }
-        
-        .status-success {
-            background: rgba(40, 167, 69, 0.2);
-            border: 1px solid #28a745;
-            color: #28a745;
-        }
-        
-        .status-error {
-            background: rgba(220, 53, 69, 0.2);
-            border: 1px solid #dc3545;
-            color: #dc3545;
-        }
-        
-        .status-info {
-            background: rgba(23, 162, 184, 0.2);
-            border: 1px solid #17a2b8;
-            color: #17a2b8;
-        }
-        
-        .instructions-footer {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .reset-zoom-btn, .exit-zoom-btn {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            transition: all 0.2s ease;
-        }
-        
-        .reset-zoom-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .reset-zoom-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .exit-zoom-btn {
-            background: var(--wave-trough);
-            color: white;
-            border: 1px solid var(--wave-trough);
-        }
-        
-        .exit-zoom-btn:hover {
-            background: var(--wave-mid);
-        }
-        
-        .click-marker {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: rgba(255, 255, 255, 0.5);
-            pointer-events: none;
-            z-index: 100;
-            animation: markerPulse 1s ease;
-        }
-        
-        .click-marker span {
-            position: absolute;
-            top: 10px;
-            left: -10px;
-            background: var(--wave-trough);
-            color: white;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8em;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        
-        .marker-2 span {
-            background: #ff2e63;
-        }
-        
-        @keyframes markerPulse {
-            0% {
-                opacity: 0;
-                transform: scaleY(0.5);
-            }
-            50% {
-                opacity: 1;
-                transform: scaleY(1);
-            }
-            100% {
-                opacity: 0;
-                transform: scaleY(0.5);
-            }
-        }
-        
-        .chart-flash {
-            animation: chartFlash 0.3s ease;
-        }
-        
-        @keyframes chartFlash {
-            0% {
-                box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.7);
-            }
-            50% {
-                box-shadow: 0 0 30px 10px rgba(0, 212, 255, 0.7);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
-            }
-        }
-        
-        #zoomClick.active {
-            background: var(--wave-trough);
-            color: white;
-            border-color: var(--wave-trough);
-            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-window.closeClickZoomInstructions = closeClickZoomInstructions;
-window.resetZoomFromInstructions = resetZoomFromInstructions;
-window.exitClickZoomMode = exitClickZoomMode;
-
-// Thêm vào cuối file js/signals.js
-
-// ========== CLICK-TO-ZOOM FIX ==========
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔄 Initializing Click-to-Zoom fix...');
-    
-    // Đợi chart được khởi tạo
-    setTimeout(initClickZoomFeature, 1500);
-});
-
-function initClickZoomFeature() {
-    console.log('🎯 Setting up Click-to-Zoom feature');
-    
-    // Kiểm tra chart đã tồn tại chưa
-    if (!window.bitcoinChart || !window.bitcoinChart.canvas) {
-        console.log('⏳ Chart not ready, retrying in 1 second...');
-        setTimeout(initClickZoomFeature, 1000);
-        return;
-    }
-    
-    // Tạo window hướng dẫn với vị trí phù hợp
-    createZoomInstructions();
-    
-    // Thêm nút Active Zoom Controls vào toolbar
-    addZoomControlButton();
-    
-    // Gán sự kiện click cho chart
-    setupChartClickEvents();
-}
-
-function createZoomInstructions() {
-    // Xóa window cũ nếu có
-    const oldInstructions = document.querySelector('.click-zoom-instructions');
-    if (oldInstructions) {
-        oldInstructions.remove();
-    }
-    
-    // Tạo window mới
-    const instructions = document.createElement('div');
-    instructions.className = 'click-zoom-instructions';
-    instructions.id = 'clickZoomInstructions';
-    instructions.innerHTML = `
-        <div class="instructions-header">
-            <i class="fas fa-mouse-pointer"></i>
-            <span>Active Zoom Controls</span>
-            <button class="close-instructions" onclick="closeClickZoomInstructions()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="instructions-body">
-            <p><i class="fas fa-hand-pointer"></i> Click vào hai điểm bất kỳ trên biểu đồ</p>
-            <p><i class="fas fa-chart-line"></i> Chart sẽ tự động zoom vào khoảng thời gian giữa hai lần click</p>
-            <div class="instruction-status status-waiting" id="zoomStatus">
-                <i class="fas fa-hourglass-half"></i> Chờ click lần 1...
-            </div>
-        </div>
-        <div class="instructions-footer">
-            <button class="reset-zoom-btn" onclick="resetZoomFromInstructions()">
-                <i class="fas fa-undo-alt"></i> Reset Zoom
-            </button>
-            <button class="exit-zoom-btn" onclick="exitClickZoomMode()">
-                <i class="fas fa-sign-out-alt"></i> Thoát
-            </button>
-        </div>
-    `;
-    
-    // Đặt vị trí phù hợp (không bị chèn vào menu)
-    instructions.style.position = 'fixed';
-    instructions.style.top = '120px';
-    instructions.style.right = '20px';
-    instructions.style.zIndex = '10000';
-    instructions.style.width = '300px';
-    instructions.style.background = 'rgba(0, 0, 0, 0.95)';
-    instructions.style.border = '1px solid #00d4ff';
-    instructions.style.borderRadius = '10px';
-    instructions.style.padding = '15px';
-    instructions.style.backdropFilter = 'blur(10px)';
-    instructions.style.boxShadow = '0 5px 25px rgba(0, 0, 0, 0.7)';
-    instructions.style.borderLeft = '4px solid #00d4ff';
-    
-    document.body.appendChild(instructions);
-    
-    // Khởi tạo biến lưu điểm click
-    window.clickZoomPoints = [];
-    window.clickZoomMode = true;
-}
-
-function addZoomControlButton() {
-    // Tìm zoom toolbar
-    const zoomToolbar = document.getElementById('zoomToolbar');
-    if (!zoomToolbar) return;
-    
-    // Hiện toolbar nếu đang ẩn
-    zoomToolbar.style.display = 'flex';
-    
-    // Kiểm tra nếu đã có nút thì không thêm nữa
-    if (document.getElementById('manualZoomBtn')) return;
-    
-    // Tạo nút mới
-    const manualZoomBtn = document.createElement('button');
-    manualZoomBtn.id = 'manualZoomBtn';
-    manualZoomBtn.className = 'zoom-btn active';
-    manualZoomBtn.innerHTML = '<i class="fas fa-mouse-pointer"></i> Active Zoom';
-    manualZoomBtn.style.width = 'auto';
-    manualZoomBtn.style.padding = '0 15px';
-    manualZoomBtn.style.background = 'linear-gradient(135deg, #00d4ff, #f7931a)';
-    manualZoomBtn.style.color = 'white';
-    manualZoomBtn.style.border = 'none';
-    manualZoomBtn.style.fontWeight = 'bold';
-    
-    manualZoomBtn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleClickZoomMode();
-    };
-    
-    // Thêm vào zoom toolbar
-    zoomToolbar.appendChild(manualZoomBtn);
-}
-
-function setupChartClickEvents() {
-    const canvas = window.bitcoinChart.canvas;
-    
-    // Xóa event cũ nếu có
-    if (window._chartClickHandler) {
-        canvas.removeEventListener('click', window._chartClickHandler);
-    }
-    
-    // Tạo handler mới
-    window._chartClickHandler = function(e) {
-        if (!window.clickZoomMode) return;
-        
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        // Lấy thông tin điểm click từ chart
-        const points = window.bitcoinChart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, true);
-        
-        if (points && points.length > 0) {
-            const firstPoint = points[0];
-            const datasetIndex = firstPoint.datasetIndex;
-            const index = firstPoint.index;
-            
-            // Lấy timestamp từ data
-            const timestamp = window.bitcoinChart.data.labels[index];
-            
-            console.log(`📌 Clicked at index ${index}, timestamp: ${timestamp}`);
-            
-            // Thêm vào danh sách điểm click
-            window.clickZoomPoints.push({
-                index: index,
-                timestamp: timestamp,
-                x: x,
-                y: y
-            });
-            
-            // Hiển thị marker trên chart
-            showClickMarker(x, y, window.clickZoomPoints.length);
-            
-            // Cập nhật status
-            updateClickZoomStatus(`Đã chọn điểm ${window.clickZoomPoints.length}, chờ click lần ${window.clickZoomPoints.length + 1}...`, 'success');
-            
-            // Nếu đã có 2 điểm, thực hiện zoom
-            if (window.clickZoomPoints.length === 2) {
-                performClickZoom();
-            }
-        } else {
-            console.log('❌ No data point at click position');
-            updateClickZoomStatus('Không tìm thấy điểm dữ liệu tại vị trí click!', 'error');
-        }
-    };
-    
-    canvas.addEventListener('click', window._chartClickHandler);
-    console.log('✅ Click events attached to chart');
-}
-
-function showClickMarker(x, y, pointNumber) {
-    const chartContainer = document.querySelector('.chart-container');
-    if (!chartContainer) return;
-    
-    const marker = document.createElement('div');
-    marker.className = `click-marker marker-${pointNumber}`;
-    marker.style.position = 'absolute';
-    marker.style.left = x + 'px';
-    marker.style.top = '0';
-    marker.style.bottom = '0';
-    marker.style.width = '2px';
-    marker.style.background = 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.8) 20%, rgba(255,255,255,0.8) 80%, transparent 100%)';
-    marker.style.pointerEvents = 'none';
-    marker.style.zIndex = '100';
-    
-    const markerNumber = document.createElement('span');
-    markerNumber.style.position = 'absolute';
-    markerNumber.style.top = '20px';
-    markerNumber.style.left = '-12px';
-    markerNumber.style.background = pointNumber === 1 ? '#00d4ff' : '#ff2e63';
-    markerNumber.style.color = 'white';
-    markerNumber.style.width = '26px';
-    markerNumber.style.height = '26px';
-    markerNumber.style.borderRadius = '50%';
-    markerNumber.style.display = 'flex';
-    markerNumber.style.alignItems = 'center';
-    markerNumber.style.justifyContent = 'center';
-    markerNumber.style.fontWeight = 'bold';
-    markerNumber.style.boxShadow = '0 2px 10px rgba(0,0,0,0.5)';
-    markerNumber.style.border = '2px solid white';
-    markerNumber.innerText = pointNumber;
-    
-    marker.appendChild(markerNumber);
-    
-    // Xóa marker cũ nếu có
-    const oldMarkers = chartContainer.querySelectorAll('.click-marker');
-    oldMarkers.forEach(m => m.remove());
-    
-    chartContainer.appendChild(marker);
-}
-
-function updateClickZoomStatus(message, type = 'waiting') {
-    const statusEl = document.getElementById('zoomStatus');
-    if (!statusEl) return;
-    
-    statusEl.innerHTML = `<i class="fas fa-${type === 'waiting' ? 'hourglass-half' : (type === 'success' ? 'check-circle' : 'exclamation-circle')}"></i> ${message}`;
-    
-    // Update class
-    statusEl.className = `instruction-status status-${type}`;
-}
-
-function performClickZoom() {
-    if (!window.clickZoomPoints || window.clickZoomPoints.length !== 2) return;
-    
-    // Sắp xếp điểm theo thời gian
-    const points = [...window.clickZoomPoints].sort((a, b) => a.index - b.index);
-    const startPoint = points[0];
-    const endPoint = points[1];
-    
-    console.log(`🔍 Zooming from index ${startPoint.index} to ${endPoint.index}`);
-    
-    // Lấy timestamps
-    const startTime = startPoint.timestamp;
-    const endTime = endPoint.timestamp;
-    
-    if (!startTime || !endTime) {
-        updateClickZoomStatus('Không thể xác định thời gian!', 'error');
-        return;
-    }
-    
-    // Thực hiện zoom trên chart
-    if (window.bitcoinChart && window.bitcoinChart.zoomScale) {
-        try {
-            // Cách 1: Dùng zoomScale nếu có
-            window.bitcoinChart.zoomScale('x', {
-                min: new Date(startTime),
-                max: new Date(endTime)
-            });
-        } catch (e) {
-            console.log('ZoomScale không hoạt động, thử cách khác');
-            
-            // Cách 2: Set min/max trực tiếp
-            try {
-                const xAxis = window.bitcoinChart.scales.x;
-                if (xAxis) {
-                    xAxis.options.min = new Date(startTime);
-                    xAxis.options.max = new Date(endTime);
-                    window.bitcoinChart.update();
-                }
-            } catch (e2) {
-                console.error('Không thể zoom chart:', e2);
-            }
-        }
-        
-        // Hiệu ứng flash
-        const chartContainer = document.querySelector('.chart-container');
-        if (chartContainer) {
-            chartContainer.classList.add('chart-flash');
-            setTimeout(() => {
-                chartContainer.classList.remove('chart-flash');
-            }, 500);
-        }
-        
-        updateClickZoomStatus('✅ Đã zoom thành công! Click để chọn lại', 'success');
-        
-        // Reset điểm click
-        window.clickZoomPoints = [];
-    } else {
-        updateClickZoomStatus('Không thể zoom chart!', 'error');
-    }
-}
-
-// Global functions
-window.toggleClickZoomMode = function() {
-    window.clickZoomMode = !window.clickZoomMode;
-    
-    const btn = document.getElementById('manualZoomBtn');
-    if (btn) {
-        if (window.clickZoomMode) {
-            btn.style.background = 'linear-gradient(135deg, #00d4ff, #f7931a)';
-            btn.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.7)';
-            btn.innerHTML = '<i class="fas fa-mouse-pointer"></i> Active Zoom (ON)';
-            
-            // Hiện instructions
-            const instructions = document.getElementById('clickZoomInstructions');
-            if (instructions) {
-                instructions.style.display = 'block';
-            } else {
-                createZoomInstructions();
-            }
-            
-            // Reset points
-            window.clickZoomPoints = [];
-            updateClickZoomStatus('Chờ click lần 1...', 'waiting');
-            
-            // Xóa markers
-            const chartContainer = document.querySelector('.chart-container');
-            if (chartContainer) {
-                const markers = chartContainer.querySelectorAll('.click-marker');
-                markers.forEach(m => m.remove());
-            }
-        } else {
-            btn.style.background = '';
-            btn.style.boxShadow = '';
-            btn.innerHTML = '<i class="fas fa-mouse-pointer"></i> Active Zoom';
-            
-            // Ẩn instructions
-            const instructions = document.getElementById('clickZoomInstructions');
-            if (instructions) {
-                instructions.style.display = 'none';
-            }
-            
-            // Xóa markers
-            const chartContainer = document.querySelector('.chart-container');
-            if (chartContainer) {
-                const markers = chartContainer.querySelectorAll('.click-marker');
-                markers.forEach(m => m.remove());
-            }
-        }
-    }
-};
-
-window.closeClickZoomInstructions = function() {
-    window.clickZoomMode = false;
-    
-    const instructions = document.getElementById('clickZoomInstructions');
-    if (instructions) {
-        instructions.style.display = 'none';
-    }
-    
-    const btn = document.getElementById('manualZoomBtn');
-    if (btn) {
-        btn.style.background = '';
-        btn.style.boxShadow = '';
-        btn.innerHTML = '<i class="fas fa-mouse-pointer"></i> Active Zoom';
-    }
-    
-    // Xóa markers
-    const chartContainer = document.querySelector('.chart-container');
-    if (chartContainer) {
-        const markers = chartContainer.querySelectorAll('.click-marker');
-        markers.forEach(m => m.remove());
-    }
-    
-    window.clickZoomPoints = [];
-};
-
-window.resetZoomFromInstructions = function() {
-    // Reset chart zoom
-    if (window.bitcoinChart && window.bitcoinChart.resetZoom) {
-        window.bitcoinChart.resetZoom();
-    } else {
-        // Reset min/max
-        try {
-            const xAxis = window.bitcoinChart.scales.x;
-            if (xAxis) {
-                xAxis.options.min = null;
-                xAxis.options.max = null;
-                window.bitcoinChart.update();
-            }
-        } catch (e) {
-            console.error('Cannot reset zoom:', e);
-        }
-    }
-    
-    // Reset points
-    window.clickZoomPoints = [];
-    
-    // Xóa markers
-    const chartContainer = document.querySelector('.chart-container');
-    if (chartContainer) {
-        const markers = chartContainer.querySelectorAll('.click-marker');
-        markers.forEach(m => m.remove());
-    }
-    
-    updateClickZoomStatus('Đã reset zoom, chờ click lần 1...', 'waiting');
-};
-
-window.exitClickZoomMode = function() {
-    window.clickZoomMode = false;
-    
-    const instructions = document.getElementById('clickZoomInstructions');
-    if (instructions) {
-        instructions.remove();
-    }
-    
-    const btn = document.getElementById('manualZoomBtn');
-    if (btn) {
-        btn.style.background = '';
-        btn.style.boxShadow = '';
-        btn.innerHTML = '<i class="fas fa-mouse-pointer"></i> Active Zoom';
-    }
-    
-    // Xóa markers
-    const chartContainer = document.querySelector('.chart-container');
-    if (chartContainer) {
-        const markers = chartContainer.querySelectorAll('.click-marker');
-        markers.forEach(m => m.remove());
-    }
-    
-    window.clickZoomPoints = [];
-};
-
-// Thêm CSS cần thiết
-function addClickZoomStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .click-zoom-instructions {
-            animation: slideInRight 0.3s ease;
-        }
-        
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        .click-marker {
-            animation: markerAppear 0.5s ease;
-        }
-        
-        .click-marker span {
-            animation: markerBounce 0.5s ease;
-        }
-        
-        @keyframes markerAppear {
-            0% {
-                opacity: 0;
-                transform: scaleY(0);
-            }
-            100% {
-                opacity: 1;
-                transform: scaleY(1);
-            }
-        }
-        
-        @keyframes markerBounce {
-            0% {
-                transform: scale(0);
-            }
-            50% {
-                transform: scale(1.2);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-        
-        .chart-flash {
-            animation: chartFlash 0.5s ease;
-        }
-        
-        @keyframes chartFlash {
-            0% {
-                box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
-            }
-            20% {
-                box-shadow: 0 0 30px 15px rgba(0, 212, 255, 0.7);
-            }
-            40% {
-                box-shadow: 0 0 50px 25px rgba(0, 212, 255, 0.5);
-            }
-            60% {
-                box-shadow: 0 0 30px 15px rgba(0, 212, 255, 0.3);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
-            }
-        }
-        
-        #manualZoomBtn {
-            transition: all 0.3s ease;
-        }
-        
-        .status-waiting {
-            background: rgba(255, 193, 7, 0.15);
-            border: 1px solid #ffc107;
-            color: #ffc107;
-        }
-        
-        .status-success {
-            background: rgba(40, 167, 69, 0.15);
-            border: 1px solid #28a745;
-            color: #28a745;
-        }
-        
-        .status-error {
-            background: rgba(220, 53, 69, 0.15);
-            border: 1px solid #dc3545;
-            color: #dc3545;
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// Gọi khi trang load
-addClickZoomStyles();
-
-// ========== TIME RANGE SELECTOR FEATURE ==========
-// Thêm sau phần Click-to-Zoom code
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('⏰ Initializing Time Range Selector...');
-    
-    // Đợi chart và data load xong
-    setTimeout(initTimeRangeSelector, 2000);
-});
-
-function initTimeRangeSelector() {
-    if (!window.bitcoinChart || !window.signalsData) {
-        console.log('⏳ Waiting for chart and signals data...');
-        setTimeout(initTimeRangeSelector, 1000);
-        return;
-    }
-    
-    createTimeRangeSelector();
-    setupTimeRangeEvents();
-}
-
-function createTimeRangeSelector() {
-    // Tìm chart section để thêm time range selector
-    const chartSection = document.querySelector('.chart-section');
-    if (!chartSection) return;
-    
-    // Kiểm tra nếu đã có thì không thêm nữa
-    if (document.getElementById('timeRangeSelector')) return;
-    
-    // Tạo time range selector container
-    const timeRangeContainer = document.createElement('div');
-    timeRangeContainer.className = 'time-range-selector';
-    timeRangeContainer.id = 'timeRangeSelector';
-    timeRangeContainer.innerHTML = `
-        <div class="time-range-header">
-            <i class="fas fa-calendar-alt"></i>
-            <span>Time Range Selection</span>
-            <span class="time-range-badge">Select period to view Peak/Dip signals</span>
-        </div>
-        
-        <div class="time-range-controls">
-            <!-- Quick preset buttons -->
-            <div class="range-presets">
-                <button class="range-preset-btn" data-days="1">24H</button>
-                <button class="range-preset-btn" data-days="7">7D</button>
-                <button class="range-preset-btn" data-days="30">30D</button>
-                <button class="range-preset-btn" data-days="90">90D</button>
-                <button class="range-preset-btn" data-days="180">6M</button>
-                <button class="range-preset-btn" data-days="365">1Y</button>
-                <button class="range-preset-btn" data-all="true">All Time</button>
-            </div>
-            
-            <!-- Custom date range picker -->
-            <div class="custom-range">
-                <div class="date-input-group">
-                    <label for="startDate">From:</label>
-                    <input type="datetime-local" id="startDate" class="date-input">
-                </div>
-                
-                <div class="date-input-group">
-                    <label for="endDate">To:</label>
-                    <input type="datetime-local" id="endDate" class="date-input">
-                </div>
-                
-                <button class="apply-range-btn" id="applyCustomRange">
-                    <i class="fas fa-check"></i> Apply
-                </button>
-                
-                <button class="reset-range-btn" id="resetRange">
-                    <i class="fas fa-undo-alt"></i> Reset
-                </button>
-            </div>
-        </div>
-        
-        <!-- Range info display -->
-        <div class="range-info" id="rangeInfo">
-            <div class="range-stats">
-                <span><i class="fas fa-chart-line"></i> <span id="rangeDataPoints">0</span> data points</span>
-                <span><i class="fas fa-mountain"></i> <span id="rangePeaks">0</span> peaks</span>
-                <span><i class="fas fa-water"></i> <span id="rangeDips">0</span> dips</span>
-                <span><i class="fas fa-calendar"></i> <span id="rangePeriod">All time</span></span>
-            </div>
-        </div>
-    `;
-    
-    // Thêm CSS cho time range selector
-    addTimeRangeStyles();
-    
-    // Chèn sau chart container
-    const chartContainer = chartSection.querySelector('.chart-container');
-    if (chartContainer) {
-        chartContainer.insertAdjacentElement('afterend', timeRangeContainer);
-    } else {
-        chartSection.appendChild(timeRangeContainer);
-    }
-}
-
-function addTimeRangeStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .time-range-selector {
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        
-        .time-range-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .time-range-header i {
-            color: var(--wave-trough);
-            font-size: 1.3em;
-        }
-        
-        .time-range-header span {
-            color: white;
-            font-size: 1.2em;
-            font-weight: 600;
-        }
-        
-        .time-range-badge {
-            background: rgba(0, 212, 255, 0.1);
-            color: var(--wave-trough) !important;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85em !important;
-            margin-left: auto;
-            border: 1px solid rgba(0, 212, 255, 0.3);
-        }
-        
-        .time-range-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .range-presets {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            border-radius: 10px;
-        }
-        
-        .range-preset-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: var(--text-glow);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 60px;
-        }
-        
-        .range-preset-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .range-preset-btn.active {
-            background: var(--wave-trough);
-            color: white;
-            border-color: var(--wave-trough);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
-        }
-        
-        .custom-range {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
-            border-radius: 10px;
-        }
-        
-        .date-input-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .date-input-group label {
-            color: var(--text-glow);
-            font-size: 0.9em;
-            min-width: 40px;
-        }
-        
-        .date-input {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            padding: 10px;
-            color: white;
-            font-size: 0.9em;
-        }
-        
-        .date-input:focus {
-            outline: none;
-            border-color: var(--wave-trough);
-            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.1);
-        }
-        
-        .apply-range-btn, .reset-range-btn {
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-size: 0.9em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-        }
-        
-        .apply-range-btn {
-            background: linear-gradient(to right, var(--wave-trough), var(--wave-mid));
-            color: white;
-        }
-        
-        .apply-range-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
-        }
-        
-        .reset-range-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-glow);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .reset-range-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .range-info {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(0, 212, 255, 0.05);
-            border-radius: 8px;
-            border-left: 4px solid var(--wave-trough);
-        }
-        
-        .range-stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .range-stats span {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-glow);
-            font-size: 0.95em;
-        }
-        
-        .range-stats i {
-            color: var(--wave-trough);
-            font-size: 1.1em;
-        }
-        
-        .range-stats span:nth-child(2) i {
-            color: var(--wave-peak);
-        }
-        
-        .range-stats span:nth-child(3) i {
-            color: var(--wave-trough);
-        }
-        
-        @media (max-width: 768px) {
-            .custom-range {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .date-input-group {
-                min-width: 100%;
-            }
-            
-            .range-stats {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .range-presets {
-                justify-content: center;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-function setupTimeRangeEvents() {
-    // Preset buttons
-    document.querySelectorAll('.range-preset-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remove active class from all preset buttons
-            document.querySelectorAll('.range-preset-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            if (this.hasAttribute('data-all')) {
-                // Show all data
-                resetToFullRange();
-            } else {
-                const days = parseInt(this.getAttribute('data-days'));
-                applyPresetRange(days);
-            }
-        });
-    });
-    
-    // Apply custom range
-    document.getElementById('applyCustomRange').addEventListener('click', function() {
-        applyCustomRange();
-    });
-    
-    // Reset range
-    document.getElementById('resetRange').addEventListener('click', function() {
-        resetToFullRange();
-        // Remove active class from all preset buttons
-        document.querySelectorAll('.range-preset-btn').forEach(b => b.classList.remove('active'));
-    });
-    
-    // Set default dates for custom range
-    setDefaultDateInputs();
-}
-
-function setDefaultDateInputs() {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-    
-    const formatDateForInput = (date) => {
-        return date.toISOString().slice(0, 16);
-    };
-    
-    const startInput = document.getElementById('startDate');
-    const endInput = document.getElementById('endDate');
-    
-    if (startInput && endInput) {
-        startInput.value = formatDateForInput(thirtyDaysAgo);
-        endInput.value = formatDateForInput(now);
-    }
-}
-
-function applyPresetRange(days) {
-    if (!window.bitcoinChart || !window.signalsData) return;
-    
-    const now = new Date();
-    const startDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
-    
-    // Lấy tất cả timestamps từ chart labels
-    const allTimestamps = window.bitcoinChart.data.labels.map(ts => new Date(ts));
-    
-    // Tìm index của start date gần nhất
-    let startIndex = 0;
-    for (let i = 0; i < allTimestamps.length; i++) {
-        if (allTimestamps[i] >= startDate) {
-            startIndex = i;
-            break;
-        }
-    }
-    
-    // Zoom chart đến range
-    zoomChartToRange(startIndex, allTimestamps.length - 1);
-    
-    // Cập nhật thông tin range
-    updateRangeInfo(startDate, now);
-}
-
-function applyCustomRange() {
-    const startInput = document.getElementById('startDate').value;
-    const endInput = document.getElementById('endDate').value;
-    
-    if (!startInput || !endInput) {
-        alert('Please select both start and end dates');
-        return;
-    }
-    
-    const startDate = new Date(startInput);
-    const endDate = new Date(endInput);
-    
-    if (startDate >= endDate) {
-        alert('End date must be after start date');
-        return;
-    }
-    
-    if (!window.bitcoinChart || !window.signalsData) return;
-    
-    const allTimestamps = window.bitcoinChart.data.labels.map(ts => new Date(ts));
-    
-    // Tìm index gần nhất với startDate và endDate
-    let startIndex = 0;
-    let endIndex = allTimestamps.length - 1;
-    
-    for (let i = 0; i < allTimestamps.length; i++) {
-        if (allTimestamps[i] >= startDate) {
-            startIndex = i;
-            break;
-        }
-    }
-    
-    for (let i = allTimestamps.length - 1; i >= 0; i--) {
-        if (allTimestamps[i] <= endDate) {
-            endIndex = i;
-            break;
-        }
-    }
-    
-    if (startIndex > endIndex) {
-        alert('No data in selected range');
-        return;
-    }
-    
-    // Zoom chart
-    zoomChartToRange(startIndex, endIndex);
-    
-    // Cập nhật thông tin
-    updateRangeInfo(startDate, endDate);
-}
-
-function zoomChartToRange(startIndex, endIndex) {
-    if (!window.bitcoinChart) return;
-    
-    try {
-        // Lấy timestamps tương ứng
-        const startTime = window.bitcoinChart.data.labels[startIndex];
-        const endTime = window.bitcoinChart.data.labels[endIndex];
-        
-        // Zoom chart
-        const xAxis = window.bitcoinChart.scales.x;
-        if (xAxis) {
-            xAxis.options.min = new Date(startTime);
-            xAxis.options.max = new Date(endTime);
-            window.bitcoinChart.update();
-        }
-        
-        // Highlight các signal points trong range
-        highlightSignalsInRange(startTime, endTime);
-        
-        // Hiệu ứng flash
-        const chartContainer = document.querySelector('.chart-container');
-        if (chartContainer) {
-            chartContainer.classList.add('chart-flash');
-            setTimeout(() => {
-                chartContainer.classList.remove('chart-flash');
-            }, 500);
-        }
-        
-        console.log(`🔍 Zoomed to range: ${new Date(startTime).toLocaleString()} - ${new Date(endTime).toLocaleString()}`);
-    } catch (e) {
-        console.error('Error zooming chart:', e);
-    }
-}
-
-function highlightSignalsInRange(startTime, endTime) {
-    if (!window.signalsData) return;
-    
-    const start = new Date(startTime).getTime();
-    const end = new Date(endTime).getTime();
-    
-    // Đếm signals trong range
-    let peaksInRange = 0;
-    let dipsInRange = 0;
-    
-    window.signalsData.forEach(signal => {
-        const signalTime = new Date(signal.timestamp).getTime();
-        if (signalTime >= start && signalTime <= end) {
-            if (signal.signal_type === 'PEAK') peaksInRange++;
-            else if (signal.signal_type === 'DIP') dipsInRange++;
-        }
-    });
-    
-    // Cập nhật range info
-    const rangePeaks = document.getElementById('rangePeaks');
-    const rangeDips = document.getElementById('rangeDips');
-    const rangeDataPoints = document.getElementById('rangeDataPoints');
-    
-    if (rangePeaks) rangePeaks.textContent = peaksInRange;
-    if (rangeDips) rangeDips.textContent = dipsInRange;
-    if (rangeDataPoints) {
-        const dataPoints = window.bitcoinChart.data.labels.filter(ts => {
-            const t = new Date(ts).getTime();
-            return t >= start && t <= end;
-        }).length;
-        rangeDataPoints.textContent = dataPoints;
-    }
-}
-
-function updateRangeInfo(startDate, endDate) {
-    const rangePeriod = document.getElementById('rangePeriod');
-    if (rangePeriod) {
-        const formatDate = (date) => {
-            return date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                year: 'numeric'
-            });
-        };
-        rangePeriod.textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
-    }
-    
-    // Cập nhật số liệu signals trong range
-    if (window.signalsData) {
-        const start = startDate.getTime();
-        const end = endDate.getTime();
-        
-        let peaks = 0, dips = 0;
-        window.signalsData.forEach(signal => {
-            const signalTime = new Date(signal.timestamp).getTime();
-            if (signalTime >= start && signalTime <= end) {
-                if (signal.signal_type === 'PEAK') peaks++;
-                else if (signal.signal_type === 'DIP') dips++;
-            }
-        });
-        
-        const rangePeaks = document.getElementById('rangePeaks');
-        const rangeDips = document.getElementById('rangeDips');
-        const rangeDataPoints = document.getElementById('rangeDataPoints');
-        
-        if (rangePeaks) rangePeaks.textContent = peaks;
-        if (rangeDips) rangeDips.textContent = dips;
-        if (rangeDataPoints) {
-            const dataPoints = window.bitcoinChart.data.labels.filter(ts => {
-                const t = new Date(ts).getTime();
-                return t >= start && t <= end;
-            }).length;
-            rangeDataPoints.textContent = dataPoints;
-        }
-    }
-}
-
-function resetToFullRange() {
-    if (!window.bitcoinChart) return;
-    
-    try {
-        const xAxis = window.bitcoinChart.scales.x;
-        if (xAxis) {
-            xAxis.options.min = null;
-            xAxis.options.max = null;
-            window.bitcoinChart.update();
-        }
-        
-        // Reset range info
-        const rangePeriod = document.getElementById('rangePeriod');
-        if (rangePeriod) rangePeriod.textContent = 'All time';
-        
-        // Reset counts to total
-        if (window.signalsData) {
-            const peaks = window.signalsData.filter(s => s.signal_type === 'PEAK').length;
-            const dips = window.signalsData.filter(s => s.signal_type === 'DIP').length;
-            
-            const rangePeaks = document.getElementById('rangePeaks');
-            const rangeDips = document.getElementById('rangeDips');
-            const rangeDataPoints = document.getElementById('rangeDataPoints');
-            
-            if (rangePeaks) rangePeaks.textContent = peaks;
-            if (rangeDips) rangeDips.textContent = dips;
-            if (rangeDataPoints) rangeDataPoints.textContent = window.bitcoinChart.data.labels.length;
-        }
-        
-        // Hiệu ứng flash
-        const chartContainer = document.querySelector('.chart-container');
-        if (chartContainer) {
-            chartContainer.classList.add('chart-flash');
-            setTimeout(() => {
-                chartContainer.classList.remove('chart-flash');
-            }, 500);
-        }
-        
-        // Reset date inputs to default
-        setDefaultDateInputs();
-        
-        // Remove active class from preset buttons
-        document.querySelectorAll('.range-preset-btn').forEach(b => b.classList.remove('active'));
-        
-        console.log('🔄 Reset to full range');
-    } catch (e) {
-        console.error('Error resetting range:', e);
-    }
-}
-
-// Thêm event listener cho chart data loaded
-document.addEventListener('signalsDataLoaded', function(e) {
-    console.log('📊 Signals data loaded, updating range info...');
-    setTimeout(() => {
-        if (document.getElementById('timeRangeSelector')) {
-            resetToFullRange();
-        }
-    }, 1000);
-});
