@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (USES REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.5.0 - Real Bitcoin Price Data Integration
+// Version: 1.4.7 - Real Bitcoin Price Data Integration
 
 let signalsData = [];
 let currentPage = 1;
@@ -14,7 +14,7 @@ let csvDataLoaded = false;
 let lastUpdateTime = null;
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.5.0'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
+const APP_VERSION = '1.4.7'; // TĂNG SỐ NÀY MỖI LẦN CẬP NHẬT
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi
@@ -130,6 +130,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Thêm dòng này để setup drag scroll
     setTimeout(setupTableDragScroll, 1000);
+
+    // Thêm CSS cho click zoom
+    addClickZoomStyles();    
 });
 
 // ========== BITCOIN PRICE DATA LOADING ==========
@@ -2699,3 +2702,600 @@ if (window.bitcoinPriceData && typeof window.bitcoinPriceData === 'string') {
 
 console.log('✅ signals.js (REAL BITCOIN PRICE DATA VERSION) loaded successfully');
 console.log('ℹ️  This version uses REAL Bitcoin price data from Binance CSV');
+
+// ========== CLICK-TO-ZOOM FEATURE ==========
+let clickZoomPoints = [];
+let clickZoomInstructions = null;
+
+function initializeClickToZoom() {
+    console.log('🔍 Initializing click-to-zoom feature...');
+    
+    // Tạo instruction panel
+    createClickZoomInstructions();
+    
+    // Thêm event listener cho chart
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (!chartCanvas) return;
+    
+    // Xóa event listener cũ nếu có
+    chartCanvas.removeEventListener('click', handleChartClick);
+    chartCanvas.addEventListener('click', handleChartClick);
+}
+
+function createClickZoomInstructions() {
+    // Xóa instruction cũ nếu có
+    const oldInstructions = document.getElementById('clickZoomInstructions');
+    if (oldInstructions) oldInstructions.remove();
+    
+    // Tạo instruction mới
+    clickZoomInstructions = document.createElement('div');
+    clickZoomInstructions.id = 'clickZoomInstructions';
+    clickZoomInstructions.className = 'click-zoom-instructions';
+    clickZoomInstructions.innerHTML = `
+        <div class="instructions-header">
+            <i class="fas fa-mouse-pointer"></i>
+            <span>Click-to-Zoom Mode</span>
+            <button class="close-instructions" onclick="closeClickZoomInstructions()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="instructions-body">
+            <p>👆 <strong>Hướng dẫn:</strong> Click vào hai điểm bất kỳ trên biểu đồ</p>
+            <p>📊 Chart sẽ tự động zoom vào khoảng thời gian giữa hai lần click</p>
+            <p class="instruction-status" id="clickZoomStatus">
+                ⏳ Chờ click lần 1...
+            </p>
+        </div>
+        <div class="instructions-footer">
+            <button class="reset-zoom-btn" onclick="resetZoomFromInstructions()">
+                <i class="fas fa-undo"></i> Reset Zoom
+            </button>
+            <button class="exit-zoom-btn" onclick="exitClickZoomMode()">
+                <i class="fas fa-sign-out-alt"></i> Thoát
+            </button>
+        </div>
+    `;
+    
+    // Thêm vào chart section
+    const chartSection = document.querySelector('.chart-section');
+    if (chartSection) {
+        chartSection.appendChild(clickZoomInstructions);
+    }
+    
+    updateClickZoomStatus('Chờ click lần 1...', 'waiting');
+}
+
+function updateClickZoomStatus(message, type = 'info') {
+    const statusEl = document.getElementById('clickZoomStatus');
+    if (!statusEl) return;
+    
+    statusEl.innerHTML = '';
+    statusEl.className = 'instruction-status';
+    
+    if (type === 'success') {
+        statusEl.classList.add('status-success');
+        statusEl.innerHTML = `✅ ${message}`;
+    } else if (type === 'error') {
+        statusEl.classList.add('status-error');
+        statusEl.innerHTML = `❌ ${message}`;
+    } else if (type === 'info') {
+        statusEl.classList.add('status-info');
+        statusEl.innerHTML = `ℹ️ ${message}`;
+    } else if (type === 'waiting') {
+        statusEl.classList.add('status-waiting');
+        statusEl.innerHTML = `⏳ ${message}`;
+    }
+}
+
+function handleChartClick(event) {
+    // Chỉ xử lý khi đang ở chế độ click-to-zoom
+    if (!clickZoomInstructions || clickZoomInstructions.style.display === 'none') return;
+    
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (!chartCanvas || !bitcoinChart) return;
+    
+    // Lấy tọa độ click
+    const rect = chartCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    
+    // Chuyển đổi tọa độ pixel thành thời gian
+    const xScale = bitcoinChart.scales.x;
+    const clickDate = xScale.getValueForPixel(x);
+    
+    if (!clickDate) return;
+    
+    // Thêm điểm click vào mảng
+    clickZoomPoints.push({
+        date: clickDate,
+        x: x,
+        time: clickDate.getTime()
+    });
+    
+    // Hiển thị marker tạm thời
+    showClickMarker(x, clickZoomPoints.length);
+    
+    // Cập nhật trạng thái
+    if (clickZoomPoints.length === 1) {
+        updateClickZoomStatus('Đã ghi nhận điểm 1, chờ điểm 2...', 'success');
+    } else if (clickZoomPoints.length === 2) {
+        // Thực hiện zoom
+        performClickZoom();
+    }
+}
+
+function showClickMarker(x, pointNumber) {
+    const chartContainer = document.querySelector('.chart-container');
+    if (!chartContainer) return;
+    
+    const marker = document.createElement('div');
+    marker.className = `click-marker marker-${pointNumber}`;
+    marker.style.left = `${x}px`;
+    marker.innerHTML = `<span>${pointNumber}</span>`;
+    
+    chartContainer.appendChild(marker);
+    
+    // Xóa marker sau 2 giây
+    setTimeout(() => {
+        if (marker.parentNode) {
+            marker.remove();
+        }
+    }, 2000);
+}
+
+function performClickZoom() {
+    if (clickZoomPoints.length !== 2) return;
+    
+    // Lấy hai thời điểm
+    const time1 = clickZoomPoints[0].time;
+    const time2 = clickZoomPoints[1].time;
+    
+    // Xác định min và max (không phân biệt thứ tự)
+    const minTime = Math.min(time1, time2);
+    const maxTime = Math.max(time1, time2);
+    
+    // Thêm padding 5% mỗi bên
+    const range = maxTime - minTime;
+    const padding = range * 0.05;
+    
+    const startDate = new Date(minTime - padding);
+    const endDate = new Date(maxTime + padding);
+    
+    // Lưu vào history
+    zoomState.zoomHistory.push({
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max
+    });
+    
+    // Áp dụng zoom
+    bitcoinChart.options.scales.x.min = startDate;
+    bitcoinChart.options.scales.x.max = endDate;
+    bitcoinChart.options.scales.x.time.unit = determineTimeUnit(range);
+    zoomState.isZoomed = true;
+    zoomState.min = startDate;
+    zoomState.max = endDate;
+    
+    bitcoinChart.update();
+    
+    // Hiển thị thông tin zoom
+    const days = Math.ceil(range / (1000 * 60 * 60 * 24));
+    updateClickZoomStatus(`Đã zoom ${days} ngày (${formatDate(startDate)} - ${formatDate(endDate)})`, 'success');
+    
+    // Cập nhật zoom info và slider
+    updateZoomInfo();
+    updateTimelineSlider();
+    
+    // Xóa các điểm click
+    clickZoomPoints = [];
+    
+    // Hiệu ứng flash
+    flashChart();
+}
+
+function determineTimeUnit(rangeMs) {
+    const days = rangeMs / (1000 * 60 * 60 * 24);
+    
+    if (days <= 1) return 'hour';
+    if (days <= 7) return 'day';
+    if (days <= 30) return 'week';
+    if (days <= 90) return 'month';
+    return 'month';
+}
+
+function flashChart() {
+    const chartContainer = document.querySelector('.chart-container');
+    if (!chartContainer) return;
+    
+    chartContainer.classList.add('chart-flash');
+    setTimeout(() => {
+        chartContainer.classList.remove('chart-flash');
+    }, 300);
+}
+
+function resetZoomFromInstructions() {
+    resetZoom();
+    updateClickZoomStatus('Đã reset zoom, chờ click lần 1...', 'waiting');
+    clickZoomPoints = [];
+}
+
+function exitClickZoomMode() {
+    if (clickZoomInstructions) {
+        clickZoomInstructions.style.display = 'none';
+    }
+    clickZoomPoints = [];
+    
+    // Reset cursor
+    document.getElementById('bitcoinChart').style.cursor = '';
+    
+    showNotification('Đã thoát chế độ click-to-zoom', 'info');
+}
+
+function closeClickZoomInstructions() {
+    exitClickZoomMode();
+}
+
+// Cập nhật hàm initializeZoomControls để thêm nút kích hoạt
+function initializeZoomControls() {
+    console.log('🔍 Initializing zoom controls...');
+    
+    if (document.querySelector('.zoom-toolbar')) {
+        console.log('✅ Zoom toolbar already exists');
+        return;
+    }
+    
+    const chartSection = document.querySelector('.chart-section');
+    if (!chartSection) return;
+    
+    const zoomToolbar = document.createElement('div');
+    zoomToolbar.className = 'zoom-toolbar';
+    zoomToolbar.innerHTML = `
+        <div class="zoom-controls">
+            <button class="zoom-btn" id="zoomIn" title="Zoom In">
+                <i class="fas fa-search-plus"></i>
+            </button>
+            <button class="zoom-btn" id="zoomOut" title="Zoom Out">
+                <i class="fas fa-search-minus"></i>
+            </button>
+            <button class="zoom-btn" id="zoomReset" title="Reset Zoom">
+                <i class="fas fa-expand-alt"></i>
+            </button>
+            <button class="zoom-btn" id="zoomPan" title="Pan Mode">
+                <i class="fas fa-arrows-alt"></i>
+            </button>
+            <button class="zoom-btn" id="zoomSelect" title="Select Area">
+                <i class="fas fa-vector-square"></i>
+            </button>
+            <button class="zoom-btn active" id="zoomClick" title="Click to Zoom (2 clicks)">
+                <i class="fas fa-mouse-pointer"></i>
+            </button>
+        </div>
+        <div class="timeline-controls">
+            <input type="range" id="timelineSlider" min="0" max="100" value="100" class="timeline-slider">
+            <div class="timeline-labels">
+                <span id="zoomStartLabel">Start</span>
+                <span id="zoomEndLabel">End</span>
+            </div>
+        </div>
+        <div class="zoom-info">
+            <span id="zoomInfo">Full Range</span>
+            <button class="zoom-history-btn" id="zoomBack" title="Back">
+                <i class="fas fa-undo"></i>
+            </button>
+        </div>
+    `;
+    
+    chartSection.querySelector('.chart-container').parentNode.insertBefore(zoomToolbar, chartSection.querySelector('.chart-info'));
+    
+    addZoomStyles();
+    setupZoomEventListeners();
+    setupDragToZoom();
+    
+    // Mặc định kích hoạt chế độ click-to-zoom
+    activateClickZoomMode();
+}
+
+function activateClickZoomMode() {
+    // Deactivate các chế độ khác
+    const panBtn = document.getElementById('zoomPan');
+    const selectBtn = document.getElementById('zoomSelect');
+    const clickBtn = document.getElementById('zoomClick');
+    
+    if (panBtn) panBtn.classList.remove('active');
+    if (selectBtn) selectBtn.classList.remove('active');
+    
+    if (clickBtn) {
+        clickBtn.classList.add('active');
+    }
+    
+    // Hiển thị instructions
+    if (clickZoomInstructions) {
+        clickZoomInstructions.style.display = 'block';
+    } else {
+        initializeClickToZoom();
+    }
+    
+    // Reset points
+    clickZoomPoints = [];
+    
+    // Update cursor
+    document.getElementById('bitcoinChart').style.cursor = 'crosshair';
+    
+    showNotification('Chế độ click-to-zoom: Click 2 điểm bất kỳ trên biểu đồ để zoom', 'info', 4000);
+}
+
+// Cập nhật setupZoomEventListeners
+function setupZoomEventListeners() {
+    document.getElementById('zoomIn')?.addEventListener('click', function() {
+        deactivateAllModes();
+        zoomChart(0.8);
+    });
+    
+    document.getElementById('zoomOut')?.addEventListener('click', function() {
+        deactivateAllModes();
+        zoomChart(1.2);
+    });
+    
+    document.getElementById('zoomReset')?.addEventListener('click', function() {
+        deactivateAllModes();
+        resetZoom();
+    });
+    
+    document.getElementById('zoomPan')?.addEventListener('click', function() {
+        togglePanMode();
+        if (clickZoomInstructions) clickZoomInstructions.style.display = 'none';
+    });
+    
+    document.getElementById('zoomSelect')?.addEventListener('click', function() {
+        toggleSelectMode();
+        if (clickZoomInstructions) clickZoomInstructions.style.display = 'none';
+    });
+    
+    document.getElementById('zoomClick')?.addEventListener('click', function() {
+        const panBtn = document.getElementById('zoomPan');
+        const selectBtn = document.getElementById('zoomSelect');
+        
+        if (panBtn) panBtn.classList.remove('active');
+        if (selectBtn) selectBtn.classList.remove('active');
+        
+        this.classList.add('active');
+        document.getElementById('bitcoinChart').style.cursor = 'crosshair';
+        
+        activateClickZoomMode();
+    });
+    
+    const timelineSlider = document.getElementById('timelineSlider');
+    if (timelineSlider) {
+        timelineSlider.addEventListener('input', function() {
+            deactivateAllModes();
+            updateZoomFromSlider(this.value);
+        });
+    }
+    
+    document.getElementById('zoomBack')?.addEventListener('click', function() {
+        zoomBack();
+    });
+    
+    addTimeframePresets();
+}
+
+function deactivateAllModes() {
+    const panBtn = document.getElementById('zoomPan');
+    const selectBtn = document.getElementById('zoomSelect');
+    const clickBtn = document.getElementById('zoomClick');
+    
+    if (panBtn) panBtn.classList.remove('active');
+    if (selectBtn) selectBtn.classList.remove('active');
+    if (clickBtn) clickBtn.classList.remove('active');
+    
+    document.getElementById('bitcoinChart').style.cursor = '';
+    
+    if (clickZoomInstructions) {
+        clickZoomInstructions.style.display = 'none';
+    }
+    
+    clickZoomPoints = [];
+}
+
+// Thêm CSS cho click markers và instructions
+function addClickZoomStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .click-zoom-instructions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--wave-trough);
+            border-radius: 10px;
+            padding: 15px;
+            width: 280px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            animation: slideInRight 0.3s ease;
+        }
+        
+        .instructions-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .instructions-header i {
+            color: var(--wave-trough);
+            font-size: 1.2em;
+        }
+        
+        .instructions-header span {
+            flex: 1;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .close-instructions {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .close-instructions:hover {
+            color: white;
+        }
+        
+        .instructions-body {
+            margin-bottom: 15px;
+        }
+        
+        .instructions-body p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 8px 0;
+            font-size: 0.9em;
+        }
+        
+        .instruction-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        
+        .status-waiting {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #ffc107;
+            color: #ffc107;
+        }
+        
+        .status-success {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+            color: #28a745;
+        }
+        
+        .status-error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+            color: #dc3545;
+        }
+        
+        .status-info {
+            background: rgba(23, 162, 184, 0.2);
+            border: 1px solid #17a2b8;
+            color: #17a2b8;
+        }
+        
+        .instructions-footer {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .reset-zoom-btn, .exit-zoom-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .reset-zoom-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .reset-zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .exit-zoom-btn {
+            background: var(--wave-trough);
+            color: white;
+            border: 1px solid var(--wave-trough);
+        }
+        
+        .exit-zoom-btn:hover {
+            background: var(--wave-mid);
+        }
+        
+        .click-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            z-index: 100;
+            animation: markerPulse 1s ease;
+        }
+        
+        .click-marker span {
+            position: absolute;
+            top: 10px;
+            left: -10px;
+            background: var(--wave-trough);
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .marker-2 span {
+            background: #ff2e63;
+        }
+        
+        @keyframes markerPulse {
+            0% {
+                opacity: 0;
+                transform: scaleY(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: scaleY(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scaleY(0.5);
+            }
+        }
+        
+        .chart-flash {
+            animation: chartFlash 0.3s ease;
+        }
+        
+        @keyframes chartFlash {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 30px 10px rgba(0, 212, 255, 0.7);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
+            }
+        }
+        
+        #zoomClick.active {
+            background: var(--wave-trough);
+            color: white;
+            border-color: var(--wave-trough);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+    `;
+    document.head.appendChild(style);
+}
