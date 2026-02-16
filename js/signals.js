@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.12 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.13 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.12';
+const APP_VERSION = '1.4.13';
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi
@@ -1070,7 +1070,9 @@ function highlightSignalOnChart(signal) {
     console.log(`📊 Chart highlight for ${signal.signal_type} at $${signal.price}`);
 }
 
-// ========== CHART FUNCTIONS ==========
+// Thêm vào phần khởi tạo chart trong hàm initializeCharts()
+// Tìm phần options của chart và thêm callback cho legend click
+
 function initializeCharts() {
     console.log('📊 Initializing charts with REAL Bitcoin price data...');
     
@@ -1089,7 +1091,7 @@ function initializeCharts() {
         data: {
             datasets: [
                 {
-                    label: 'Bitcoin Price (Binance)',
+                    label: 'Bitcoin Price (Binance Real Data)',
                     data: [],
                     borderColor: 'rgba(247, 147, 26, 0.9)',
                     backgroundColor: 'rgba(247, 147, 26, 0.1)',
@@ -1097,7 +1099,8 @@ function initializeCharts() {
                     fill: true,
                     tension: 0.1,
                     pointRadius: 0,
-                    pointHoverRadius: 3
+                    pointHoverRadius: 3,
+                    hidden: false // Thêm thuộc tính hidden
                 },
                 {
                     label: 'Peak Signals',
@@ -1108,7 +1111,8 @@ function initializeCharts() {
                     pointRadius: 6,
                     pointStyle: 'triangle',
                     pointRotation: 180,
-                    showLine: false
+                    showLine: false,
+                    hidden: false // Thêm thuộc tính hidden
                 },
                 {
                     label: 'Dip Signals',
@@ -1118,7 +1122,8 @@ function initializeCharts() {
                     borderWidth: 0,
                     pointRadius: 6,
                     pointStyle: 'triangle',
-                    showLine: false
+                    showLine: false,
+                    hidden: false // Thêm thuộc tính hidden
                 }
             ]
         },
@@ -1135,7 +1140,29 @@ function initializeCharts() {
                     position: 'top',
                     labels: {
                         color: 'rgba(255, 255, 255, 0.7)',
-                        font: { size: 12 }
+                        font: { size: 12 },
+                        // Thêm filter để xử lý khi click vào legend
+                        filter: function(item, chart) {
+                            return true; // Giữ nguyên filter mặc định
+                        }
+                    },
+                    // THÊM CALLBACK NÀY - XỬ LÝ KHI CLICK VÀO LEGEND
+                    onClick: function(e, legendItem, legend) {
+                        // Gọi hàm onClick mặc định của Chart.js
+                        const index = legendItem.datasetIndex;
+                        const ci = legend.chart;
+                        
+                        // Toggle visibility của dataset được click
+                        const meta = ci.getDatasetMeta(index);
+                        meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
+                        
+                        // Cập nhật chart
+                        ci.update();
+                        
+                        // === THÊM PHẦN XỬ LÝ SCALE TỰ ĐỘNG ===
+                        setTimeout(() => {
+                            autoScaleChartAfterLegendClick(ci);
+                        }, 50);
                     }
                 },
                 tooltip: {
@@ -1219,6 +1246,113 @@ function initializeCharts() {
     }, 500);
 }
 
+// THÊM HÀM MỚI - Auto scale chart khi tắt đường Bitcoin Price
+function autoScaleChartAfterLegendClick(chart) {
+    if (!chart) return;
+    
+    // Kiểm tra dataset nào đang hiển thị
+    const priceDatasetVisible = !chart.getDatasetMeta(0).hidden;
+    const peakDatasetVisible = !chart.getDatasetMeta(1).hidden;
+    const dipDatasetVisible = !chart.getDatasetMeta(2).hidden;
+    
+    console.log('🔄 Auto-scaling chart - Price visible:', priceDatasetVisible, 
+                'Peak visible:', peakDatasetVisible, 'Dip visible:', dipDatasetVisible);
+    
+    // Nếu tắt đường giá (price) nhưng vẫn còn Peak/Dip
+    if (!priceDatasetVisible && (peakDatasetVisible || dipDatasetVisible)) {
+        console.log('📊 Scaling chart to fit Peak/Dip signals only');
+        
+        // Lấy tất cả signal data từ dataset 1 và 2
+        const allSignals = [];
+        
+        if (peakDatasetVisible) {
+            const peakData = chart.data.datasets[1].data;
+            allSignals.push(...peakData);
+        }
+        
+        if (dipDatasetVisible) {
+            const dipData = chart.data.datasets[2].data;
+            allSignals.push(...dipData);
+        }
+        
+        if (allSignals.length > 0) {
+            // Tìm min và max date từ signals
+            const dates = allSignals.map(s => s.x.getTime());
+            const minDate = new Date(Math.min(...dates));
+            const maxDate = new Date(Math.max(...dates));
+            
+            // Thêm padding 10% mỗi bên
+            const range = maxDate - minDate;
+            const padding = range * 0.1;
+            
+            const startDate = new Date(minDate.getTime() - padding);
+            const endDate = new Date(maxDate.getTime() + padding);
+            
+            console.log(`📅 Scaling to signals range: ${formatDate(startDate)} - ${formatDate(endDate)}`);
+            
+            // Lưu vào zoom history
+            zoomState.zoomHistory.push({
+                min: chart.options.scales.x.min,
+                max: chart.options.scales.x.max
+            });
+            
+            // Áp dụng zoom mới
+            chart.options.scales.x.min = startDate;
+            chart.options.scales.x.max = endDate;
+            
+            // Xác định time unit phù hợp
+            const days = range / (1000 * 60 * 60 * 24);
+            if (days <= 30) {
+                chart.options.scales.x.time.unit = 'day';
+            } else if (days <= 90) {
+                chart.options.scales.x.time.unit = 'week';
+            } else {
+                chart.options.scales.x.time.unit = 'month';
+            }
+            
+            zoomState.isZoomed = true;
+            zoomState.min = startDate;
+            zoomState.max = endDate;
+            
+            chart.update();
+            
+            // Cập nhật UI
+            updateZoomInfo();
+            updateTimelineSlider();
+            
+            showNotification('Chart auto-scaled to show all signals', 'info', 2000);
+        }
+    }
+    // Nếu bật lại đường giá
+    else if (priceDatasetVisible && !zoomState.isZoomed) {
+        console.log('📊 Restoring full price range');
+        
+        // Restore về full range
+        if (historicalPriceData.length > 0) {
+            const fullData = historicalPriceData;
+            const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
+            const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
+            
+            const range = fullMax - fullMin;
+            const startDate = new Date(fullMin.getTime() - range * 0.05);
+            const endDate = new Date(fullMax.getTime() + range * 0.05);
+            
+            chart.options.scales.x.min = startDate;
+            chart.options.scales.x.max = endDate;
+            chart.options.scales.x.time.unit = 'month';
+            
+            zoomState.isZoomed = false;
+            zoomState.min = startDate;
+            zoomState.max = endDate;
+            
+            chart.update();
+            updateZoomInfo();
+            updateTimelineSlider();
+        }
+    }
+}
+
+// Cập nhật hàm updateChartsWithData() để thêm data và đảm bảo auto-scale hoạt động
 function updateChartsWithData() {
     if (!bitcoinChart) {
         console.warn('⚠️ Cannot update chart: no chart');
@@ -1260,6 +1394,11 @@ function updateChartsWithData() {
         signal: signal
     }));
     
+    // Reset hidden state (đảm bảo tất cả đều hiển thị ban đầu)
+    bitcoinChart.data.datasets[0].hidden = false;
+    bitcoinChart.data.datasets[1].hidden = false;
+    bitcoinChart.data.datasets[2].hidden = false;
+    
     // Update chart title to show data source
     const isSynthetic = historicalPriceData.some(d => d.synthetic);
     if (isSynthetic) {
@@ -1271,8 +1410,36 @@ function updateChartsWithData() {
     
     bitcoinChart.update();
     
+    // Auto-scale nếu cần (kiểm tra trạng thái hiện tại)
+    setTimeout(() => {
+        const priceVisible = !bitcoinChart.getDatasetMeta(0).hidden;
+        if (!priceVisible && (peakSignals.length > 0 || dipSignals.length > 0)) {
+            autoScaleChartAfterLegendClick(bitcoinChart);
+        }
+    }, 100);
+    
     console.log(`✅ Charts updated with REAL Bitcoin price data`);
 }
+
+// Thêm CSS cho notification mới
+const additionalStyle = document.createElement('style');
+additionalStyle.textContent = `
+    /* Style cho legend khi hover */
+    .chartjs-legend li:hover {
+        opacity: 0.8;
+        cursor: pointer;
+    }
+    
+    /* Animation khi auto-scale */
+    .chart-container {
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .chart-container.auto-scaling {
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+`;
+document.head.appendChild(additionalStyle);
 
 function initializeAnalysisCharts() {
     console.log('📊 Initializing analysis charts...');
