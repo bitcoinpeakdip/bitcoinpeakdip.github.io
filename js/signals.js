@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.14 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.15 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.14';
+const APP_VERSION = '1.4.15';
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi
@@ -1599,70 +1599,6 @@ function updateAnalysisCharts() {
     }
     
     console.log('✅ Analysis charts updated');
-}
-
-// ========== ZOOM & TIMELINE FUNCTIONS ==========
-function initializeZoomControls() {
-    console.log('🔍 Initializing zoom controls...');
-    
-    if (document.querySelector('.zoom-toolbar')) {
-        console.log('✅ Zoom toolbar already exists');
-        return;
-    }
-    
-    const chartSection = document.querySelector('.chart-section');
-    if (!chartSection) return;
-    
-    const zoomToolbar = document.createElement('div');
-    zoomToolbar.className = 'zoom-toolbar';
-    zoomToolbar.id = 'zoomToolbar';
-    zoomToolbar.innerHTML = `
-        <div class="zoom-controls">
-            <button class="zoom-btn" id="zoomIn" title="Zoom In">
-                <i class="fas fa-search-plus"></i>
-            </button>
-            <button class="zoom-btn" id="zoomOut" title="Zoom Out">
-                <i class="fas fa-search-minus"></i>
-            </button>
-            <button class="zoom-btn" id="zoomReset" title="Reset Zoom">
-                <i class="fas fa-expand-alt"></i>
-            </button>
-            <button class="zoom-btn" id="zoomPan" title="Pan Mode">
-                <i class="fas fa-arrows-alt"></i>
-            </button>
-            <button class="zoom-btn" id="zoomSelect" title="Select Area">
-                <i class="fas fa-vector-square"></i>
-            </button>
-            <button class="zoom-btn" id="zoomClick" title="Click to Zoom (2 clicks)">
-                <i class="fas fa-mouse-pointer"></i>
-            </button>
-        </div>
-        <div class="timeline-controls">
-            <input type="range" id="timelineSlider" min="0" max="100" value="100" class="timeline-slider">
-            <div class="timeline-labels">
-                <span id="zoomStartLabel">Start</span>
-                <span id="zoomEndLabel">End</span>
-            </div>
-        </div>
-        <div class="zoom-info">
-            <span id="zoomInfo">Full Range</span>
-            <button class="zoom-history-btn" id="zoomBack" title="Back">
-                <i class="fas fa-undo"></i>
-            </button>
-        </div>
-    `;
-    
-    chartSection.querySelector('.chart-container').parentNode.insertBefore(zoomToolbar, chartSection.querySelector('.chart-info'));
-    
-    addZoomStyles();
-    setupZoomEventListeners();
-    setupDragToZoom();
-    
-    // Tạo instructions panel
-    createClickZoomInstructions();
-    
-    // Kích hoạt click-to-zoom
-    activateClickZoomMode();
 }
 
 function addZoomStyles() {
@@ -3778,6 +3714,12 @@ function addChartToolbarStyles() {
 function createChartToolbar() {
     const chartSection = document.querySelector('.chart-section');
     if (!chartSection) return;
+
+    // Kiểm tra chart đã có data chưa
+    if (!bitcoinChart || historicalPriceData.length === 0) {
+        console.log('⏳ Waiting for chart data before creating toolbar');
+        return;
+    }    
     
     // Xóa toolbar cũ nếu có
     const oldToolbar = document.querySelector('.chart-tools-container');
@@ -4455,14 +4397,73 @@ function initializeZoomControls() {
 }
 
 // ========== CẬP NHẬT HÀM UPDATE CHARTS WITH DATA ==========
-// Thêm vào cuối hàm updateChartsWithData()
+// Cập nhật hàm updateChartsWithData() - thay thế hoàn toàn
 function updateChartsWithData() {
-    // ... existing code ...
+    if (!bitcoinChart) {
+        console.warn('⚠️ Cannot update chart: no chart');
+        return;
+    }
     
-    // Sau khi cập nhật chart, cập nhật range handles
+    console.log('📊 Updating charts with REAL Bitcoin price data...');
+    
+    if (historicalPriceData.length === 0) {
+        console.warn('⚠️ No Bitcoin price data available');
+        return;
+    }
+    
+    const peakSignals = signalsData.filter(s => s.signal_type === 'PEAK');
+    const dipSignals = signalsData.filter(s => s.signal_type === 'DIP');
+    
+    console.log(`📊 Chart data:`);
+    console.log(`- Real Bitcoin price points: ${historicalPriceData.length}`);
+    console.log(`- Peak signals: ${peakSignals.length}`);
+    console.log(`- Dip signals: ${dipSignals.length}`);
+    
+    // Update chart datasets
+    bitcoinChart.data.datasets[0].data = historicalPriceData;
+    bitcoinChart.data.datasets[1].data = peakSignals.map(signal => ({
+        x: signal.timestamp,
+        y: signal.price,
+        signal: signal
+    }));
+    bitcoinChart.data.datasets[2].data = dipSignals.map(signal => ({
+        x: signal.timestamp,
+        y: signal.price,
+        signal: signal
+    }));
+    
+    // Reset hidden state
+    bitcoinChart.data.datasets[0].hidden = false;
+    bitcoinChart.data.datasets[1].hidden = false;
+    bitcoinChart.data.datasets[2].hidden = false;
+    
+    // Update chart title
+    const isSynthetic = historicalPriceData.some(d => d.synthetic);
+    if (isSynthetic) {
+        bitcoinChart.data.datasets[0].label = 'Bitcoin Price (Synthetic Fallback)';
+        bitcoinChart.data.datasets[0].borderColor = 'rgba(255, 152, 0, 0.8)';
+    } else {
+        bitcoinChart.data.datasets[0].label = 'Bitcoin Price (Binance Real Data)';
+    }
+    
+    bitcoinChart.update();
+    
+    // Cập nhật range handles sau khi chart update
     setTimeout(() => {
-        updateRangeHandles();
+        if (typeof updateRangeHandles === 'function') {
+            updateRangeHandles();
+        }
     }, 100);
+    
+    // Auto-scale nếu cần
+    setTimeout(() => {
+        const priceVisible = !bitcoinChart.getDatasetMeta(0).hidden;
+        if (!priceVisible && (peakSignals.length > 0 || dipSignals.length > 0)) {
+            autoScaleChartAfterLegendClick(bitcoinChart);
+        }
+    }, 200);
+    
+    console.log(`✅ Charts updated with REAL Bitcoin price data`);
 }
 
 // Thêm hàm này vào cuối file để đảm bảo toolbar được tạo sau khi chart load
@@ -4471,3 +4472,56 @@ setTimeout(() => {
         initializeZoomControls();
     }
 }, 2000);
+
+// CẬP NHẬT HÀM INITIALIZE ZOOM CONTROLS
+function initializeZoomControls() {
+    console.log('🔍 Initializing zoom controls...');
+    
+    // Kiểm tra chart đã tồn tại chưa
+    if (!bitcoinChart) {
+        console.log('⏳ Chart not ready, will initialize zoom controls later');
+        return;
+    }
+    
+    // Thêm styles
+    addChartToolbarStyles();
+    
+    // Tạo toolbar mới
+    createChartToolbar();
+    
+    // Ẩn toolbar cũ nếu có
+    const oldToolbar = document.querySelector('.zoom-toolbar');
+    if (oldToolbar) {
+        oldToolbar.style.display = 'none';
+    }
+    
+    // Tạo instructions panel cho click-to-zoom (nếu cần)
+    createClickZoomInstructions();
+    
+    // Cập nhật range handles
+    setTimeout(() => {
+        updateRangeHandles();
+    }, 500);
+    
+    console.log('✅ Zoom controls initialized');
+}
+
+// Đảm bảo toolbar được tạo sau khi có data
+document.addEventListener('chartDataUpdated', function() {
+    if (bitcoinChart && historicalPriceData.length > 0) {
+        if (!document.querySelector('.chart-tools-container')) {
+            initializeZoomControls();
+        } else {
+            updateRangeHandles();
+        }
+    }
+});
+
+// Gọi event khi data được cập nhật
+const originalUpdateChartsWithData = updateChartsWithData;
+updateChartsWithData = function() {
+    originalUpdateChartsWithData.apply(this, arguments);
+    setTimeout(() => {
+        document.dispatchEvent(new CustomEvent('chartDataUpdated'));
+    }, 300);
+};
