@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.17 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.18 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.17';
+const APP_VERSION = '1.4.18';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
@@ -4590,8 +4590,12 @@ updateChartsWithData = function() {
 /**
  * Khởi tạo zoom slider cho mobile với touch events
  */
+// ========== MOBILE ZOOM SLIDER FIX - FIXED SCROLL ISSUE ==========
+/**
+ * Khởi tạo zoom slider cho mobile với touch events và ngăn scroll
+ */
 function initMobileZoomSlider() {
-    console.log('📱 Initializing mobile zoom slider...');
+    console.log('📱 Initializing mobile zoom slider with scroll prevention...');
     
     const slider = document.getElementById('timelineSlider');
     if (!slider) {
@@ -4604,10 +4608,116 @@ function initMobileZoomSlider() {
     const newSlider = slider.cloneNode(true);
     slider.parentNode.replaceChild(newSlider, slider);
     
-    // Thêm touch events cho mobile
-    newSlider.addEventListener('touchstart', handleSliderTouchStart, { passive: false });
-    newSlider.addEventListener('touchmove', handleSliderTouchMove, { passive: false });
-    newSlider.addEventListener('touchend', handleSliderTouchEnd);
+    // Biến để kiểm soát trạng thái
+    let isSliding = false;
+    let startY = 0;
+    
+    // === FIX CHÍNH: Ngăn scroll khi chạm vào slider ===
+    newSlider.addEventListener('touchstart', function(e) {
+        // Ngăn chặn hành vi mặc định và bubble để không scroll
+        e.preventDefault();
+        e.stopPropagation();
+        
+        isSliding = true;
+        startY = e.touches[0].clientY;
+        newSlider.dataset.touchActive = 'true';
+        
+        // Tính toán giá trị dựa trên vị trí touch
+        const rect = newSlider.getBoundingClientRect();
+        const touch = e.touches[0];
+        let x = touch.clientX - rect.left;
+        x = Math.max(0, Math.min(rect.width, x));
+        
+        const percent = (x / rect.width) * 100;
+        
+        // Cập nhật giá trị slider
+        newSlider.value = percent;
+        
+        // Trigger zoom update
+        if (typeof updateZoomFromSlider === 'function') {
+            updateZoomFromSlider(percent);
+        }
+        
+        // Hiển thị feedback
+        showSliderFeedback(percent);
+        
+        // Thêm class để ngăn scroll body
+        document.body.classList.add('slider-active');
+        
+        console.log('👆 Touch start on slider - scroll prevented');
+    }, { passive: false }); // passive: false là quan trọng để preventDefault hoạt động
+    
+    newSlider.addEventListener('touchmove', function(e) {
+        // Ngăn scroll khi di chuyển
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!isSliding || !newSlider.dataset.touchActive) return;
+        
+        const rect = newSlider.getBoundingClientRect();
+        const touch = e.touches[0];
+        
+        // Tính toán di chuyển theo chiều dọc để phát hiện ý định scroll
+        const currentY = touch.clientY;
+        const deltaY = Math.abs(currentY - startY);
+        
+        // Nếu di chuyển dọc nhiều hơn ngang, có thể user muốn scroll
+        // Nhưng vẫn cho phép điều chỉnh slider
+        if (deltaY > 20) {
+            // Cho phép scroll nhẹ nhưng vẫn giữ khả năng điều chỉnh slider
+            // Không preventDefault ở đây để vẫn có thể scroll nếu cần
+        }
+        
+        // Giới hạn trong phạm vi slider
+        let x = touch.clientX - rect.left;
+        x = Math.max(0, Math.min(rect.width, x));
+        
+        const percent = (x / rect.width) * 100;
+        
+        // Cập nhật giá trị slider
+        newSlider.value = percent;
+        
+        // Trigger zoom update
+        if (typeof updateZoomFromSlider === 'function') {
+            updateZoomFromSlider(percent);
+        }
+        
+        // Hiển thị feedback
+        showSliderFeedback(percent);
+        
+        console.log('👆 Touch move:', Math.round(percent) + '%');
+    }, { passive: false });
+    
+    newSlider.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        isSliding = false;
+        newSlider.dataset.touchActive = 'false';
+        
+        // Lưu state vào undo stack
+        if (typeof saveZoomState === 'function') {
+            saveZoomState();
+        }
+        
+        // Ẩn feedback
+        hideSliderFeedback();
+        
+        // Bỏ class ngăn scroll
+        document.body.classList.remove('slider-active');
+        
+        console.log('👆 Touch end');
+    });
+    
+    newSlider.addEventListener('touchcancel', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        isSliding = false;
+        newSlider.dataset.touchActive = 'false';
+        document.body.classList.remove('slider-active');
+        hideSliderFeedback();
+    });
     
     // Vẫn giữ mouse events cho desktop
     newSlider.addEventListener('mousedown', handleSliderMouseDown);
@@ -4615,12 +4725,11 @@ function initMobileZoomSlider() {
     newSlider.addEventListener('mouseup', handleSliderMouseUp);
     newSlider.addEventListener('mouseleave', handleSliderMouseLeave);
     
-    // Thêm CSS để cải thiện touch target
+    // Thêm CSS để cải thiện touch target và ngăn scroll
     addMobileSliderStyles();
     
-    console.log('✅ Mobile zoom slider initialized');
+    console.log('✅ Mobile zoom slider initialized with scroll prevention');
 }
-
 /**
  * Xử lý touch start trên slider
  */
@@ -4723,6 +4832,27 @@ function handleSliderMouseMove(e) {
 }
 
 /**
+ * Xử lý mouse move cho desktop
+ */
+function handleSliderMouseMove(e) {
+    const slider = e.target;
+    if (!slider.dataset.mouseActive) return;
+    
+    const rect = slider.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    x = Math.max(0, Math.min(rect.width, x));
+    
+    const percent = (x / rect.width) * 100;
+    slider.value = percent;
+    
+    if (typeof updateZoomFromSlider === 'function') {
+        updateZoomFromSlider(percent);
+    }
+    
+    showSliderFeedback(percent);
+}
+
+/**
  * Xử lý mouse up cho desktop
  */
 function handleSliderMouseUp(e) {
@@ -4779,7 +4909,11 @@ function hideSliderFeedback() {
  * Thêm CSS cho mobile slider
  */
 function addMobileSliderStyles() {
+    // Kiểm tra style đã tồn tại chưa
+    if (document.getElementById('mobileSliderStyles')) return;
+    
     const style = document.createElement('style');
+    style.id = 'mobileSliderStyles';
     style.textContent = `
         /* Cải thiện touch target cho slider */
         .timeline-slider {
@@ -4791,6 +4925,7 @@ function addMobileSliderStyles() {
             border-radius: 4px;
             outline: none;
             cursor: pointer;
+            touch-action: none; /* QUAN TRỌNG: Ngăn scroll khi chạm vào slider */
         }
         
         /* Webkit (Chrome, Safari, Edge) */
@@ -4894,7 +5029,20 @@ function addMobileSliderStyles() {
         /* Ngăn scroll khi kéo slider trên mobile */
         body.slider-active {
             overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
             touch-action: none;
+        }
+        
+        /* Đảm bảo slider không bị focus outline */
+        .timeline-slider:focus {
+            outline: none;
+        }
+        
+        /* Ngăn Chrome tự động scroll khi focus */
+        .timeline-slider {
+            -webkit-tap-highlight-color: transparent;
         }
     `;
     document.head.appendChild(style);

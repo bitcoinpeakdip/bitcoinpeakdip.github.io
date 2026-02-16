@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
 // Version: 1.4.0
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.4.17';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.4.17';
+const CACHE_NAME = 'bitcoin-peakdip-v1.4.18';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.4.18';
 
 // Assets to cache on install
 const STATIC_ASSETS = [

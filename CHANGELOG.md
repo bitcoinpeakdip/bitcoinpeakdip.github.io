@@ -1,5 +1,17 @@
 # Bitcoin PeakDip Changelog
 
+## 1.4.18 - 2026-02-16
+
+### 🚀 New Features
+- [FEATURE] Describe new features here
+
+### 🐛 Bug Fixes  
+- [FIX] Describe bug fixes here
+
+### 🔧 Improvements
+- [IMPROVEMENT] Describe improvements here
+
+
 ## 1.4.17 - 2026-02-16
 
 ### 🚀 New Features
