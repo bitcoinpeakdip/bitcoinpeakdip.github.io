@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.13 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.14 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.13';
+const APP_VERSION = '1.4.14';
 const VERSION_KEY = 'peakdip_version';
 
 // Kiểm tra và xử lý cache khi version thay đổi
@@ -3500,3 +3500,974 @@ if (window.bitcoinPriceData && typeof window.bitcoinPriceData === 'string') {
 
 console.log('✅ signals.js (REAL BITCOIN PRICE DATA VERSION) loaded successfully');
 console.log('ℹ️  This version uses REAL Bitcoin price data from Binance CSV');
+
+// Thêm vào phần khai báo biến (đầu file)
+// ========== CHART INTERACTION TOOLS ==========
+let currentTool = 'cursor'; // 'cursor', 'pan', 'zoom', 'undo'
+let isDragging = false;
+let dragStartX = null;
+let selectionRect = null;
+let undoStack = [];
+let redoStack = [];
+
+// ========== THÊM CSS CHO TOOLBAR MỚI ==========
+function addChartToolbarStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Chart Tools Container */
+        .chart-tools-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 8px 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+        }
+        
+        .tools-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 10px;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .tools-group:last-child {
+            border-right: none;
+        }
+        
+        .tool-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-glow);
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.1em;
+            position: relative;
+        }
+        
+        .tool-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            border-color: var(--wave-trough);
+        }
+        
+        .tool-btn.active {
+            background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+        
+        .tool-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 0 10px white;
+        }
+        
+        .tool-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Timeline Range Slider */
+        .timeline-range-container {
+            flex: 1;
+            min-width: 250px;
+            padding: 0 15px;
+        }
+        
+        .range-slider {
+            position: relative;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .range-fill {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(to right, var(--wave-trough), var(--wave-mid));
+            border-radius: 3px;
+            pointer-events: none;
+        }
+        
+        .range-handle {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: 2px solid var(--wave-trough);
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+            transition: box-shadow 0.2s ease;
+            z-index: 2;
+        }
+        
+        .range-handle:hover {
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        
+        .range-handle:active {
+            cursor: grabbing;
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+        
+        .range-handle.left {
+            left: 0%;
+        }
+        
+        .range-handle.right {
+            left: 100%;
+        }
+        
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            color: var(--text-glow);
+            font-size: 0.85em;
+        }
+        
+        /* Undo/Redo buttons */
+        .history-badge {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            color: var(--wave-trough);
+            margin-left: 5px;
+        }
+        
+        /* Cursor styles for different tools */
+        .tool-cursor {
+            cursor: default;
+        }
+        
+        .tool-pan {
+            cursor: grab;
+        }
+        
+        .tool-pan:active {
+            cursor: grabbing;
+        }
+        
+        .tool-zoom {
+            cursor: crosshair;
+        }
+        
+        /* Selection rectangle */
+        .chart-selection-rect {
+            position: absolute;
+            border: 2px solid var(--wave-trough);
+            background: rgba(0, 212, 255, 0.1);
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+            animation: selectionPulse 1s ease infinite;
+        }
+        
+        @keyframes selectionPulse {
+            0% { border-color: var(--wave-trough); }
+            50% { border-color: var(--wave-mid); }
+            100% { border-color: var(--wave-trough); }
+        }
+        
+        /* Tooltips */
+        .tool-btn[data-tooltip] {
+            position: relative;
+        }
+        
+        .tool-btn[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            border: 1px solid var(--wave-trough);
+            z-index: 1000;
+            pointer-events: none;
+            animation: tooltipFade 0.2s ease;
+        }
+        
+        @keyframes tooltipFade {
+            from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        /* Zoom level indicator */
+        .zoom-level-indicator {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 0.9em;
+            color: var(--wave-trough);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .zoom-level-indicator i {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .chart-tools-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .tools-group {
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 10px;
+                justify-content: center;
+            }
+            
+            .timeline-range-container {
+                min-width: auto;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .tools-group {
+                flex-wrap: wrap;
+            }
+            
+            .tool-btn {
+                width: 42px;
+                height: 42px;
+                font-size: 1.2em;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ========== TẠO TOOLBAR MỚI ==========
+function createChartToolbar() {
+    const chartSection = document.querySelector('.chart-section');
+    if (!chartSection) return;
+    
+    // Xóa toolbar cũ nếu có
+    const oldToolbar = document.querySelector('.chart-tools-container');
+    if (oldToolbar) oldToolbar.remove();
+    
+    // Tạo container mới
+    const toolbar = document.createElement('div');
+    toolbar.className = 'chart-tools-container';
+    toolbar.id = 'chartTools';
+    
+    // Group 1: Navigation tools
+    const navGroup = document.createElement('div');
+    navGroup.className = 'tools-group';
+    navGroup.innerHTML = `
+        <button class="tool-btn active" id="toolCursor" data-tool="cursor" data-tooltip="Cursor (C)">
+            <i class="fas fa-mouse-pointer"></i>
+        </button>
+        <button class="tool-btn" id="toolPan" data-tool="pan" data-tooltip="Pan (P)">
+            <i class="fas fa-arrows-alt"></i>
+        </button>
+        <button class="tool-btn" id="toolZoom" data-tool="zoom" data-tooltip="Zoom Area (Z)">
+            <i class="fas fa-vector-square"></i>
+        </button>
+    `;
+    
+    // Group 2: History tools
+    const historyGroup = document.createElement('div');
+    historyGroup.className = 'tools-group';
+    historyGroup.innerHTML = `
+        <button class="tool-btn" id="toolUndo" data-tooltip="Undo (Ctrl+Z)">
+            <i class="fas fa-undo"></i>
+            <span class="history-badge" id="undoCount">0</span>
+        </button>
+        <button class="tool-btn" id="toolRedo" data-tooltip="Redo (Ctrl+Y)">
+            <i class="fas fa-redo"></i>
+            <span class="history-badge" id="redoCount">0</span>
+        </button>
+        <button class="tool-btn" id="toolReset" data-tooltip="Reset View">
+            <i class="fas fa-expand-alt"></i>
+        </button>
+    `;
+    
+    // Group 3: Timeline range
+    const timelineGroup = document.createElement('div');
+    timelineGroup.className = 'tools-group';
+    timelineGroup.style.flex = '1';
+    timelineGroup.innerHTML = `
+        <div class="timeline-range-container">
+            <div class="range-slider" id="rangeSlider">
+                <div class="range-fill" id="rangeFill"></div>
+                <div class="range-handle left" id="rangeHandleLeft"></div>
+                <div class="range-handle right" id="rangeHandleRight"></div>
+            </div>
+            <div class="range-labels">
+                <span id="rangeStartLabel">Start</span>
+                <span id="rangeEndLabel">End</span>
+            </div>
+        </div>
+    `;
+    
+    // Group 4: Zoom level
+    const zoomGroup = document.createElement('div');
+    zoomGroup.className = 'tools-group';
+    zoomGroup.innerHTML = `
+        <div class="zoom-level-indicator" id="zoomLevel">
+            <i class="fas fa-search"></i>
+            <span>100%</span>
+        </div>
+    `;
+    
+    toolbar.appendChild(navGroup);
+    toolbar.appendChild(historyGroup);
+    toolbar.appendChild(timelineGroup);
+    toolbar.appendChild(zoomGroup);
+    
+    // Thêm vào chart section (trước chart container)
+    const chartContainer = chartSection.querySelector('.chart-container');
+    chartSection.insertBefore(toolbar, chartContainer);
+    
+    // Thêm event listeners
+    setupChartToolEvents();
+    
+    // Thêm keyboard shortcuts
+    setupKeyboardShortcuts();
+    
+    console.log('✅ Chart toolbar created');
+}
+
+// ========== SETUP TOOL EVENTS ==========
+function setupChartToolEvents() {
+    // Cursor tool
+    document.getElementById('toolCursor')?.addEventListener('click', () => {
+        setActiveTool('cursor');
+    });
+    
+    // Pan tool
+    document.getElementById('toolPan')?.addEventListener('click', () => {
+        setActiveTool('pan');
+    });
+    
+    // Zoom tool
+    document.getElementById('toolZoom')?.addEventListener('click', () => {
+        setActiveTool('zoom');
+    });
+    
+    // Undo
+    document.getElementById('toolUndo')?.addEventListener('click', () => {
+        undoZoom();
+    });
+    
+    // Redo
+    document.getElementById('toolRedo')?.addEventListener('click', () => {
+        redoZoom();
+    });
+    
+    // Reset
+    document.getElementById('toolReset')?.addEventListener('click', () => {
+        resetFullView();
+    });
+    
+    // Range slider handles
+    setupRangeSlider();
+    
+    // Chart mouse events for pan and zoom
+    setupChartMouseEvents();
+}
+
+// ========== SET ACTIVE TOOL ==========
+function setActiveTool(tool) {
+    currentTool = tool;
+    
+    // Update button states
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    if (tool !== 'undo' && tool !== 'redo') {
+        const activeBtn = document.getElementById(`tool${tool.charAt(0).toUpperCase() + tool.slice(1)}`);
+        if (activeBtn) activeBtn.classList.add('active');
+    }
+    
+    // Update chart cursor
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (!chartCanvas) return;
+    
+    chartCanvas.classList.remove('tool-cursor', 'tool-pan', 'tool-zoom');
+    
+    switch(tool) {
+        case 'cursor':
+            chartCanvas.classList.add('tool-cursor');
+            break;
+        case 'pan':
+            chartCanvas.classList.add('tool-pan');
+            break;
+        case 'zoom':
+            chartCanvas.classList.add('tool-zoom');
+            break;
+    }
+    
+    // Exit other modes
+    deactivateAllModes();
+    
+    console.log(`🛠️ Tool activated: ${tool}`);
+}
+
+// ========== SETUP RANGE SLIDER ==========
+function setupRangeSlider() {
+    const slider = document.getElementById('rangeSlider');
+    const leftHandle = document.getElementById('rangeHandleLeft');
+    const rightHandle = document.getElementById('rangeHandleRight');
+    const fill = document.getElementById('rangeFill');
+    const startLabel = document.getElementById('rangeStartLabel');
+    const endLabel = document.getElementById('rangeEndLabel');
+    
+    if (!slider || !leftHandle || !rightHandle) return;
+    
+    let activeHandle = null;
+    
+    // Get min/max dates from data
+    const getFullRange = () => {
+        if (historicalPriceData.length === 0) return { min: new Date(2020, 0, 1), max: new Date() };
+        
+        const dates = historicalPriceData.map(d => d.x);
+        return {
+            min: new Date(Math.min(...dates)),
+            max: new Date(Math.max(...dates))
+        };
+    };
+    
+    const updateRange = () => {
+        const leftPercent = parseFloat(leftHandle.style.left) || 0;
+        const rightPercent = parseFloat(rightHandle.style.left) || 100;
+        
+        // Update fill
+        fill.style.left = leftPercent + '%';
+        fill.style.width = (rightPercent - leftPercent) + '%';
+        
+        // Update labels
+        const fullRange = getFullRange();
+        const rangeMs = fullRange.max - fullRange.min;
+        
+        const startDate = new Date(fullRange.min.getTime() + (rangeMs * leftPercent / 100));
+        const endDate = new Date(fullRange.min.getTime() + (rangeMs * rightPercent / 100));
+        
+        startLabel.textContent = formatDateShort(startDate);
+        endLabel.textContent = formatDateShort(endDate);
+        
+        // Apply zoom to chart
+        if (bitcoinChart) {
+            zoomToRange(startDate, endDate);
+        }
+        
+        // Update zoom level
+        updateZoomLevel(rightPercent - leftPercent);
+    };
+    
+    // Mouse down on handles
+    leftHandle.addEventListener('mousedown', (e) => {
+        activeHandle = leftHandle;
+        e.stopPropagation();
+    });
+    
+    rightHandle.addEventListener('mousedown', (e) => {
+        activeHandle = rightHandle;
+        e.stopPropagation();
+    });
+    
+    // Mouse down on slider (for panning)
+    slider.addEventListener('mousedown', (e) => {
+        if (e.target === leftHandle || e.target === rightHandle) return;
+        
+        const rect = slider.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const percent = (clickX / rect.width) * 100;
+        
+        // Move both handles (pan)
+        const currentRange = parseFloat(rightHandle.style.left) - parseFloat(leftHandle.style.left);
+        let newLeft = percent - (currentRange / 2);
+        let newRight = percent + (currentRange / 2);
+        
+        if (newLeft < 0) {
+            newLeft = 0;
+            newRight = currentRange;
+        }
+        if (newRight > 100) {
+            newRight = 100;
+            newLeft = 100 - currentRange;
+        }
+        
+        leftHandle.style.left = newLeft + '%';
+        rightHandle.style.left = newRight + '%';
+        
+        updateRange();
+    });
+    
+    // Mouse move on document
+    document.addEventListener('mousemove', (e) => {
+        if (!activeHandle) return;
+        
+        const rect = slider.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        x = Math.max(0, Math.min(rect.width, x));
+        
+        let percent = (x / rect.width) * 100;
+        
+        if (activeHandle === leftHandle) {
+            const rightPercent = parseFloat(rightHandle.style.left) || 100;
+            percent = Math.min(percent, rightPercent - 5); // Min width 5%
+            leftHandle.style.left = percent + '%';
+        } else {
+            const leftPercent = parseFloat(leftHandle.style.left) || 0;
+            percent = Math.max(percent, leftPercent + 5); // Min width 5%
+            rightHandle.style.left = percent + '%';
+        }
+        
+        updateRange();
+    });
+    
+    // Mouse up
+    document.addEventListener('mouseup', () => {
+        if (activeHandle) {
+            // Save to undo stack
+            saveZoomState();
+            activeHandle = null;
+        }
+    });
+    
+    // Initialize
+    leftHandle.style.left = '0%';
+    rightHandle.style.left = '100%';
+    updateRange();
+}
+
+// ========== SETUP CHART MOUSE EVENTS ==========
+function setupChartMouseEvents() {
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (!chartCanvas) return;
+    
+    // Mouse down for pan/zoom
+    chartCanvas.addEventListener('mousedown', (e) => {
+        if (currentTool === 'pan') {
+            startPan(e);
+        } else if (currentTool === 'zoom') {
+            startZoomSelection(e);
+        }
+    });
+    
+    // Mouse move for pan/zoom
+    chartCanvas.addEventListener('mousemove', (e) => {
+        if (currentTool === 'pan' && isDragging) {
+            doPan(e);
+        } else if (currentTool === 'zoom' && isDragging) {
+            updateZoomSelection(e);
+        }
+    });
+    
+    // Mouse up
+    chartCanvas.addEventListener('mouseup', (e) => {
+        if (currentTool === 'pan' && isDragging) {
+            endPan(e);
+        } else if (currentTool === 'zoom' && isDragging) {
+            endZoomSelection(e);
+        }
+    });
+    
+    // Mouse leave
+    chartCanvas.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            if (currentTool === 'zoom' && selectionRect) {
+                selectionRect.remove();
+                selectionRect = null;
+            }
+            isDragging = false;
+        }
+    });
+}
+
+// ========== PAN FUNCTIONS ==========
+function startPan(e) {
+    isDragging = true;
+    dragStartX = e.clientX;
+    chartCanvas.style.cursor = 'grabbing';
+}
+
+function doPan(e) {
+    if (!isDragging || !bitcoinChart || !zoomState.min || !zoomState.max) return;
+    
+    const deltaX = e.clientX - dragStartX;
+    const chartWidth = chartCanvas.width;
+    const timeRange = zoomState.max - zoomState.min;
+    const timePerPixel = timeRange / chartWidth;
+    
+    const timeDelta = deltaX * timePerPixel;
+    
+    const newMin = new Date(zoomState.min.getTime() - timeDelta);
+    const newMax = new Date(zoomState.max.getTime() - timeDelta);
+    
+    // Check bounds
+    const fullData = historicalPriceData;
+    const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
+    const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
+    
+    if (newMin >= fullMin && newMax <= fullMax) {
+        zoomState.min = newMin;
+        zoomState.max = newMax;
+        
+        bitcoinChart.options.scales.x.min = newMin;
+        bitcoinChart.options.scales.x.max = newMax;
+        bitcoinChart.update();
+        
+        updateRangeHandles();
+    }
+    
+    dragStartX = e.clientX;
+}
+
+function endPan(e) {
+    isDragging = false;
+    chartCanvas.style.cursor = 'grab';
+    saveZoomState();
+}
+
+// ========== ZOOM SELECTION FUNCTIONS ==========
+function startZoomSelection(e) {
+    isDragging = true;
+    
+    const rect = chartCanvas.getBoundingClientRect();
+    dragStartX = e.clientX - rect.left;
+    
+    selectionRect = document.createElement('div');
+    selectionRect.className = 'chart-selection-rect';
+    selectionRect.style.left = dragStartX + 'px';
+    selectionRect.style.top = '0';
+    selectionRect.style.height = chartCanvas.height + 'px';
+    selectionRect.style.width = '0px';
+    
+    chartCanvas.parentNode.appendChild(selectionRect);
+}
+
+function updateZoomSelection(e) {
+    if (!isDragging || !selectionRect) return;
+    
+    const rect = chartCanvas.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    
+    const left = Math.min(dragStartX, currentX);
+    const width = Math.abs(currentX - dragStartX);
+    
+    selectionRect.style.left = left + 'px';
+    selectionRect.style.width = width + 'px';
+}
+
+function endZoomSelection(e) {
+    if (!isDragging || !selectionRect || !bitcoinChart) {
+        if (selectionRect) selectionRect.remove();
+        isDragging = false;
+        return;
+    }
+    
+    const rect = chartCanvas.getBoundingClientRect();
+    const endX = e.clientX - rect.left;
+    
+    const minX = Math.min(dragStartX, endX);
+    const maxX = Math.max(dragStartX, endX);
+    
+    const xScale = bitcoinChart.scales.x;
+    const minDate = xScale.getValueForPixel(minX);
+    const maxDate = xScale.getValueForPixel(maxX);
+    
+    if (minDate && maxDate && (maxDate - minDate) > 0) {
+        zoomToRange(minDate, maxDate);
+        saveZoomState();
+    }
+    
+    selectionRect.remove();
+    selectionRect = null;
+    isDragging = false;
+}
+
+// ========== UNDO/REDO FUNCTIONS ==========
+function saveZoomState() {
+    if (!bitcoinChart) return;
+    
+    const state = {
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max,
+        unit: bitcoinChart.options.scales.x.time.unit
+    };
+    
+    undoStack.push(state);
+    redoStack = [];
+    
+    updateHistoryCounters();
+}
+
+function undoZoom() {
+    if (undoStack.length === 0) return;
+    
+    // Save current state to redo
+    const currentState = {
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max,
+        unit: bitcoinChart.options.scales.x.time.unit
+    };
+    redoStack.push(currentState);
+    
+    // Apply previous state
+    const prevState = undoStack.pop();
+    applyZoomState(prevState);
+    
+    updateHistoryCounters();
+}
+
+function redoZoom() {
+    if (redoStack.length === 0) return;
+    
+    // Save current state to undo
+    const currentState = {
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max,
+        unit: bitcoinChart.options.scales.x.time.unit
+    };
+    undoStack.push(currentState);
+    
+    // Apply next state
+    const nextState = redoStack.pop();
+    applyZoomState(nextState);
+    
+    updateHistoryCounters();
+}
+
+function applyZoomState(state) {
+    if (!bitcoinChart || !state) return;
+    
+    bitcoinChart.options.scales.x.min = state.min;
+    bitcoinChart.options.scales.x.max = state.max;
+    bitcoinChart.options.scales.x.time.unit = state.unit || 'month';
+    
+    zoomState.min = state.min;
+    zoomState.max = state.max;
+    zoomState.isZoomed = true;
+    
+    bitcoinChart.update();
+    
+    updateRangeHandles();
+    updateZoomInfo();
+}
+
+function resetFullView() {
+    if (historicalPriceData.length === 0) return;
+    
+    saveZoomState();
+    
+    const fullData = historicalPriceData;
+    const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
+    const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
+    
+    const range = fullMax - fullMin;
+    const startDate = new Date(fullMin.getTime() - range * 0.05);
+    const endDate = new Date(fullMax.getTime() + range * 0.05);
+    
+    bitcoinChart.options.scales.x.min = startDate;
+    bitcoinChart.options.scales.x.max = endDate;
+    bitcoinChart.options.scales.x.time.unit = 'month';
+    
+    zoomState.min = startDate;
+    zoomState.max = endDate;
+    zoomState.isZoomed = false;
+    
+    bitcoinChart.update();
+    
+    updateRangeHandles();
+    updateZoomInfo();
+    
+    // Reset handles
+    document.getElementById('rangeHandleLeft').style.left = '0%';
+    document.getElementById('rangeHandleRight').style.left = '100%';
+    updateZoomLevel(100);
+}
+
+function updateHistoryCounters() {
+    const undoCount = document.getElementById('undoCount');
+    const redoCount = document.getElementById('redoCount');
+    
+    if (undoCount) {
+        undoCount.textContent = undoStack.length;
+        undoCount.style.opacity = undoStack.length > 0 ? '1' : '0.5';
+    }
+    
+    if (redoCount) {
+        redoCount.textContent = redoStack.length;
+        redoCount.style.opacity = redoStack.length > 0 ? '1' : '0.5';
+    }
+}
+
+// ========== UPDATE RANGE HANDLES ==========
+function updateRangeHandles() {
+    if (!bitcoinChart || historicalPriceData.length === 0) return;
+    
+    const fullData = historicalPriceData;
+    const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
+    const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
+    const fullRange = fullMax - fullMin;
+    
+    const currentMin = zoomState.min || fullMin;
+    const currentMax = zoomState.max || fullMax;
+    
+    const leftPercent = ((currentMin - fullMin) / fullRange) * 100;
+    const rightPercent = ((currentMax - fullMin) / fullRange) * 100;
+    
+    const leftHandle = document.getElementById('rangeHandleLeft');
+    const rightHandle = document.getElementById('rangeHandleRight');
+    
+    if (leftHandle) leftHandle.style.left = leftPercent + '%';
+    if (rightHandle) rightHandle.style.left = rightPercent + '%';
+    
+    // Update fill
+    const fill = document.getElementById('rangeFill');
+    if (fill) {
+        fill.style.left = leftPercent + '%';
+        fill.style.width = (rightPercent - leftPercent) + '%';
+    }
+    
+    // Update labels
+    const startLabel = document.getElementById('rangeStartLabel');
+    const endLabel = document.getElementById('rangeEndLabel');
+    
+    if (startLabel) startLabel.textContent = formatDateShort(currentMin);
+    if (endLabel) endLabel.textContent = formatDateShort(currentMax);
+    
+    // Update zoom level
+    updateZoomLevel(rightPercent - leftPercent);
+}
+
+function updateZoomLevel(percent) {
+    const zoomLevel = document.querySelector('#zoomLevel span');
+    if (!zoomLevel) return;
+    
+    if (percent >= 95) {
+        zoomLevel.textContent = '100%';
+    } else if (percent >= 50) {
+        zoomLevel.textContent = Math.round(percent) + '%';
+    } else if (percent >= 25) {
+        zoomLevel.textContent = Math.round(percent) + '% (Zoomed)';
+    } else {
+        zoomLevel.textContent = Math.round(percent) + '% (Max Zoom)';
+    }
+}
+
+// ========== KEYBOARD SHORTCUTS ==========
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ignore if typing in input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        switch(e.key.toLowerCase()) {
+            case 'c':
+                setActiveTool('cursor');
+                e.preventDefault();
+                break;
+            case 'p':
+                setActiveTool('pan');
+                e.preventDefault();
+                break;
+            case 'z':
+                if (e.ctrlKey) {
+                    if (e.shiftKey) {
+                        redoZoom(); // Ctrl+Shift+Z = Redo
+                    } else {
+                        undoZoom(); // Ctrl+Z = Undo
+                    }
+                    e.preventDefault();
+                }
+                break;
+            case 'y':
+                if (e.ctrlKey) {
+                    redoZoom(); // Ctrl+Y = Redo
+                    e.preventDefault();
+                }
+                break;
+            case 'escape':
+                setActiveTool('cursor');
+                if (selectionRect) {
+                    selectionRect.remove();
+                    selectionRect = null;
+                }
+                isDragging = false;
+                e.preventDefault();
+                break;
+        }
+    });
+}
+
+// ========== CẬP NHẬT HÀM INITIALIZE ZOOM CONTROLS ==========
+// Thay thế hàm initializeZoomControls() cũ
+function initializeZoomControls() {
+    console.log('🔍 Initializing zoom controls...');
+    
+    // Thêm styles
+    addChartToolbarStyles();
+    
+    // Tạo toolbar mới
+    createChartToolbar();
+    
+    // Ẩn toolbar cũ nếu có
+    const oldToolbar = document.querySelector('.zoom-toolbar');
+    if (oldToolbar) {
+        oldToolbar.style.display = 'none';
+    }
+    
+    // Tạo instructions panel cho click-to-zoom (nếu cần)
+    createClickZoomInstructions();
+    
+    console.log('✅ Zoom controls initialized');
+}
+
+// ========== CẬP NHẬT HÀM UPDATE CHARTS WITH DATA ==========
+// Thêm vào cuối hàm updateChartsWithData()
+function updateChartsWithData() {
+    // ... existing code ...
+    
+    // Sau khi cập nhật chart, cập nhật range handles
+    setTimeout(() => {
+        updateRangeHandles();
+    }, 100);
+}
+
+// Thêm hàm này vào cuối file để đảm bảo toolbar được tạo sau khi chart load
+setTimeout(() => {
+    if (bitcoinChart && !document.querySelector('.chart-tools-container')) {
+        initializeZoomControls();
+    }
+}, 2000);
