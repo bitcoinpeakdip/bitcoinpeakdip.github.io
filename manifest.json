@@ -1,8 +1,8 @@
 {
-  "name": "Bitcoin PeakDip v1.4.18",
+  "name": "Bitcoin PeakDip v1.4.19",
   "short_name": "Bitcoin PeakDip",
   "description": "Real-time Bitcoin peak and dip detection using Early Warning System with AI algorithms",
-  "start_url": "/?v=1.4.18",
+  "start_url": "/?v=1.4.19",
   "display": "standalone",
   "background_color": "#050811",
   "theme_color": "#00d4ff",
