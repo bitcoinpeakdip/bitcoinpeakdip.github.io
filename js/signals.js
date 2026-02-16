@@ -417,6 +417,19 @@ function parseBitcoinPriceData(csvText) {
     }
     
     showNotification(`Loaded ${validRows} real Bitcoin price points from Binance`, 'success');
+
+    // Sau khi parse xong, kiểm tra dữ liệu
+    setTimeout(() => {
+        if (validateHistoricalData()) {
+            console.log('✅ Historical price data validated');
+            // Cập nhật range handles
+            if (typeof updateRangeHandles === 'function') {
+                setTimeout(updateRangeHandles, 500);
+            }
+        } else {
+            console.warn('⚠️ Historical price data has invalid dates');
+        }
+    }, 100);    
 }
 
 function parseBinanceDate(dateStr) {
@@ -2205,36 +2218,114 @@ function toggleSelectMode() {
     }
 }
 
+/**
+ * Cập nhật zoom từ slider value
+ * FIXED: Xử lý Invalid Date
+ */
 function updateZoomFromSlider(value) {
-    if (historicalPriceData.length === 0) return;
-    
-    const fullData = historicalPriceData;
-    const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
-    const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
-    const fullRange = fullMax - fullMin;
-    
-    const visiblePercentage = value / 100;
-    const visibleRange = fullRange * visiblePercentage;
-    
-    const endDate = fullMax;
-    const startDate = new Date(fullMax.getTime() - visibleRange);
-    
-    if (zoomState.isZoomed) {
-        zoomState.zoomHistory.push({
-            min: bitcoinChart.options.scales.x.min,
-            max: bitcoinChart.options.scales.x.max
-        });
+    if (!bitcoinChart || !historicalPriceData || historicalPriceData.length === 0) {
+        console.log('⏳ Cannot update zoom: no data');
+        return;
     }
     
-    zoomState.min = startDate;
-    zoomState.max = endDate;
-    zoomState.isZoomed = value < 100;
+    try {
+        const fullData = historicalPriceData;
+        
+        // Lọc dates hợp lệ
+        const validDates = fullData
+            .map(d => d.x)
+            .filter(date => date && date instanceof Date && !isNaN(date.getTime()));
+        
+        if (validDates.length === 0) {
+            console.warn('No valid dates for zoom');
+            return;
+        }
+        
+        const fullMin = new Date(Math.min(...validDates.map(d => d.getTime())));
+        const fullMax = new Date(Math.max(...validDates.map(d => d.getTime())));
+        
+        // Kiểm tra dates hợp lệ
+        if (isNaN(fullMin.getTime()) || isNaN(fullMax.getTime())) {
+            console.error('Invalid full range dates for zoom');
+            return;
+        }
+        
+        const fullRange = fullMax - fullMin;
+        
+        // value từ 0-100, 0 là zoom xa nhất (full range), 100 là zoom gần nhất
+        const visiblePercentage = Math.min(100, Math.max(0, parseFloat(value) || 100)) / 100;
+        
+        // Đảm bảo visiblePercentage hợp lệ
+        if (isNaN(visiblePercentage) || visiblePercentage < 0.01) {
+            return;
+        }
+        
+        const visibleRange = fullRange * visiblePercentage;
+        
+        // Tính toán start date (luôn kết thúc ở fullMax)
+        const startDate = new Date(fullMax.getTime() - visibleRange);
+        const endDate = new Date(fullMax.getTime());
+        
+        // Kiểm tra kết quả
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            console.error('Invalid zoom dates calculated');
+            return;
+        }
+        
+        // Lưu vào history nếu đang zoom
+        if (zoomState.isZoomed) {
+            zoomState.zoomHistory.push({
+                min: bitcoinChart.options.scales.x.min,
+                max: bitcoinChart.options.scales.x.max
+            });
+        }
+        
+        // Áp dụng zoom
+        zoomState.min = startDate;
+        zoomState.max = endDate;
+        zoomState.isZoomed = value < 100;
+        
+        bitcoinChart.options.scales.x.min = startDate;
+        bitcoinChart.options.scales.x.max = endDate;
+        
+        bitcoinChart.update();
+        
+        // Cập nhật UI
+        updateZoomInfo();
+        
+        // Cập nhật labels
+        const startLabel = document.getElementById('zoomStartLabel');
+        const endLabel = document.getElementById('zoomEndLabel');
+        if (startLabel) startLabel.textContent = formatDateShort(startDate);
+        if (endLabel) endLabel.textContent = formatDateShort(endDate);
+        
+    } catch (error) {
+        console.error('Error in updateZoomFromSlider:', error);
+    }
+}
+
+/**
+ * Kiểm tra dữ liệu historicalPriceData có hợp lệ không
+ */
+function validateHistoricalData() {
+    if (!historicalPriceData || historicalPriceData.length === 0) {
+        console.warn('No historical price data');
+        return false;
+    }
     
-    bitcoinChart.options.scales.x.min = startDate;
-    bitcoinChart.options.scales.x.max = endDate;
+    // Kiểm tra 5 điểm dữ liệu đầu tiên
+    const sampleSize = Math.min(5, historicalPriceData.length);
+    let validCount = 0;
     
-    bitcoinChart.update();
-    updateZoomInfo();
+    for (let i = 0; i < sampleSize; i++) {
+        const point = historicalPriceData[i];
+        if (point && point.x && point.x instanceof Date && !isNaN(point.x.getTime())) {
+            validCount++;
+        }
+    }
+    
+    console.log(`Data validation: ${validCount}/${sampleSize} valid dates`);
+    return validCount > 0;
 }
 
 function updateTimelineSlider() {
@@ -3284,30 +3375,48 @@ function formatDateTime(date) {
     return `${formatDate(date)} ${formatTime(date)}`;
 }
 
+/**
+ * Format date ngắn gọn, an toàn (không bị Invalid Date)
+ */
 function formatDateShort(date) {
-    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
-        return 'Invalid Date';
+    // Kiểm tra đầu vào
+    if (!date) {
+        return 'N/A';
     }
     
-    const now = new Date();
-    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    // Nếu là string, thử chuyển thành Date
+    if (typeof date === 'string') {
+        date = new Date(date);
+    }
     
-    if (diffDays === 0) {
-        return 'Today';
-    } else if (diffDays === 1) {
-        return 'Yesterday';
-    } else if (diffDays < 7) {
-        return `${diffDays}d ago`;
-    } else if (diffDays < 30) {
-        return `${Math.floor(diffDays / 7)}w ago`;
-    } else {
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            year: 'numeric'
-        });
+    // Kiểm tra date hợp lệ
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+        return 'Invalid';
+    }
+    
+    try {
+        const now = new Date();
+        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) {
+            return 'Today';
+        } else if (diffDays === 1) {
+            return 'Yesterday';
+        } else if (diffDays < 7) {
+            return `${diffDays}d ago`;
+        } else if (diffDays < 30) {
+            return `${Math.floor(diffDays / 7)}w ago`;
+        } else {
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return 'Date error';
     }
 }
-
 function getTimeAgo(date) {
     const now = new Date();
     const diffMs = now - date;
@@ -4374,42 +4483,83 @@ function updateHistoryCounters() {
 }
 
 // ========== UPDATE RANGE HANDLES ==========
+/**
+ * Cập nhật range handles dựa trên zoom state hiện tại
+ * FIXED: Xử lý Invalid Date
+ */
 function updateRangeHandles() {
-    if (!bitcoinChart || historicalPriceData.length === 0) return;
-    
-    const fullData = historicalPriceData;
-    const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
-    const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
-    const fullRange = fullMax - fullMin;
-    
-    const currentMin = zoomState.min || fullMin;
-    const currentMax = zoomState.max || fullMax;
-    
-    const leftPercent = ((currentMin - fullMin) / fullRange) * 100;
-    const rightPercent = ((currentMax - fullMin) / fullRange) * 100;
-    
-    const leftHandle = document.getElementById('rangeHandleLeft');
-    const rightHandle = document.getElementById('rangeHandleRight');
-    
-    if (leftHandle) leftHandle.style.left = leftPercent + '%';
-    if (rightHandle) rightHandle.style.left = rightPercent + '%';
-    
-    // Update fill
-    const fill = document.getElementById('rangeFill');
-    if (fill) {
-        fill.style.left = leftPercent + '%';
-        fill.style.width = (rightPercent - leftPercent) + '%';
+    if (!bitcoinChart || !historicalPriceData || historicalPriceData.length === 0) {
+        console.log('⏳ Cannot update range handles: no data');
+        return;
     }
     
-    // Update labels
-    const startLabel = document.getElementById('rangeStartLabel');
-    const endLabel = document.getElementById('rangeEndLabel');
-    
-    if (startLabel) startLabel.textContent = formatDateShort(currentMin);
-    if (endLabel) endLabel.textContent = formatDateShort(currentMax);
-    
-    // Update zoom level
-    updateZoomLevel(rightPercent - leftPercent);
+    try {
+        const fullData = historicalPriceData;
+        
+        // Lọc dates hợp lệ
+        const validDates = fullData
+            .map(d => d.x)
+            .filter(date => date && date instanceof Date && !isNaN(date.getTime()));
+        
+        if (validDates.length === 0) {
+            console.warn('No valid dates in historical data');
+            return;
+        }
+        
+        const fullMin = new Date(Math.min(...validDates.map(d => d.getTime())));
+        const fullMax = new Date(Math.max(...validDates.map(d => d.getTime())));
+        
+        // Kiểm tra dates hợp lệ
+        if (isNaN(fullMin.getTime()) || isNaN(fullMax.getTime())) {
+            console.error('Invalid full range dates');
+            return;
+        }
+        
+        const fullRange = fullMax - fullMin;
+        
+        // Lấy current zoom range
+        let currentMin = zoomState.min;
+        let currentMax = zoomState.max;
+        
+        // Nếu không có zoom state, dùng full range
+        if (!currentMin || !currentMax || isNaN(currentMin.getTime()) || isNaN(currentMax.getTime())) {
+            currentMin = fullMin;
+            currentMax = fullMax;
+        }
+        
+        // Tính phần trăm
+        const leftPercent = Math.max(0, Math.min(100, ((currentMin - fullMin) / fullRange) * 100));
+        const rightPercent = Math.max(0, Math.min(100, ((currentMax - fullMin) / fullRange) * 100));
+        
+        // Cập nhật handles
+        const leftHandle = document.getElementById('rangeHandleLeft');
+        const rightHandle = document.getElementById('rangeHandleRight');
+        
+        if (leftHandle) leftHandle.style.left = leftPercent + '%';
+        if (rightHandle) rightHandle.style.left = rightPercent + '%';
+        
+        // Update fill
+        const fill = document.getElementById('rangeFill');
+        if (fill) {
+            fill.style.left = leftPercent + '%';
+            fill.style.width = (rightPercent - leftPercent) + '%';
+        }
+        
+        // Update labels
+        const startLabel = document.getElementById('rangeStartLabel');
+        const endLabel = document.getElementById('rangeEndLabel');
+        
+        if (startLabel && endLabel) {
+            startLabel.textContent = formatDateShort(currentMin);
+            endLabel.textContent = formatDateShort(currentMax);
+        }
+        
+        // Update zoom level
+        updateZoomLevel(rightPercent - leftPercent);
+        
+    } catch (error) {
+        console.error('Error in updateRangeHandles:', error);
+    }
 }
 
 function updateZoomLevel(percent) {
@@ -4740,12 +4890,17 @@ function initMobileZoomSlider() {
     });
     
     // Helper function để cập nhật slider từ touch
-    function updateSliderFromTouch(e, slider, touch = null) {
-        if (!touch && e.touches.length > 0) {
-            touch = e.touches[0];
-        }
-        if (!touch) return;
-        
+  /**
+ * Helper function để cập nhật slider từ touch
+ * FIXED: Thêm kiểm tra an toàn
+ */
+function updateSliderFromTouch(e, slider, touch = null) {
+    if (!touch && e.touches.length > 0) {
+        touch = e.touches[0];
+    }
+    if (!touch) return;
+    
+    try {
         const rect = slider.getBoundingClientRect();
         
         // Giới hạn touch X trong phạm vi slider
@@ -4773,9 +4928,10 @@ function initMobileZoomSlider() {
         // Hiển thị feedback
         showSliderFeedback(roundedPercent);
         
-        // Debug
-        console.log('👆 Touch MOVE:', roundedPercent.toFixed(1) + '%', 'X:', touchX.toFixed(0));
+    } catch (error) {
+        console.error('Error updating slider from touch:', error);
     }
+}
     
     // Vẫn giữ mouse events cho desktop
     newSlider.addEventListener('mousedown', handleSliderMouseDown);
@@ -5521,6 +5677,10 @@ function handleRangeTouchEnd(e) {
 /**
  * Cập nhật fill và labels cho range slider
  */
+/**
+ * Cập nhật fill và labels cho range slider
+ * FIXED: Xử lý Invalid Date
+ */
 function updateRangeFillAndLabels() {
     const leftHandle = document.getElementById('rangeHandleLeft');
     const rightHandle = document.getElementById('rangeHandleRight');
@@ -5538,18 +5698,63 @@ function updateRangeFillAndLabels() {
         fill.style.width = (rightPercent - leftPercent) + '%';
     }
     
-    // Update labels
-    if (historicalPriceData.length > 0 && startLabel && endLabel) {
-        const fullData = historicalPriceData;
-        const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
-        const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
-        const fullRange = fullMax - fullMin;
-        
-        const startDate = new Date(fullMin.getTime() + (fullRange * leftPercent / 100));
-        const endDate = new Date(fullMin.getTime() + (fullRange * rightPercent / 100));
-        
-        startLabel.textContent = formatDateShort(startDate);
-        endLabel.textContent = formatDateShort(endDate);
+    // Update labels - THÊM KIỂM TRA DỮ LIỆU
+    if (startLabel && endLabel) {
+        // Kiểm tra historicalPriceData có dữ liệu không
+        if (historicalPriceData && historicalPriceData.length > 0) {
+            try {
+                const fullData = historicalPriceData;
+                
+                // Lọc bỏ các điểm dữ liệu không hợp lệ
+                const validDates = fullData
+                    .map(d => d.x)
+                    .filter(date => date && date instanceof Date && !isNaN(date.getTime()));
+                
+                if (validDates.length === 0) {
+                    startLabel.textContent = 'No data';
+                    endLabel.textContent = 'No data';
+                    return;
+                }
+                
+                const fullMin = new Date(Math.min(...validDates.map(d => d.getTime())));
+                const fullMax = new Date(Math.max(...validDates.map(d => d.getTime())));
+                
+                // Kiểm tra lại sau khi tính toán
+                if (isNaN(fullMin.getTime()) || isNaN(fullMax.getTime())) {
+                    startLabel.textContent = 'Invalid range';
+                    endLabel.textContent = 'Invalid range';
+                    return;
+                }
+                
+                const fullRange = fullMax - fullMin;
+                
+                // Tính toán dates dựa trên phần trăm
+                const startTime = fullMin.getTime() + (fullRange * leftPercent / 100);
+                const endTime = fullMin.getTime() + (fullRange * rightPercent / 100);
+                
+                const startDate = new Date(startTime);
+                const endDate = new Date(endTime);
+                
+                // Kiểm tra kết quả
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    startLabel.textContent = 'Invalid date';
+                    endLabel.textContent = 'Invalid date';
+                    return;
+                }
+                
+                startLabel.textContent = formatDateShort(startDate);
+                endLabel.textContent = formatDateShort(endDate);
+                
+            } catch (error) {
+                console.error('Error updating range labels:', error);
+                startLabel.textContent = 'Error';
+                endLabel.textContent = 'Error';
+            }
+        } else {
+            // Fallback khi chưa có data
+            startLabel.textContent = 'Loading...';
+            endLabel.textContent = 'Loading...';
+        }
     }
 }
 
