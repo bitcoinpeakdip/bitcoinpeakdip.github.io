@@ -2230,15 +2230,16 @@ body.slider-active {
 }
 
 /* Thêm vào cuối file signals.css */
+/* Thay thế phần chart-stats-row cũ bằng phiên bản mới này */
 
 /* ========== CHART STATS ROW ========== */
 .chart-stats-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 20, 30, 0.8));
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 30, 40, 0.9));
     border-radius: 12px;
-    padding: 15px 25px;
+    padding: 12px 20px;
     margin-bottom: 20px;
     border: 1px solid rgba(0, 212, 255, 0.3);
     backdrop-filter: blur(5px);
@@ -2275,7 +2276,7 @@ body.slider-active {
     gap: 12px;
     padding: 8px 16px;
     border-radius: 10px;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
     min-width: 160px;
@@ -2404,7 +2405,7 @@ body.slider-active {
     .chart-stats-row {
         flex-wrap: wrap;
         gap: 10px;
-        padding: 15px;
+        padding: 12px;
     }
     
     .stat-item {

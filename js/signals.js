@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.21 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.22 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.21';
+const APP_VERSION = '1.4.22';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
@@ -854,13 +854,22 @@ function updateLastUpdated() {
     }
 }
 
-// Tìm hàm updateStats() (khoảng dòng 540-590) và cập nhật phần accuracyRate:
+// Sửa lại hàm updateStats() để cập nhật cả stats cũ và mới (nếu còn)
 
 function updateStats() {
     if (signalsData.length === 0) {
-        // Nếu không có data, vẫn hiển thị mặc định 98% cho Noise Accuracy Reduce
-        const accuracyElement = document.getElementById('accuracyRate');
-        if (accuracyElement) accuracyElement.textContent = '98%';
+        // Nếu không có data, vẫn hiển thị mặc định
+        const elements = {
+            peakCount: document.getElementById('peakCount'),
+            dipCount: document.getElementById('dipCount'),
+            totalCount: document.getElementById('totalCount'),
+            accuracyRate: document.getElementById('accuracyRate')
+        };
+        
+        if (elements.peakCount) elements.peakCount.textContent = '0';
+        if (elements.dipCount) elements.dipCount.textContent = '0';
+        if (elements.totalCount) elements.totalCount.textContent = '0';
+        if (elements.accuracyRate) elements.accuracyRate.textContent = '98%';
         return;
     }
     
@@ -868,23 +877,31 @@ function updateStats() {
     const dipCount = signalsData.filter(s => s.signal_type === 'DIP').length;
     const totalCount = signalsData.length;
     
-    // Tính accuracy rate từ dữ liệu thực tế hoặc giữ mặc định 98%
-    const validatedSignals = signalsData.filter(s => s.validation === 'VALIDATED').length;
+    // Luôn hiển thị 98% cho Noise Accuracy Reduce
+    const accuracyRate = 98;
     
-    // VẪN GIỮ NGUYÊN 98% THEO YÊU CẦU
-    const accuracyRate = 98; // Luôn hiển thị 98%
+    // Cập nhật tất cả các elements có thể có
+    const elements = {
+        // Stats mới trong chart
+        peakCount: document.getElementById('peakCount'),
+        dipCount: document.getElementById('dipCount'),
+        totalCount: document.getElementById('totalCount'),
+        accuracyRate: document.getElementById('accuracyRate'),
+        
+        // Stats cũ (nếu còn)
+        peakCountOld: document.getElementById('peakCount'),
+        dipCountOld: document.getElementById('dipCount'),
+        totalCountOld: document.getElementById('totalCount'),
+        accuracyRateOld: document.getElementById('accuracyRate')
+    };
     
-    const peakElement = document.getElementById('peakCount');
-    const dipElement = document.getElementById('dipCount');
-    const totalElement = document.getElementById('totalCount');
-    const accuracyElement = document.getElementById('accuracyRate');
+    // Cập nhật
+    if (elements.peakCount) elements.peakCount.textContent = peakCount;
+    if (elements.dipCount) elements.dipCount.textContent = dipCount;
+    if (elements.totalCount) elements.totalCount.textContent = totalCount;
+    if (elements.accuracyRate) elements.accuracyRate.textContent = accuracyRate + '%';
     
-    if (peakElement) peakElement.textContent = peakCount;
-    if (dipElement) dipElement.textContent = dipCount;
-    if (totalElement) totalElement.textContent = totalCount;
-    if (accuracyElement) accuracyElement.textContent = accuracyRate + '%';
-    
-    // Phần còn lại giữ nguyên...
+    // Cập nhật percentages (nếu còn)
     const peakPercentage = document.getElementById('peakPercentage');
     const dipPercentage = document.getElementById('dipPercentage');
     if (peakPercentage && dipPercentage) {
@@ -892,6 +909,7 @@ function updateStats() {
         dipPercentage.textContent = totalCount > 0 ? Math.round((dipCount / totalCount) * 100) + '%' : '0%';
     }
     
+    // Cập nhật confidence stats (nếu còn)
     const highConfidence = signalsData.filter(s => s.confidence >= 80).length;
     const mediumConfidence = signalsData.filter(s => s.confidence >= 60 && s.confidence < 80).length;
     
@@ -901,7 +919,29 @@ function updateStats() {
     if (document.getElementById('mediumConfidence')) {
         document.getElementById('mediumConfidence').textContent = mediumConfidence;
     }
+    
+    // Log để debug
+    console.log('📊 Stats updated:', {
+        peak: peakCount,
+        dip: dipCount,
+        total: totalCount,
+        accuracy: accuracyRate + '%'
+    });
 }
+
+// Thêm hàm kiểm tra để đảm bảo stats được cập nhật khi data thay đổi
+function ensureStatsUpdated() {
+    // Kiểm tra xem stats đã được cập nhật chưa
+    const peakElement = document.getElementById('peakCount');
+    if (peakElement && peakElement.textContent === '0' && signalsData.length > 0) {
+        console.log('🔄 Forcing stats update...');
+        updateStats();
+    }
+}
+
+// Gọi ensureStatsUpdated sau khi data load
+setTimeout(ensureStatsUpdated, 2000);
+setTimeout(ensureStatsUpdated, 5000);
 
 function filterSignals() {
     const searchInput = document.getElementById('signalSearch');
@@ -5839,3 +5879,20 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('chartDataUpdated', function() {
     setTimeout(initMobileZoomSlider, 500);
 });
+
+// Debug function để kiểm tra stats
+function debugStats() {
+    console.log('🔍 Debug Stats:');
+    console.log('- peakCount element:', document.getElementById('peakCount'));
+    console.log('- dipCount element:', document.getElementById('dipCount'));
+    console.log('- totalCount element:', document.getElementById('totalCount'));
+    console.log('- accuracyRate element:', document.getElementById('accuracyRate'));
+    console.log('- signalsData length:', signalsData.length);
+    
+    if (signalsData.length > 0) {
+        console.log('- First signal:', signalsData[0]);
+    }
+}
+
+// Gọi debug sau khi load
+setTimeout(debugStats, 3000);
