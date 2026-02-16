@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.15 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.16 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,8 +27,13 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.15';
+const APP_VERSION = '1.4.16';
 const VERSION_KEY = 'peakdip_version';
+
+// Thêm ở đầu file sau các khai báo biến
+console.log('🚀 signals.js loaded - Debug mode ON');
+console.log('📍 clickZoomMode initial:', clickZoomMode);
+console.log('📍 clickZoomPoints initial:', clickZoomPoints);
 
 // Kiểm tra và xử lý cache khi version thay đổi
 function handleCacheVersion() {
@@ -2366,69 +2371,69 @@ function createClickZoomInstructions() {
     setupChartClickEvents();
 }
 
-function setupChartClickEvents() {
-    const chartCanvas = document.getElementById('bitcoinChart');
-    if (!chartCanvas || !bitcoinChart) return;
+// Sửa hàm performClickZoom() để đảm bảo zoom hoạt động
+function performClickZoom() {
+    console.log('🔍 Performing click zoom with points:', clickZoomPoints);
     
-    // Xóa event cũ nếu có
-    if (window._chartClickHandler) {
-        chartCanvas.removeEventListener('click', window._chartClickHandler);
+    if (clickZoomPoints.length !== 2) {
+        console.log('❌ Need exactly 2 points');
+        return;
     }
     
-    // Tạo handler mới
-    window._chartClickHandler = function(e) {
-        if (!clickZoomMode) return;
-        
-        const points = bitcoinChart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, true);
-        
-        if (points && points.length > 0) {
-            const firstPoint = points[0];
-            const datasetIndex = firstPoint.datasetIndex;
-            const index = firstPoint.index;
-            
-            // Lấy timestamp từ data
-            let clickDate;
-            if (bitcoinChart.data.datasets[datasetIndex] && bitcoinChart.data.datasets[datasetIndex].data[index]) {
-                const dataPoint = bitcoinChart.data.datasets[datasetIndex].data[index];
-                clickDate = dataPoint.x;
-            } else {
-                // Fallback: dùng xScale
-                const xScale = bitcoinChart.scales.x;
-                const rect = chartCanvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                clickDate = xScale.getValueForPixel(x);
-            }
-            
-            if (!clickDate) {
-                updateClickZoomStatus('Không thể xác định thời gian!', 'error');
-                return;
-            }
-            
-            console.log(`📌 Clicked at: ${new Date(clickDate).toLocaleString()}`);
-            
-            // Thêm vào danh sách điểm click
-            clickZoomPoints.push({
-                date: clickDate,
-                time: clickDate.getTime()
-            });
-            
-            // Hiển thị marker trên chart
-            showClickMarker(e.clientX, clickZoomPoints.length);
-            
-            // Cập nhật status
-            if (clickZoomPoints.length === 1) {
-                updateClickZoomStatus('Đã ghi nhận điểm 1, chờ điểm 2...', 'success');
-            } else if (clickZoomPoints.length === 2) {
-                // Thực hiện zoom
-                performClickZoom();
-            }
-        } else {
-            updateClickZoomStatus('Không tìm thấy điểm dữ liệu!', 'error');
-        }
-    };
+    if (!bitcoinChart) {
+        console.log('❌ Bitcoin chart not available');
+        return;
+    }
     
-    chartCanvas.addEventListener('click', window._chartClickHandler);
-    console.log('✅ Click events attached to chart');
+    // Sắp xếp điểm theo thời gian
+    const points = [...clickZoomPoints].sort((a, b) => a.time - b.time);
+    const startPoint = points[0];
+    const endPoint = points[1];
+    
+    console.log(`📅 Zoom from ${new Date(startPoint.time).toLocaleString()} to ${new Date(endPoint.time).toLocaleString()}`);
+    
+    // Thêm padding 5% mỗi bên
+    const range = endPoint.time - startPoint.time;
+    const padding = range * 0.05;
+    
+    const startDate = new Date(startPoint.time - padding);
+    const endDate = new Date(endPoint.time + padding);
+    
+    console.log(`📊 Applying zoom with padding: ${new Date(startDate).toLocaleString()} - ${new Date(endDate).toLocaleString()}`);
+    
+    // Lưu vào history
+    zoomState.zoomHistory.push({
+        min: bitcoinChart.options.scales.x.min,
+        max: bitcoinChart.options.scales.x.max
+    });
+    
+    // Áp dụng zoom
+    bitcoinChart.options.scales.x.min = startDate;
+    bitcoinChart.options.scales.x.max = endDate;
+    bitcoinChart.options.scales.x.time.unit = determineTimeUnit(range);
+    
+    zoomState.isZoomed = true;
+    zoomState.min = startDate;
+    zoomState.max = endDate;
+    
+    bitcoinChart.update();
+    
+    // Hiển thị thông tin zoom
+    const days = Math.ceil(range / (1000 * 60 * 60 * 24));
+    updateClickZoomStatus(`✅ Đã zoom ${days} ngày (${formatDate(startDate)} - ${formatDate(endDate)})`, 'success');
+    
+    // Cập nhật zoom info và slider
+    updateZoomInfo();
+    updateTimelineSlider();
+    updateRangeHandles();
+    
+    // Xóa các điểm click
+    clickZoomPoints = [];
+    
+    // Hiệu ứng flash
+    flashChart();
+    
+    console.log('✅ Click zoom completed');
 }
 
 function showClickMarker(clientX, pointNumber) {
@@ -2624,8 +2629,13 @@ function closeClickZoomInstructions() {
     exitClickZoomMode();
 }
 
+// Sửa hàm activateClickZoomMode() để thêm log và kiểm tra
 function activateClickZoomMode() {
+    console.log('🖱️ Activating click-to-zoom mode');
     clickZoomMode = true;
+    
+    // Reset points
+    clickZoomPoints = [];
     
     // Hiển thị instructions
     if (!clickZoomInstructions || !document.body.contains(clickZoomInstructions)) {
@@ -2634,9 +2644,10 @@ function activateClickZoomMode() {
         clickZoomInstructions.style.display = 'block';
     }
     
-    // Reset points
-    clickZoomPoints = [];
-    updateClickZoomStatus('Chờ click lần 1...', 'waiting');
+    // Cập nhật status
+    if (typeof updateClickZoomStatus === 'function') {
+        updateClickZoomStatus('Chờ click lần 1...', 'waiting');
+    }
     
     // Update cursor
     const chartCanvas = document.getElementById('bitcoinChart');
@@ -2644,9 +2655,13 @@ function activateClickZoomMode() {
         chartCanvas.style.cursor = 'crosshair';
     }
     
+    // Đảm bảo chart click events được setup
+    if (typeof setupChartClickEvents === 'function') {
+        setupChartClickEvents();
+    }
+    
     showNotification('Chế độ click-to-zoom: Click 2 điểm bất kỳ trên biểu đồ để zoom', 'info', 4000);
 }
-
 function deactivateAllModes() {
     const panBtn = document.getElementById('zoomPan');
     const selectBtn = document.getElementById('zoomSelect');
@@ -4372,30 +4387,6 @@ function setupKeyboardShortcuts() {
         }
     });
 }
-
-// ========== CẬP NHẬT HÀM INITIALIZE ZOOM CONTROLS ==========
-// Thay thế hàm initializeZoomControls() cũ
-function initializeZoomControls() {
-    console.log('🔍 Initializing zoom controls...');
-    
-    // Thêm styles
-    addChartToolbarStyles();
-    
-    // Tạo toolbar mới
-    createChartToolbar();
-    
-    // Ẩn toolbar cũ nếu có
-    const oldToolbar = document.querySelector('.zoom-toolbar');
-    if (oldToolbar) {
-        oldToolbar.style.display = 'none';
-    }
-    
-    // Tạo instructions panel cho click-to-zoom (nếu cần)
-    createClickZoomInstructions();
-    
-    console.log('✅ Zoom controls initialized');
-}
-
 // ========== CẬP NHẬT HÀM UPDATE CHARTS WITH DATA ==========
 // Cập nhật hàm updateChartsWithData() - thay thế hoàn toàn
 function updateChartsWithData() {
@@ -4473,7 +4464,7 @@ setTimeout(() => {
     }
 }, 2000);
 
-// CẬP NHẬT HÀM INITIALIZE ZOOM CONTROLS
+// CẬP NHẬT HÀM INITIALIZE ZOOM CONTROLS - CHỈ GIỮ LẠI MỘT PHIÊN BẢN
 function initializeZoomControls() {
     console.log('🔍 Initializing zoom controls...');
     
@@ -4495,12 +4486,41 @@ function initializeZoomControls() {
         oldToolbar.style.display = 'none';
     }
     
-    // Tạo instructions panel cho click-to-zoom (nếu cần)
-    createClickZoomInstructions();
+    // === QUAN TRỌNG: KHỞI TẠO CLICK-TO-ZOOM ===
+    // Tạo instructions panel cho click-to-zoom
+    if (typeof createClickZoomInstructions === 'function') {
+        createClickZoomInstructions();
+    }
+    
+    // Kích hoạt click-to-zoom mode khi click vào nút tương ứng
+    const clickBtn = document.getElementById('zoomClick');
+    if (clickBtn) {
+        // Xóa event listener cũ nếu có
+        const newClickBtn = clickBtn.cloneNode(true);
+        clickBtn.parentNode.replaceChild(newClickBtn, clickBtn);
+        
+        // Thêm event listener mới
+        newClickBtn.addEventListener('click', function() {
+            const panBtn = document.getElementById('zoomPan');
+            const selectBtn = document.getElementById('zoomSelect');
+            
+            if (panBtn) panBtn.classList.remove('active');
+            if (selectBtn) selectBtn.classList.remove('active');
+            
+            this.classList.add('active');
+            
+            // Kích hoạt click-to-zoom
+            if (typeof activateClickZoomMode === 'function') {
+                activateClickZoomMode();
+            }
+        });
+    }
     
     // Cập nhật range handles
     setTimeout(() => {
-        updateRangeHandles();
+        if (typeof updateRangeHandles === 'function') {
+            updateRangeHandles();
+        }
     }, 500);
     
     console.log('✅ Zoom controls initialized');
