@@ -2161,3 +2161,70 @@ body.slider-active {
     height: 100%;
     touch-action: none;
 }
+
+/* Thêm vào cuối file signals.css */
+
+/* Ngăn scroll khi kéo slider trên mobile */
+body.slider-active {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+}
+
+/* Cải thiện touch target cho slider */
+.timeline-slider {
+    touch-action: none; /* QUAN TRỌNG: Ngăn scroll khi chạm vào slider */
+    -webkit-tap-highlight-color: transparent;
+    padding: 10px 0;
+    margin: 15px 0;
+    height: 8px;
+}
+
+/* Tăng kích thước thumb cho dễ chạm */
+.timeline-slider::-webkit-slider-thumb {
+    width: 28px !important;
+    height: 28px !important;
+    border: 3px solid white !important;
+}
+
+.timeline-slider::-moz-range-thumb {
+    width: 28px !important;
+    height: 28px !important;
+    border: 3px solid white !important;
+}
+
+/* Feedback khi kéo */
+.slider-feedback {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 1.1em;
+    font-weight: bold;
+    border: 1px solid var(--wave-trough);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.slider-feedback.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.slider-feedback i {
+    color: var(--wave-trough);
+    font-size: 1.2em;
+}

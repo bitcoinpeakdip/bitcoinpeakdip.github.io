@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.19 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.20 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.19';
+const APP_VERSION = '1.4.20';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
@@ -151,8 +151,55 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add click zoom styles
     addClickZoomStyles();
+    
+    // ===== PHẦN MỚI THÊM: KHỞI TẠO MOBILE FEATURES =====
+    
+    // Khởi tạo mobile features sau khi chart load (2 giây)
+    setTimeout(initMobileZoomSlider, 2000);
+    
+    // Thêm event listener để ngăn scroll khi chạm vào slider
+    document.addEventListener('touchstart', function(e) {
+        // Kiểm tra nếu target là slider hoặc nằm trong slider
+        if (e.target.classList.contains('timeline-slider') || 
+            e.target.closest('.timeline-slider')) {
+            document.body.classList.add('slider-active');
+        }
+    }, { passive: false });
+    
+    document.addEventListener('touchend', function(e) {
+        // Chỉ remove class khi không còn chạm vào slider
+        if (!e.target.classList.contains('timeline-slider') && 
+            !e.target.closest('.timeline-slider')) {
+            setTimeout(() => {
+                document.body.classList.remove('slider-active');
+            }, 100);
+        }
+    });
+    
+    document.addEventListener('touchcancel', function() {
+        document.body.classList.remove('slider-active');
+    });
+    
+    // Lắng nghe sự kiện chart update để khởi tạo lại mobile slider
+    document.addEventListener('chartDataUpdated', function() {
+        setTimeout(initMobileZoomSlider, 500);
+    });
+    
+    // Thêm CSS động để đảm bảo slider không bị scroll
+    addMobileSliderStyles();
+    
+    // Cải thiện range slider cho mobile sau khi chart load
+    setTimeout(enhanceRangeSliderForMobile, 3000);
+    
+    // Xử lý khi xoay màn hình
+    window.addEventListener('resize', function() {
+        if (typeof updateRangeHandles === 'function') {
+            setTimeout(updateRangeHandles, 100);
+        }
+    });
+    
+    console.log('📱 Mobile features initialization completed');
 });
-
 // ========== BITCOIN PRICE DATA LOADING ==========
 async function loadBitcoinPriceData() {
     try {
@@ -4589,6 +4636,11 @@ updateChartsWithData = function() {
  * Khởi tạo zoom slider cho mobile với touch events và ngăn scroll
  * FIXED: Touch position always stays on slider
  */
+// ========== MOBILE ZOOM SLIDER FIX - COMPLETELY REWRITTEN ==========
+/**
+ * Khởi tạo zoom slider cho mobile với touch events và ngăn scroll
+ * FIXED: Touch position always stays on slider
+ */
 function initMobileZoomSlider() {
     console.log('📱 Initializing mobile zoom slider with improved touch handling...');
     
@@ -4751,37 +4803,37 @@ function handleSliderMouseDown(e) {
 /**
  * Xử lý mouse move cho desktop
  */
-function handleSliderMouseMove(e) {
-    const slider = e.target;
-    if (!slider.dataset.mouseActive) return;
+// function handleSliderMouseMove(e) {
+//     const slider = e.target;
+//     if (!slider.dataset.mouseActive) return;
     
-    updateSliderFromMouse(e, slider);
-}
+//     updateSliderFromMouse(e, slider);
+// }
 
 /**
  * Xử lý mouse up cho desktop
  */
-function handleSliderMouseUp(e) {
-    const slider = e.target;
-    slider.dataset.mouseActive = 'false';
+// function handleSliderMouseUp(e) {
+//     const slider = e.target;
+//     slider.dataset.mouseActive = 'false';
     
-    if (typeof saveZoomState === 'function') {
-        saveZoomState();
-    }
+//     if (typeof saveZoomState === 'function') {
+//         saveZoomState();
+//     }
     
-    hideSliderFeedback();
-}
+//     hideSliderFeedback();
+// }
 
 /**
  * Xử lý mouse leave
  */
-function handleSliderMouseLeave(e) {
-    const slider = e.target;
-    if (slider.dataset.mouseActive) {
-        slider.dataset.mouseActive = 'false';
-        hideSliderFeedback();
-    }
-}
+// function handleSliderMouseLeave(e) {
+//     const slider = e.target;
+//     if (slider.dataset.mouseActive) {
+//         slider.dataset.mouseActive = 'false';
+//         hideSliderFeedback();
+//     }
+// }
 
 /**
  * Cập nhật slider từ mouse event
@@ -5076,10 +5128,10 @@ function handleSliderTouchEnd(e) {
 /**
  * Xử lý mouse down cho desktop
  */
-function handleSliderMouseDown(e) {
-    const slider = e.target;
-    slider.dataset.mouseActive = 'true';
-}
+// function handleSliderMouseDown(e) {
+//     const slider = e.target;
+//     slider.dataset.mouseActive = 'true';
+// }
 
 /**
  * Xử lý mouse move cho desktop
