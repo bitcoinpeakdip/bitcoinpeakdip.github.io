@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.22 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.23 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.22';
+const APP_VERSION = '1.4.23';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
@@ -5880,6 +5880,353 @@ document.addEventListener('chartDataUpdated', function() {
     setTimeout(initMobileZoomSlider, 500);
 });
 
+// ========== FIX MOBILE ZOOM SLIDER - MERGED VERSION ==========
+/**
+ * Hợp nhất và sửa lỗi mobile zoom slider
+ * Gọi function này sau khi toolbar được tạo
+ */
+function fixMobileZoomSlider() {
+    console.log('🔧 Fixing mobile zoom slider...');
+    
+    // Tìm slider đang active
+    const timelineSlider = document.getElementById('timelineSlider');
+    const rangeSlider = document.getElementById('rangeSlider');
+    
+    // Nếu đang dùng range slider (toolbar mới)
+    if (rangeSlider && !document.querySelector('.range-slider-improved')) {
+        console.log('📱 Adding touch support to range slider');
+        
+        // Đánh dấu đã xử lý
+        rangeSlider.classList.add('range-slider-improved');
+        
+        // Tăng kích thước touch target
+        rangeSlider.style.minHeight = '44px';
+        rangeSlider.style.padding = '10px 0';
+        rangeSlider.style.touchAction = 'none';
+        
+        // Cải thiện handles
+        const leftHandle = document.getElementById('rangeHandleLeft');
+        const rightHandle = document.getElementById('rangeHandleRight');
+        
+        if (leftHandle && rightHandle) {
+            [leftHandle, rightHandle].forEach(handle => {
+                handle.style.width = '28px';
+                handle.style.height = '28px';
+                handle.style.borderWidth = '3px';
+                handle.style.touchAction = 'none';
+            });
+        }
+        
+        // Thêm touch events
+        setupRangeSliderTouchEvents();
+    }
+    
+    // Nếu đang dùng timeline slider (toolbar cũ)
+    if (timelineSlider && !timelineSlider.classList.contains('touch-fixed')) {
+        console.log('📱 Re-initializing timeline slider with touch support');
+        timelineSlider.classList.add('touch-fixed');
+        initMobileZoomSlider(); // Gọi lại hàm khởi tạo
+    }
+}
+
+/**
+ * Setup touch events cho range slider
+ */
+function setupRangeSliderTouchEvents() {
+    const rangeSlider = document.getElementById('rangeSlider');
+    const leftHandle = document.getElementById('rangeHandleLeft');
+    const rightHandle = document.getElementById('rangeHandleRight');
+    
+    if (!rangeSlider || !leftHandle || !rightHandle) return;
+    
+    let activeTouch = null;
+    let activeHandleType = null;
+    let startLeft, startRight, startX;
+    
+    // Touch start
+    rangeSlider.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        
+        if (e.touches.length > 0) {
+            const touch = e.touches[0];
+            const rect = rangeSlider.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const percent = (touchX / rect.width) * 100;
+            
+            // Xác định handle nào gần nhất
+            const leftPercent = parseFloat(leftHandle.style.left) || 0;
+            const rightPercent = parseFloat(rightHandle.style.left) || 100;
+            
+            const distToLeft = Math.abs(percent - leftPercent);
+            const distToRight = Math.abs(percent - rightPercent);
+            
+            if (distToLeft < distToRight && distToLeft < 20) {
+                activeHandleType = 'left';
+                leftHandle.classList.add('active');
+            } else if (distToRight < 20) {
+                activeHandleType = 'right';
+                rightHandle.classList.add('active');
+            } else {
+                activeHandleType = 'pan';
+            }
+            
+            activeTouch = touch.identifier;
+            startLeft = leftPercent;
+            startRight = rightPercent;
+            startX = touch.clientX;
+            
+            document.body.classList.add('slider-active');
+        }
+    }, { passive: false });
+    
+    // Touch move
+    rangeSlider.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        
+        if (activeTouch === null) return;
+        
+        // Tìm đúng touch point
+        let touch = null;
+        for (let i = 0; i < e.touches.length; i++) {
+            if (e.touches[i].identifier === activeTouch) {
+                touch = e.touches[i];
+                break;
+            }
+        }
+        
+        if (!touch && e.touches.length > 0) {
+            touch = e.touches[0];
+            activeTouch = touch.identifier;
+        }
+        
+        if (!touch) return;
+        
+        const rect = rangeSlider.getBoundingClientRect();
+        let touchX = touch.clientX - rect.left;
+        touchX = Math.max(0, Math.min(rect.width, touchX));
+        
+        const percent = (touchX / rect.width) * 100;
+        
+        if (activeHandleType === 'left') {
+            // Di chuyển left handle
+            const newLeft = Math.min(percent, startRight - 5);
+            leftHandle.style.left = newLeft + '%';
+        } 
+        else if (activeHandleType === 'right') {
+            // Di chuyển right handle
+            const newRight = Math.max(percent, startLeft + 5);
+            rightHandle.style.left = newRight + '%';
+        } 
+        else if (activeHandleType === 'pan') {
+            // Pan cả hai handles
+            const deltaX = touch.clientX - startX;
+            const deltaPercent = (deltaX / rect.width) * 100;
+            const range = startRight - startLeft;
+            
+            let newLeft = startLeft + deltaPercent;
+            let newRight = startRight + deltaPercent;
+            
+            if (newLeft < 0) {
+                newLeft = 0;
+                newRight = range;
+            }
+            if (newRight > 100) {
+                newRight = 100;
+                newLeft = 100 - range;
+            }
+            
+            leftHandle.style.left = newLeft + '%';
+            rightHandle.style.left = newRight + '%';
+        }
+        
+        // Update UI
+        updateRangeFillAndLabels();
+        
+        // Hiển thị feedback
+        showRangeFeedback(percent, activeHandleType);
+        
+    }, { passive: false });
+    
+    // Touch end
+    rangeSlider.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        
+        activeTouch = null;
+        activeHandleType = null;
+        
+        leftHandle.classList.remove('active');
+        rightHandle.classList.remove('active');
+        
+        document.body.classList.remove('slider-active');
+        hideRangeFeedback();
+        
+        // Apply zoom
+        applyRangeZoom();
+    });
+    
+    // Touch cancel
+    rangeSlider.addEventListener('touchcancel', function(e) {
+        e.preventDefault();
+        
+        activeTouch = null;
+        activeHandleType = null;
+        
+        leftHandle.classList.remove('active');
+        rightHandle.classList.remove('active');
+        
+        document.body.classList.remove('slider-active');
+        hideRangeFeedback();
+    });
+}
+
+/**
+ * Hiển thị feedback cho range slider
+ */
+function showRangeFeedback(percent, type) {
+    let feedback = document.getElementById('rangeFeedback');
+    
+    if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.id = 'rangeFeedback';
+        feedback.className = 'slider-feedback';
+        document.querySelector('.chart-tools-container')?.appendChild(feedback);
+    }
+    
+    let message = '';
+    if (type === 'left') {
+        message = `Start: ${Math.round(percent)}%`;
+    } else if (type === 'right') {
+        message = `End: ${Math.round(percent)}%`;
+    } else {
+        message = `Pan: ${Math.round(percent)}%`;
+    }
+    
+    feedback.innerHTML = `<i class="fas fa-arrows-alt-h"></i> ${message}`;
+    feedback.classList.add('visible');
+}
+
+/**
+ * Ẩn range feedback
+ */
+function hideRangeFeedback() {
+    const feedback = document.getElementById('rangeFeedback');
+    if (feedback) {
+        feedback.classList.remove('visible');
+    }
+}
+
+/**
+ * Cập nhật CSS cho mobile
+ */
+function addMobileRangeStyles() {
+    if (document.getElementById('mobileRangeStyles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'mobileRangeStyles';
+    style.textContent = `
+        /* Mobile improvements for range slider */
+        @media (max-width: 768px) {
+            .range-slider {
+                min-height: 44px !important;
+                padding: 10px 0 !important;
+                touch-action: none !important;
+            }
+            
+            .range-handle {
+                width: 32px !important;
+                height: 32px !important;
+                border-width: 3px !important;
+                box-shadow: 0 0 20px rgba(0, 212, 255, 0.8) !important;
+            }
+            
+            .range-handle.active {
+                transform: translate(-50%, -50%) scale(1.2) !important;
+                background: var(--wave-trough) !important;
+            }
+            
+            .range-labels {
+                font-size: 0.9em !important;
+                margin-top: 12px !important;
+            }
+            
+            /* Feedback positioning */
+            .slider-feedback {
+                bottom: 20px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                padding: 12px 24px !important;
+                font-size: 1em !important;
+                border-radius: 30px !important;
+                background: rgba(0, 0, 0, 0.95) !important;
+                border: 2px solid var(--wave-trough) !important;
+                z-index: 10001 !important;
+            }
+        }
+        
+        /* Prevent body scroll when using slider */
+        body.slider-active {
+            overflow: hidden !important;
+            position: fixed !important;
+            width: 100% !important;
+            height: 100% !important;
+            touch-action: none !important;
+        }
+        
+        /* Active handle glow */
+        .range-handle.active {
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.9) !important;
+            animation: handlePulse 1s infinite !important;
+        }
+        
+        @keyframes handlePulse {
+            0% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(0, 212, 255, 0.9); }
+            100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.5); }
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+// ========== HOOK VÀO HÀM TẠO TOOLBAR ==========
+// Lưu lại hàm createChartToolbar gốc
+const originalCreateChartToolbar = createChartToolbar;
+
+// Override để thêm fix sau khi tạo toolbar
+createChartToolbar = function() {
+    const result = originalCreateChartToolbar.apply(this, arguments);
+    
+    // Thêm fix sau 500ms
+    setTimeout(() => {
+        fixMobileZoomSlider();
+        addMobileRangeStyles();
+    }, 500);
+    
+    return result;
+};
+
+// ========== KHỞI TẠO KHI DOM READY ==========
+document.addEventListener('DOMContentLoaded', function() {
+    // Thêm CSS
+    addMobileRangeStyles();
+    
+    // Kiểm tra và fix sau khi load
+    setTimeout(() => {
+        fixMobileZoomSlider();
+    }, 3000);
+    
+    // Kiểm tra lại sau khi chart data load
+    setTimeout(() => {
+        fixMobileZoomSlider();
+    }, 5000);
+});
+
+// Lắng nghe sự kiện chart data updated
+document.addEventListener('chartDataUpdated', function() {
+    setTimeout(fixMobileZoomSlider, 500);
+});
+
+console.log('✅ Mobile zoom slider fix loaded');
 // Debug function để kiểm tra stats
 function debugStats() {
     console.log('🔍 Debug Stats:');
