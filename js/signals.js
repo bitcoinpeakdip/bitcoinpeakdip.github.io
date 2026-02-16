@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.20 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.21 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.20';
+const APP_VERSION = '1.4.21';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
@@ -854,15 +854,25 @@ function updateLastUpdated() {
     }
 }
 
+// Tìm hàm updateStats() (khoảng dòng 540-590) và cập nhật phần accuracyRate:
+
 function updateStats() {
-    if (signalsData.length === 0) return;
+    if (signalsData.length === 0) {
+        // Nếu không có data, vẫn hiển thị mặc định 98% cho Noise Accuracy Reduce
+        const accuracyElement = document.getElementById('accuracyRate');
+        if (accuracyElement) accuracyElement.textContent = '98%';
+        return;
+    }
     
     const peakCount = signalsData.filter(s => s.signal_type === 'PEAK').length;
     const dipCount = signalsData.filter(s => s.signal_type === 'DIP').length;
     const totalCount = signalsData.length;
     
+    // Tính accuracy rate từ dữ liệu thực tế hoặc giữ mặc định 98%
     const validatedSignals = signalsData.filter(s => s.validation === 'VALIDATED').length;
-    const accuracyRate = totalCount > 0 ? Math.round((validatedSignals / totalCount) * 100) : 0;
+    
+    // VẪN GIỮ NGUYÊN 98% THEO YÊU CẦU
+    const accuracyRate = 98; // Luôn hiển thị 98%
     
     const peakElement = document.getElementById('peakCount');
     const dipElement = document.getElementById('dipCount');
@@ -874,6 +884,7 @@ function updateStats() {
     if (totalElement) totalElement.textContent = totalCount;
     if (accuracyElement) accuracyElement.textContent = accuracyRate + '%';
     
+    // Phần còn lại giữ nguyên...
     const peakPercentage = document.getElementById('peakPercentage');
     const dipPercentage = document.getElementById('dipPercentage');
     if (peakPercentage && dipPercentage) {

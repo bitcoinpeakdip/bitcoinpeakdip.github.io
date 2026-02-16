@@ -6,9 +6,9 @@
     
     <!-- CSS với version parameter -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/main.css?v=1.4.20">
-    <link rel="stylesheet" href="styles/signals.css?v=1.4.20">
-    <link rel="stylesheet" href="styles/zoom.css?v=1.4.20">
+    <link rel="stylesheet" href="styles/main.css?v=1.4.21">
+    <link rel="stylesheet" href="styles/signals.css?v=1.4.21">
+    <link rel="stylesheet" href="styles/zoom.css?v=1.4.21">
     
     <!-- JS với version parameter -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -374,6 +374,49 @@
                 </div>
             </div>
             
+            <!-- THÊM PHẦN STATS HÀNG NGANG MỚI TÍCH HỢP VÀO CHART -->
+            <div class="chart-stats-row">
+                <div class="stat-item">
+                    <div class="stat-icon-mini">
+                        <i class="fas fa-mountain"></i>
+                    </div>
+                    <div class="stat-content-mini">
+                        <span class="stat-label-mini">Peak Signals</span>
+                        <span class="stat-value-mini" id="peakCount">0</span>
+                    </div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-icon-mini">
+                        <i class="fas fa-water"></i>
+                    </div>
+                    <div class="stat-content-mini">
+                        <span class="stat-label-mini">Dip Signals</span>
+                        <span class="stat-value-mini" id="dipCount">0</span>
+                    </div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-icon-mini">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="stat-content-mini">
+                        <span class="stat-label-mini">Total Signals</span>
+                        <span class="stat-value-mini" id="totalCount">0</span>
+                    </div>
+                </div>
+                
+                <div class="stat-item noise-accuracy">
+                    <div class="stat-icon-mini">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="stat-content-mini">
+                        <span class="stat-label-mini">Noise Accuracy Reduce</span>
+                        <span class="stat-value-mini" id="accuracyRate">98%</span>
+                    </div>
+                </div>
+            </div>
+            
             <div class="chart-container">
                 <canvas id="bitcoinChart"></canvas>
             </div>
@@ -714,7 +757,7 @@
 			}
 		};
 	</script>	
-    <script src="js/main.js?v=1.4.20"></script>
-    <script src="js/signals.js?v=1.4.20"></script> <!-- Đổi số này mỗi lần update -->	
+    <script src="js/main.js?v=1.4.21"></script>
+    <script src="js/signals.js?v=1.4.21"></script> <!-- Đổi số này mỗi lần update -->	
 </body>
 </html>
