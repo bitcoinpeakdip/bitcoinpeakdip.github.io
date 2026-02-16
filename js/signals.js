@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.16 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.17 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.16';
+const APP_VERSION = '1.4.17';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
@@ -4021,7 +4021,43 @@ function setupRangeSlider() {
             activeHandle = null;
         }
     });
+
+        // THÊM touch events cho mobile
+    slider.addEventListener('touchstart', function(e) {
+        e.preventDefault(); // Ngăn scroll khi chạm vào slider
+        console.log('👆 Touch start on slider');
+    }, { passive: false });
     
+    slider.addEventListener('touchmove', function(e) {
+        e.preventDefault(); // Ngăn scroll khi kéo slider
+        const value = this.value;
+        deactivateAllModes();
+        updateZoomFromSlider(value);
+        console.log('👆 Touch move:', value);
+    }, { passive: false });
+    
+    slider.addEventListener('touchend', function(e) {
+        console.log('👆 Touch end');
+        saveZoomState();
+    });
+    
+    // Cập nhật labels
+    function updateLabels() {
+        if (!bitcoinChart || historicalPriceData.length === 0) return;
+        
+        const fullData = historicalPriceData;
+        const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
+        const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
+        const currentMin = zoomState.min || fullMin;
+        const currentMax = zoomState.max || fullMax;
+        
+        if (startLabel) startLabel.textContent = formatDateShort(currentMin);
+        if (endLabel) endLabel.textContent = formatDateShort(currentMax);
+    }
+    
+    // Gọi updateLabels khi có thay đổi
+    slider.addEventListener('touchmove', updateLabels);
+
     // Initialize
     leftHandle.style.left = '0%';
     rightHandle.style.left = '100%';
@@ -4545,3 +4581,574 @@ updateChartsWithData = function() {
         document.dispatchEvent(new CustomEvent('chartDataUpdated'));
     }, 300);
 };
+
+// Thêm vào cuối file signals.js, trước dòng cuối cùng
+
+// ========== MOBILE ZOOM SLIDER FIX ==========
+// Cải thiện khả năng tương tác với timeline slider trên mobile
+
+/**
+ * Khởi tạo zoom slider cho mobile với touch events
+ */
+function initMobileZoomSlider() {
+    console.log('📱 Initializing mobile zoom slider...');
+    
+    const slider = document.getElementById('timelineSlider');
+    if (!slider) {
+        console.log('⏳ Timeline slider not found, will retry...');
+        setTimeout(initMobileZoomSlider, 1000);
+        return;
+    }
+    
+    // Xóa event listeners cũ để tránh duplicate
+    const newSlider = slider.cloneNode(true);
+    slider.parentNode.replaceChild(newSlider, slider);
+    
+    // Thêm touch events cho mobile
+    newSlider.addEventListener('touchstart', handleSliderTouchStart, { passive: false });
+    newSlider.addEventListener('touchmove', handleSliderTouchMove, { passive: false });
+    newSlider.addEventListener('touchend', handleSliderTouchEnd);
+    
+    // Vẫn giữ mouse events cho desktop
+    newSlider.addEventListener('mousedown', handleSliderMouseDown);
+    newSlider.addEventListener('mousemove', handleSliderMouseMove);
+    newSlider.addEventListener('mouseup', handleSliderMouseUp);
+    newSlider.addEventListener('mouseleave', handleSliderMouseLeave);
+    
+    // Thêm CSS để cải thiện touch target
+    addMobileSliderStyles();
+    
+    console.log('✅ Mobile zoom slider initialized');
+}
+
+/**
+ * Xử lý touch start trên slider
+ */
+function handleSliderTouchStart(e) {
+    e.preventDefault(); // Ngăn scroll khi chạm vào slider
+    const slider = e.target;
+    slider.dataset.touchActive = 'true';
+    
+    // Tính toán giá trị dựa trên vị trí touch
+    const rect = slider.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    
+    // Cập nhật giá trị slider
+    slider.value = percent;
+    
+    // Trigger zoom update
+    if (typeof updateZoomFromSlider === 'function') {
+        updateZoomFromSlider(percent);
+    }
+    
+    // Hiển thị feedback
+    showSliderFeedback(percent);
+}
+
+/**
+ * Xử lý touch move trên slider
+ */
+function handleSliderTouchMove(e) {
+    e.preventDefault(); // Ngăn scroll khi kéo slider
+    
+    const slider = e.target;
+    if (!slider.dataset.touchActive) return;
+    
+    const rect = slider.getBoundingClientRect();
+    const touch = e.touches[0];
+    
+    // Giới hạn trong phạm vi slider
+    let x = touch.clientX - rect.left;
+    x = Math.max(0, Math.min(rect.width, x));
+    
+    const percent = (x / rect.width) * 100;
+    
+    // Cập nhật giá trị slider
+    slider.value = percent;
+    
+    // Trigger zoom update
+    if (typeof updateZoomFromSlider === 'function') {
+        updateZoomFromSlider(percent);
+    }
+    
+    // Hiển thị feedback
+    showSliderFeedback(percent);
+}
+
+/**
+ * Xử lý touch end trên slider
+ */
+function handleSliderTouchEnd(e) {
+    const slider = e.target;
+    slider.dataset.touchActive = 'false';
+    
+    // Lưu state vào undo stack
+    if (typeof saveZoomState === 'function') {
+        saveZoomState();
+    }
+    
+    // Ẩn feedback
+    hideSliderFeedback();
+}
+
+/**
+ * Xử lý mouse down cho desktop
+ */
+function handleSliderMouseDown(e) {
+    const slider = e.target;
+    slider.dataset.mouseActive = 'true';
+}
+
+/**
+ * Xử lý mouse move cho desktop
+ */
+function handleSliderMouseMove(e) {
+    const slider = e.target;
+    if (!slider.dataset.mouseActive) return;
+    
+    const rect = slider.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    x = Math.max(0, Math.min(rect.width, x));
+    
+    const percent = (x / rect.width) * 100;
+    slider.value = percent;
+    
+    if (typeof updateZoomFromSlider === 'function') {
+        updateZoomFromSlider(percent);
+    }
+    
+    showSliderFeedback(percent);
+}
+
+/**
+ * Xử lý mouse up cho desktop
+ */
+function handleSliderMouseUp(e) {
+    const slider = e.target;
+    slider.dataset.mouseActive = 'false';
+    
+    if (typeof saveZoomState === 'function') {
+        saveZoomState();
+    }
+    
+    hideSliderFeedback();
+}
+
+/**
+ * Xử lý mouse leave
+ */
+function handleSliderMouseLeave(e) {
+    const slider = e.target;
+    if (slider.dataset.mouseActive) {
+        slider.dataset.mouseActive = 'false';
+        hideSliderFeedback();
+    }
+}
+
+/**
+ * Hiển thị feedback khi kéo slider
+ */
+function showSliderFeedback(percent) {
+    let feedback = document.getElementById('sliderFeedback');
+    
+    if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.id = 'sliderFeedback';
+        feedback.className = 'slider-feedback';
+        document.querySelector('.timeline-controls')?.appendChild(feedback);
+    }
+    
+    const zoomLevel = Math.round(percent);
+    feedback.innerHTML = `<i class="fas fa-search"></i> ${zoomLevel}% view`;
+    feedback.classList.add('visible');
+}
+
+/**
+ * Ẩn feedback
+ */
+function hideSliderFeedback() {
+    const feedback = document.getElementById('sliderFeedback');
+    if (feedback) {
+        feedback.classList.remove('visible');
+    }
+}
+
+/**
+ * Thêm CSS cho mobile slider
+ */
+function addMobileSliderStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Cải thiện touch target cho slider */
+        .timeline-slider {
+            height: 8px;
+            margin: 15px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        /* Webkit (Chrome, Safari, Edge) */
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--wave-trough);
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.7);
+            border: 2px solid white;
+            transition: transform 0.1s ease;
+        }
+        
+        /* Firefox */
+        .timeline-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--wave-trough);
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.7);
+            border: 2px solid white;
+            transition: transform 0.1s ease;
+        }
+        
+        /* Khi active */
+        .timeline-slider:active::-webkit-slider-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.9);
+        }
+        
+        .timeline-slider:active::-moz-range-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.9);
+        }
+        
+        /* Slider feedback */
+        .slider-feedback {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: 1px solid var(--wave-trough);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-feedback.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .slider-feedback i {
+            color: var(--wave-trough);
+            font-size: 1.2em;
+        }
+        
+        /* Timeline controls trên mobile */
+        @media (max-width: 768px) {
+            .timeline-controls {
+                padding: 10px 0;
+                min-width: 100%;
+            }
+            
+            .timeline-slider {
+                height: 10px; /* Cao hơn cho dễ chạm */
+            }
+            
+            .timeline-slider::-webkit-slider-thumb {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .timeline-slider::-moz-range-thumb {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .timeline-labels {
+                font-size: 0.9em;
+                padding: 0 5px;
+            }
+        }
+        
+        /* Ngăn scroll khi kéo slider trên mobile */
+        body.slider-active {
+            overflow: hidden;
+            touch-action: none;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ========== CẢI THIỆN RANGE SLIDER CHO MOBILE ==========
+/**
+ * Cập nhật range slider để hỗ trợ touch tốt hơn
+ */
+function enhanceRangeSliderForMobile() {
+    const rangeSlider = document.getElementById('rangeSlider');
+    if (!rangeSlider) return;
+    
+    // Tăng kích thước touch target
+    rangeSlider.style.minHeight = '40px';
+    rangeSlider.style.padding = '10px 0';
+    
+    // Cải thiện handles
+    const handles = rangeSlider.querySelectorAll('.range-handle');
+    handles.forEach(handle => {
+        handle.style.width = '24px';
+        handle.style.height = '24px';
+        handle.style.borderWidth = '3px';
+    });
+    
+    // Thêm touch events
+    rangeSlider.addEventListener('touchstart', handleRangeTouchStart, { passive: false });
+    rangeSlider.addEventListener('touchmove', handleRangeTouchMove, { passive: false });
+    rangeSlider.addEventListener('touchend', handleRangeTouchEnd);
+}
+
+/**
+ * Xử lý touch start trên range slider
+ */
+function handleRangeTouchStart(e) {
+    e.preventDefault();
+    
+    const rangeSlider = e.currentTarget;
+    const leftHandle = document.getElementById('rangeHandleLeft');
+    const rightHandle = document.getElementById('rangeHandleRight');
+    
+    if (!leftHandle || !rightHandle) return;
+    
+    const touch = e.touches[0];
+    const rect = rangeSlider.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const percent = (x / rect.width) * 100;
+    
+    // Xác định handle nào gần nhất
+    const leftPercent = parseFloat(leftHandle.style.left) || 0;
+    const rightPercent = parseFloat(rightHandle.style.left) || 100;
+    
+    const distToLeft = Math.abs(percent - leftPercent);
+    const distToRight = Math.abs(percent - rightPercent);
+    
+    if (distToLeft < distToRight && distToLeft < 15) {
+        rangeSlider.dataset.activeHandle = 'left';
+        leftHandle.classList.add('active');
+    } else if (distToRight < 15) {
+        rangeSlider.dataset.activeHandle = 'right';
+        rightHandle.classList.add('active');
+    } else {
+        // Click vào khoảng giữa - pan
+        rangeSlider.dataset.activeHandle = 'pan';
+    }
+    
+    rangeSlider.dataset.touchActive = 'true';
+    rangeSlider.dataset.startX = touch.clientX;
+    rangeSlider.dataset.startLeft = leftPercent;
+    rangeSlider.dataset.startRight = rightPercent;
+}
+
+/**
+ * Xử lý touch move trên range slider
+ */
+function handleRangeTouchMove(e) {
+    e.preventDefault();
+    
+    const rangeSlider = e.currentTarget;
+    if (!rangeSlider.dataset.touchActive) return;
+    
+    const leftHandle = document.getElementById('rangeHandleLeft');
+    const rightHandle = document.getElementById('rangeHandleRight');
+    if (!leftHandle || !rightHandle) return;
+    
+    const touch = e.touches[0];
+    const rect = rangeSlider.getBoundingClientRect();
+    let x = touch.clientX - rect.left;
+    x = Math.max(0, Math.min(rect.width, x));
+    
+    const percent = (x / rect.width) * 100;
+    const activeHandle = rangeSlider.dataset.activeHandle;
+    
+    if (activeHandle === 'left') {
+        // Di chuyển left handle
+        const rightPercent = parseFloat(rangeSlider.dataset.startRight) || 100;
+        const newLeft = Math.min(percent, rightPercent - 5);
+        leftHandle.style.left = newLeft + '%';
+    } else if (activeHandle === 'right') {
+        // Di chuyển right handle
+        const leftPercent = parseFloat(rangeSlider.dataset.startLeft) || 0;
+        const newRight = Math.max(percent, leftPercent + 5);
+        rightHandle.style.left = newRight + '%';
+    } else if (activeHandle === 'pan') {
+        // Pan cả hai handles
+        const deltaX = touch.clientX - parseFloat(rangeSlider.dataset.startX);
+        const deltaPercent = (deltaX / rect.width) * 100;
+        
+        const startLeft = parseFloat(rangeSlider.dataset.startLeft) || 0;
+        const startRight = parseFloat(rangeSlider.dataset.startRight) || 100;
+        const range = startRight - startLeft;
+        
+        let newLeft = startLeft + deltaPercent;
+        let newRight = startRight + deltaPercent;
+        
+        if (newLeft < 0) {
+            newLeft = 0;
+            newRight = range;
+        }
+        if (newRight > 100) {
+            newRight = 100;
+            newLeft = 100 - range;
+        }
+        
+        leftHandle.style.left = newLeft + '%';
+        rightHandle.style.left = newRight + '%';
+        rangeSlider.dataset.startX = touch.clientX;
+        rangeSlider.dataset.startLeft = newLeft;
+        rangeSlider.dataset.startRight = newRight;
+    }
+    
+    // Update fill và labels
+    updateRangeFillAndLabels();
+}
+
+/**
+ * Xử lý touch end trên range slider
+ */
+function handleRangeTouchEnd(e) {
+    const rangeSlider = e.currentTarget;
+    rangeSlider.dataset.touchActive = 'false';
+    
+    const leftHandle = document.getElementById('rangeHandleLeft');
+    const rightHandle = document.getElementById('rangeHandleRight');
+    
+    if (leftHandle) leftHandle.classList.remove('active');
+    if (rightHandle) rightHandle.classList.remove('active');
+    
+    // Apply zoom to chart
+    applyRangeZoom();
+}
+
+/**
+ * Cập nhật fill và labels cho range slider
+ */
+function updateRangeFillAndLabels() {
+    const leftHandle = document.getElementById('rangeHandleLeft');
+    const rightHandle = document.getElementById('rangeHandleRight');
+    const fill = document.getElementById('rangeFill');
+    const startLabel = document.getElementById('rangeStartLabel');
+    const endLabel = document.getElementById('rangeEndLabel');
+    
+    if (!leftHandle || !rightHandle) return;
+    
+    const leftPercent = parseFloat(leftHandle.style.left) || 0;
+    const rightPercent = parseFloat(rightHandle.style.left) || 100;
+    
+    if (fill) {
+        fill.style.left = leftPercent + '%';
+        fill.style.width = (rightPercent - leftPercent) + '%';
+    }
+    
+    // Update labels
+    if (historicalPriceData.length > 0 && startLabel && endLabel) {
+        const fullData = historicalPriceData;
+        const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
+        const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
+        const fullRange = fullMax - fullMin;
+        
+        const startDate = new Date(fullMin.getTime() + (fullRange * leftPercent / 100));
+        const endDate = new Date(fullMin.getTime() + (fullRange * rightPercent / 100));
+        
+        startLabel.textContent = formatDateShort(startDate);
+        endLabel.textContent = formatDateShort(endDate);
+    }
+}
+
+/**
+ * Áp dụng zoom từ range slider
+ */
+function applyRangeZoom() {
+    if (!bitcoinChart || historicalPriceData.length === 0) return;
+    
+    const leftHandle = document.getElementById('rangeHandleLeft');
+    const rightHandle = document.getElementById('rangeHandleRight');
+    
+    if (!leftHandle || !rightHandle) return;
+    
+    const leftPercent = parseFloat(leftHandle.style.left) || 0;
+    const rightPercent = parseFloat(rightHandle.style.left) || 100;
+    
+    const fullData = historicalPriceData;
+    const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
+    const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
+    const fullRange = fullMax - fullMin;
+    
+    const startDate = new Date(fullMin.getTime() + (fullRange * leftPercent / 100));
+    const endDate = new Date(fullMin.getTime() + (fullRange * rightPercent / 100));
+    
+    zoomToRange(startDate, endDate);
+    saveZoomState();
+}
+
+// ========== KHỞI TẠO TẤT CẢ TÍNH NĂNG MOBILE ==========
+/**
+ * Khởi tạo tất cả tính năng mobile
+ */
+function initMobileFeatures() {
+    console.log('📱 Initializing mobile features...');
+    
+    // Khởi tạo zoom slider cho mobile
+    initMobileZoomSlider();
+    
+    // Cải thiện range slider
+    setTimeout(enhanceRangeSliderForMobile, 1000);
+    
+    // Thêm CSS để ngăn scroll khi kéo slider
+    document.addEventListener('touchstart', function(e) {
+        if (e.target.classList.contains('timeline-slider') || 
+            e.target.closest('.range-slider')) {
+            document.body.classList.add('slider-active');
+        }
+    }, { passive: false });
+    
+    document.addEventListener('touchend', function() {
+        document.body.classList.remove('slider-active');
+    });
+    
+    // Cập nhật lại range handles khi xoay màn hình
+    window.addEventListener('resize', function() {
+        if (typeof updateRangeHandles === 'function') {
+            setTimeout(updateRangeHandles, 100);
+        }
+    });
+    
+    console.log('✅ Mobile features initialized');
+}
+
+// Gọi khởi tạo mobile features sau khi DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(initMobileFeatures, 2000);
+});
+
+// Cũng gọi lại khi chart data được cập nhật
+document.addEventListener('chartDataUpdated', function() {
+    setTimeout(initMobileZoomSlider, 500);
+});
