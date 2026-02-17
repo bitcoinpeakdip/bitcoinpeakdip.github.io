@@ -1602,32 +1602,6 @@
     overflow-x: auto;
 }
 
-/* ========== CLICK-TO-ZOOM STYLES ========== */
-.click-zoom-instructions {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.95);
-    border: 1px solid var(--wave-trough);
-    border-radius: 10px;
-    padding: 15px;
-    width: 280px;
-    z-index: 1000;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.7);
-    animation: slideInRight 0.3s ease;
-    border-left: 4px solid var(--wave-trough);
-}
-
-.instructions-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-}
-
 .instructions-header i {
     color: var(--wave-trough);
     font-size: 1.2em;
@@ -1860,15 +1834,6 @@
     }
 }
 
-/* Zoom Click Button Active State */
-#zoomClick.active {
-    background: var(--wave-trough);
-    color: white;
-    border-color: var(--wave-trough);
-    box-shadow: 0 0 15px rgba(0, 212, 255, 0.7);
-    animation: buttonPulse 2s infinite;
-}
-
 @keyframes buttonPulse {
     0% {
         box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
@@ -1953,20 +1918,6 @@
 /* Cập nhật chart-container để hỗ trợ absolute positioning */
 .chart-container {
     position: relative;
-}
-
-/* Style cho nút Active Zoom Controls */
-#manualZoomBtn {
-    background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
-    animation: glowPulse 2s infinite;
 }
 
 #manualZoomBtn:hover {
