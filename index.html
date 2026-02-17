@@ -6,8 +6,8 @@
     <title>Bitcoin PeakDip: Early Warning System (EWS) for Bitcoin Peaks and Dips | AI-Powered</title>
     <meta name="description" content="Real-time Bitcoin peak and dip detection using Early Warning System with AI algorithms.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/main.css?v=1.4.36">
-    <link rel="stylesheet" href="styles/about.css?v=1.4.36">
+    <link rel="stylesheet" href="styles/main.css?v=1.4.37">
+    <link rel="stylesheet" href="styles/about.css?v=1.4.37">
 	<!-- PWA Meta Tags -->
 	<meta name="theme-color" content="#00d4ff">
 	<meta name="apple-mobile-web-app-capable" content="yes">
@@ -501,8 +501,57 @@
             </div>
         </footer>        
     </div> 
-    <script src="js/learn.js?v=1.4.36"></script>      
-    <script src="js/main.js?v=1.4.36"></script>
-    <script src="js/interactions.js?v=1.4.36"></script>
+    <script src="js/learn.js?v=1.4.37"></script>      
+    <script src="js/main.js?v=1.4.37"></script>
+    <script src="js/interactions.js?v=1.4.37"></script>
+    <!-- Simple Mobile Menu Fix -->
+    <script>
+    (function() {
+        // Đợi trang load xong
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            const navMenu = document.getElementById('navMenu');
+            
+            if (menuBtn && navMenu) {
+                console.log('✅ Mobile menu found'); // Kiểm tra console
+                
+                // Xóa bỏ các class cũ nếu có
+                menuBtn.classList.remove('active');
+                navMenu.classList.remove('active');
+                
+                // Xử lý click vào nút menu
+                menuBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('👆 Menu clicked'); // Kiểm tra click
+                    
+                    // Toggle class
+                    this.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                };
+                
+                // Click vào link thì đóng menu
+                const links = navMenu.querySelectorAll('.nav-link');
+                links.forEach(link => {
+                    link.onclick = function() {
+                        menuBtn.classList.remove('active');
+                        navMenu.classList.remove('active');
+                    };
+                });
+                
+                // Click ra ngoài thì đóng menu
+                document.onclick = function(e) {
+                    if (!menuBtn.contains(e.target) && !navMenu.contains(e.target)) {
+                        menuBtn.classList.remove('active');
+                        navMenu.classList.remove('active');
+                    }
+                };
+            } else {
+                console.error('❌ Cannot find menu elements');
+            }
+        });
+    })();
+    </script>    
 </body>
 </html>
