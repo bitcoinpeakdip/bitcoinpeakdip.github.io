@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.24 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.25 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.24';
+const APP_VERSION = '1.4.25';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
@@ -1920,33 +1920,6 @@ function setupZoomEventListeners() {
         zoomBack();
     });
     
-    addTimeframePresets();
-}
-
-function addTimeframePresets() {
-    const chartControls = document.querySelector('.chart-controls');
-    if (!chartControls) return;
-    
-    const presetsContainer = document.createElement('div');
-    presetsContainer.className = 'timeframe-presets';
-    presetsContainer.innerHTML = `
-        <button class="timeframe-preset" data-preset="1w">1W</button>
-        <button class="timeframe-preset active" data-preset="1m">1M</button>
-        <button class="timeframe-preset" data-preset="3m">3M</button>
-        <button class="timeframe-preset" data-preset="6m">6M</button>
-        <button class="timeframe-preset" data-preset="1y">1Y</button>
-        <button class="timeframe-preset" data-preset="all">ALL</button>
-    `;
-    
-    chartControls.querySelector('.control-btn').parentNode.insertBefore(presetsContainer, chartControls.querySelector('.chart-legend'));
-    
-    presetsContainer.querySelectorAll('.timeframe-preset').forEach(btn => {
-        btn.addEventListener('click', function() {
-            presetsContainer.querySelectorAll('.timeframe-preset').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            applyTimeframePreset(this.dataset.preset);
-        });
-    });
 }
 
 function applyTimeframePreset(preset) {
