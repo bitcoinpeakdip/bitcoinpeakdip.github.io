@@ -694,3 +694,657 @@
         width: 100%;
     }
 }
+
+/* Knowledge Base Header Styling - Đồng bộ với trang chủ */
+.learn-header {
+    text-align: center;
+    margin: 40px 0 30px 0;
+    padding: 30px 20px;
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.learn-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent,
+        rgba(0, 212, 255, 0.1),
+        rgba(247, 147, 26, 0.1),
+        rgba(255, 46, 99, 0.1),
+        transparent
+    );
+    animation: headerShine 8s infinite;
+}
+
+@keyframes headerShine {
+    0% { left: -100%; }
+    20% { left: 100%; }
+    100% { left: 100%; }
+}
+
+.learn-title {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 20px;
+}
+
+.learn-title i {
+    background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid), var(--wave-peak));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-right: 15px;
+    font-size: 1.2em;
+}
+
+.learn-title .highlight {
+    background: linear-gradient(to right, 
+        var(--wave-trough) 0%,
+        var(--wave-mid) 50%,
+        var(--wave-peak) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.learn-title .bitcoin-text {
+    background: linear-gradient(135deg, 
+        var(--wave-trough) 0%,
+        var(--wave-peak) 50%,
+        #9c27b0 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+/* Underline với hiệu ứng gradient động */
+.learn-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        var(--wave-trough) 0%,
+        var(--wave-mid) 25%,
+        var(--wave-peak) 50%,
+        #9c27b0 75%,
+        var(--wave-trough) 100%
+    );
+    border-radius: 4px;
+    box-shadow: 0 0 15px var(--wave-trough);
+    animation: underlinePulse 3s ease-in-out infinite;
+}
+
+/* Thêm hiệu ứng glow cho underline */
+@keyframes underlinePulse {
+    0%, 100% {
+        opacity: 0.8;
+        box-shadow: 0 0 15px var(--wave-trough);
+        width: 80%;
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 25px var(--wave-peak), 0 0 35px var(--wave-mid);
+        width: 85%;
+    }
+}
+
+/* Subtitle styling */
+.learn-subtitle {
+    font-size: 1.3em;
+    background: linear-gradient(to right, 
+        rgba(255, 255, 255, 0.9), 
+        var(--wave-trough)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 10px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    position: relative;
+    display: inline-block;
+    padding: 0 20px;
+}
+
+.learn-subtitle::before,
+.learn-subtitle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 30px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--wave-trough));
+}
+
+.learn-subtitle::before {
+    left: -20px;
+    transform: translateY(-50%);
+}
+
+.learn-subtitle::after {
+    right: -20px;
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* Thêm hiệu ứng wave nhẹ cho background */
+.learn-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--wave-trough) 0px,
+        var(--wave-trough) 10px,
+        transparent 10px,
+        transparent 20px
+    );
+    opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .learn-header {
+        padding: 25px 15px;
+        margin: 30px 0 20px 0;
+    }
+    
+    .learn-title {
+        font-size: 1.8em;
+    }
+    
+    .learn-title::after {
+        width: 90%;
+    }
+    
+    .learn-subtitle {
+        font-size: 1.1em;
+    }
+    
+    .learn-subtitle::before,
+    .learn-subtitle::after {
+        width: 15px;
+    }
+}
+
+/* Animation cho title khi hover */
+.learn-header:hover .learn-title {
+    transform: scale(1.02);
+    transition: transform 0.3s ease;
+}
+
+.learn-header:hover .learn-title::after {
+    animation: underlineGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes underlineGlow {
+    0%, 100% {
+        box-shadow: 0 0 20px var(--wave-trough), 0 0 30px var(--wave-mid);
+    }
+    50% {
+        box-shadow: 0 0 30px var(--wave-peak), 0 0 50px #9c27b0;
+    }
+}
+
+/* Learn Grid Styling - Đồng bộ với trang chủ */
+.learn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin: 40px 0;
+    position: relative;
+}
+
+/* Card styling với hiệu ứng giống feature-card */
+.learn-card {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 30px 25px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Hiệu ứng glow khi hover */
+.learn-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 0%, 
+        rgba(0, 212, 255, 0.2) 0%, 
+        transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.learn-card::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+        var(--wave-trough), 
+        var(--wave-mid), 
+        var(--wave-peak), 
+        #9c27b0, 
+        var(--wave-trough));
+    background-size: 400% 400%;
+    border-radius: 18px;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.4s ease;
+    animation: gradientBorder 3s ease infinite;
+}
+
+@keyframes gradientBorder {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.learn-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    border-color: transparent;
+    box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+}
+
+.learn-card:hover::before {
+    opacity: 1;
+}
+
+.learn-card:hover::after {
+    opacity: 1;
+}
+
+/* Icon styling - đồng bộ với feature-card */
+.card-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, 
+        rgba(0, 212, 255, 0.2), 
+        rgba(247, 147, 26, 0.2));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    position: relative;
+    transition: all 0.4s ease;
+}
+
+.card-icon::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, 
+        var(--wave-trough), 
+        var(--wave-mid), 
+        var(--wave-peak));
+    opacity: 0.5;
+    filter: blur(5px);
+    transition: all 0.4s ease;
+    z-index: -1;
+}
+
+.learn-card:hover .card-icon {
+    transform: scale(1.1) rotate(360deg);
+}
+
+.learn-card:hover .card-icon::before {
+    opacity: 0.8;
+    filter: blur(8px);
+    inset: -5px;
+}
+
+.card-icon i {
+    font-size: 2.2em;
+    background: linear-gradient(135deg, 
+        var(--wave-trough), 
+        var(--wave-mid), 
+        var(--wave-peak));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    transition: all 0.4s ease;
+}
+
+/* Title styling */
+.learn-card h3 {
+    color: #ffffff !important;
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    position: relative;
+    display: inline-block;
+    padding-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.learn-card h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        var(--wave-trough), 
+        var(--wave-peak));
+    border-radius: 3px;
+    transition: all 0.4s ease;
+}
+
+.learn-card:hover h3::after {
+    width: 100%;
+    background: linear-gradient(90deg, 
+        var(--wave-trough), 
+        var(--wave-mid), 
+        var(--wave-peak), 
+        #9c27b0);
+}
+
+/* Description styling */
+.learn-card p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    line-height: 1.7;
+    margin-bottom: 25px;
+    flex-grow: 1;
+    font-size: 0.95em;
+}
+
+/* Meta info styling - đồng bộ với badges */
+.card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.learn-card:hover .card-meta {
+    border-top-color: rgba(0, 212, 255, 0.3);
+}
+
+.card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 0.9em;
+}
+
+.card-meta span:last-child {
+    background: rgba(0, 212, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 20px;
+    color: #00d4ff !important;
+    font-weight: 500;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.learn-card:hover .card-meta span:last-child {
+    background: rgba(0, 212, 255, 0.25);
+    border-color: var(--wave-trough);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+.card-meta span i {
+    color: var(--wave-trough);
+    font-size: 0.9em;
+}
+
+/* Color variations cho mỗi card dựa trên level */
+.learn-card:nth-child(1) .card-icon {
+    background: linear-gradient(135deg, 
+        rgba(0, 212, 255, 0.2), 
+        rgba(0, 212, 255, 0.1));
+}
+
+.learn-card:nth-child(2) .card-icon {
+    background: linear-gradient(135deg, 
+        rgba(247, 147, 26, 0.2), 
+        rgba(247, 147, 26, 0.1));
+}
+
+.learn-card:nth-child(2) .card-meta span:last-child {
+    background: rgba(247, 147, 26, 0.15);
+    color: var(--wave-mid) !important;
+    border-color: rgba(247, 147, 26, 0.2);
+}
+
+.learn-card:nth-child(2):hover .card-meta span:last-child {
+    background: rgba(247, 147, 26, 0.25);
+    box-shadow: 0 0 15px rgba(247, 147, 26, 0.3);
+}
+
+.learn-card:nth-child(3) .card-icon {
+    background: linear-gradient(135deg, 
+        rgba(255, 46, 99, 0.2), 
+        rgba(255, 46, 99, 0.1));
+}
+
+.learn-card:nth-child(3) .card-meta span:last-child {
+    background: rgba(255, 46, 99, 0.15);
+    color: var(--wave-peak) !important;
+    border-color: rgba(255, 46, 99, 0.2);
+}
+
+.learn-card:nth-child(3):hover .card-meta span:last-child {
+    background: rgba(255, 46, 99, 0.25);
+    box-shadow: 0 0 15px rgba(255, 46, 99, 0.3);
+}
+
+.learn-card:nth-child(4) .card-icon {
+    background: linear-gradient(135deg, 
+        rgba(156, 39, 176, 0.2), 
+        rgba(156, 39, 176, 0.1));
+}
+
+.learn-card:nth-child(4) .card-meta span:last-child {
+    background: rgba(156, 39, 176, 0.15);
+    color: #9c27b0 !important;
+    border-color: rgba(156, 39, 176, 0.2);
+}
+
+.learn-card:nth-child(4):hover .card-meta span:last-child {
+    background: rgba(156, 39, 176, 0.25);
+    box-shadow: 0 0 15px rgba(156, 39, 176, 0.3);
+}
+
+/* Hiệu ứng ripple khi click */
+.learn-card:active {
+    transform: scale(0.98);
+}
+
+.learn-card:active::after {
+    opacity: 0.8;
+}
+
+/* Recent Posts Section Styling */
+.recent-posts {
+    margin: 60px 0 30px 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.recent-posts h2 {
+    color: #ffffff !important;
+    font-size: 2em;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.recent-posts h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        var(--wave-trough), 
+        var(--wave-mid), 
+        var(--wave-peak));
+    border-radius: 4px;
+}
+
+.recent-posts h2 i {
+    color: var(--wave-trough);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+.posts-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+/* Blog post items styling */
+.post-item {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.post-item:hover {
+    transform: translateY(-5px);
+    border-color: var(--wave-trough);
+    box-shadow: 0 10px 20px rgba(0, 212, 255, 0.2);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.post-item h3 {
+    color: #ffffff;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.post-meta {
+    display: flex;
+    justify-content: space-between;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85em;
+}
+
+.post-meta span i {
+    color: var(--wave-trough);
+    margin-right: 5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .learn-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .learn-card {
+        padding: 25px 20px;
+    }
+    
+    .card-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .card-icon i {
+        font-size: 1.8em;
+    }
+    
+    .learn-card h3 {
+        font-size: 1.3em;
+    }
+    
+    .recent-posts {
+        padding: 20px;
+    }
+    
+    .recent-posts h2 {
+        font-size: 1.6em;
+    }
+}
+
+/* Animation cho cards khi load */
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.learn-card {
+    animation: cardAppear 0.5s ease forwards;
+    opacity: 0;
+}
+
+.learn-card:nth-child(1) { animation-delay: 0.1s; }
+.learn-card:nth-child(2) { animation-delay: 0.2s; }
+.learn-card:nth-child(3) { animation-delay: 0.3s; }
+.learn-card:nth-child(4) { animation-delay: 0.4s; }
