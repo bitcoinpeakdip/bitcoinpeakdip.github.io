@@ -1,0 +1,50 @@
+{
+  "last_updated": "2026-02-17T15:30:00Z",
+  "articles": [
+    {
+      "id": "ews-basics",
+      "title": "EWS Fundamentals: How Our Early Warning System Works",
+      "slug": "ews-basics",
+      "description": "Learn how our Early Warning System detects Bitcoin peaks and dips using advanced AI algorithms.",
+      "author": "Bitcoin PeakDip Team",
+      "date": "2026-02-15",
+      "modified": "2026-02-17",
+      "category": "fundamentals",
+      "tags": ["beginner", "ews", "basics"],
+      "reading_time": 10,
+      "level": "Beginner",
+      "featured": true,
+      "filename": "ews-basics.md"
+    },
+    {
+      "id": "strategy-guide",
+      "title": "8 Strategies Explained: RECLAIM_FAILURE, MOMENTUM_BREAKDOWN and More",
+      "slug": "strategy-guide",
+      "description": "Deep dive into all trading strategies including entry conditions, risk levels, and win rates.",
+      "author": "Bitcoin PeakDip Team",
+      "date": "2026-02-14",
+      "modified": "2026-02-16",
+      "category": "strategies",
+      "tags": ["intermediate", "strategies", "trading"],
+      "reading_time": 15,
+      "level": "Intermediate",
+      "featured": true,
+      "filename": "strategy-guide.md"
+    },
+    {
+      "id": "multi-tf-analysis",
+      "title": "Multi-Timeframe Guide: Master 5M, 15M, and 1H Confluence",
+      "slug": "multi-tf-analysis",
+      "description": "Master multi-timeframe confluence analysis for higher probability trades.",
+      "author": "Bitcoin PeakDip Team",
+      "date": "2026-02-13",
+      "modified": "2026-02-16",
+      "category": "advanced",
+      "tags": ["advanced", "timeframe", "analysis"],
+      "reading_time": 12,
+      "level": "Advanced",
+      "featured": true,
+      "filename": "multi-tf-analysis.md"
+    }
+  ]
+}

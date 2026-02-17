@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="articleTitle">Article - Bitcoin PeakDip Learn</title>
+    <meta name="description" content="Bitcoin PeakDip Knowledge Base">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/learn.css">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#00d4ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bitcoin PeakDip">
+    <meta name="application-name" content="Bitcoin PeakDip">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="../icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="../icons/icon-192x192.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="../manifest.json">
+</head>
+<body>
+    <!-- Navigation (giống learn.html) -->
+    <nav class="navigation" id="navigation">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-logo">
+                <i class="fas fa-wave-square"></i>
+                Bitcoin PeakDip
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item">
+                    <a href="../index.html" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="../about.html" class="nav-link">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="../product.html" class="nav-link">Product</a>
+                </li>
+                <li class="nav-item">
+                    <a href="../signals.html" class="nav-link">EWS Signals</a>
+                </li>
+                <li class="nav-item">
+                    <a href="../learn.html" class="nav-link active">
+                        <i class="fas fa-graduation-cap"></i> Learn
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link">Contact</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- Interactive Background -->
+    <div class="interactive-background" id="interactiveBackground"></div>
+    
+    <!-- Sensor Network Background -->
+    <div class="sensor-network">
+        <div class="sensor-ring ring-1"></div>
+        <div class="sensor-ring ring-2"></div>
+        <div class="sensor-ring ring-3"></div>
+        <div class="sensor-ring ring-4"></div>
+        
+        <div class="bitcoin-waves">
+            <div class="bitcoin-wave wave-1"></div>
+            <div class="bitcoin-wave wave-2"></div>
+            <div class="bitcoin-wave wave-3"></div>
+        </div>
+        
+        <div class="energy-particles" id="energyParticles"></div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="content-container">
+        <!-- Article Container -->
+        <div class="learn-article">
+            <div class="article-header">
+                <h1 id="articleTitle" class="article-title"></h1>
+                <div id="articleMeta" class="article-meta"></div>
+            </div>
+            
+            <div id="articleContent" class="article-content">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Loading article...
+                </div>
+            </div>
+            
+            <div class="article-footer-nav">
+                <a href="../learn.html" class="back-to-learn">
+                    <i class="fas fa-arrow-left"></i> Back to Knowledge Base
+                </a>
+                <button class="share-article" onclick="shareArticle()">
+                    <i class="fas fa-share-alt"></i> Share
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer id="pageFooter">
+        <p>© 2021 Nguyen Duc Hai Technologies. All rights reserved.</p>
+        <div class="footer-links">
+            <a href="../index.html" class="footer-link">Home</a>
+            <a href="../about.html" class="footer-link">About</a>
+            <a href="../product.html" class="footer-link">Product</a>
+            <a href="../signals.html" class="footer-link">EWS Signals</a>
+            <a href="../learn.html" class="footer-link">Learn</a>
+            <a href="#contact" class="footer-link">Contact</a>
+        </div>
+    </footer>
+    
+    <script src="../js/main.js"></script>
+    <script src="../js/article.js"></script>
+    <script>
+        function shareArticle() {
+            const title = document.getElementById('articleTitle').textContent;
+            const url = window.location.href;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    text: 'Check out this article from Bitcoin PeakDip',
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(url);
+                showToast('Link copied to clipboard!', 'success');
+            }
+        }
+    </script>
+</body>
+</html>

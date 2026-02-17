@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
 // Version: 1.4.0
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.4.34';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.4.34';
+const CACHE_NAME = 'bitcoin-peakdip-v1.4.35';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.4.35';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -21,6 +21,9 @@ const STATIC_ASSETS = [
   '/js/interactions.js',
   '/js/product.js',
   '/js/signals.js',
+  '/learn/article-template.html',
+  '/learn/articles.json',
+  '/js/article.js',  
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-brands-400.woff2',
@@ -143,34 +146,44 @@ function staleWhileRevalidate(request) {
 
 // Fetch event - handle requests
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-  
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-  
-  // API/CSV requests - network first (to get latest data)
-  if (url.pathname.includes('/data/') || url.pathname.includes('.csv')) {
-    event.respondWith(networkFirst(event.request));
-    return;
-  }
-  
-  // HTML pages - stale while revalidate (for updates)
-  if (url.pathname.endsWith('.html') || url.pathname === '/') {
-    event.respondWith(staleWhileRevalidate(event.request));
-    return;
-  }
-  
-  // CSS/JS/Images/Fonts - cache first (for performance)
-  if (url.pathname.match(/\.(css|js|png|jpg|jpeg|svg|ico|woff2?|ttf)$/)) {
-    event.respondWith(cacheFirst(event.request));
-    return;
-  }
-  
-  // Default - network first with cache fallback
-  event.respondWith(
-    fetch(event.request)
-      .catch(() => caches.match(event.request))
-  );
+	const url = new URL(event.request.url);
+	// Cache markdown articles với stale-while-revalidate
+	if (url.pathname.includes('/learn/articles/') && url.pathname.endsWith('.md')) {
+		event.respondWith(staleWhileRevalidate(event.request));
+		return;
+	}
+
+	// Cache articles.json với network-first để luôn có metadata mới nhất
+	if (url.pathname.includes('/learn/articles.json')) {
+		event.respondWith(networkFirst(event.request));
+		return;
+	}  
+	// Skip non-GET requests
+	if (event.request.method !== 'GET') return;
+
+	// API/CSV requests - network first (to get latest data)
+	if (url.pathname.includes('/data/') || url.pathname.includes('.csv')) {
+	event.respondWith(networkFirst(event.request));
+	return;
+	}
+
+	// HTML pages - stale while revalidate (for updates)
+	if (url.pathname.endsWith('.html') || url.pathname === '/') {
+	event.respondWith(staleWhileRevalidate(event.request));
+	return;
+	}
+
+	// CSS/JS/Images/Fonts - cache first (for performance)
+	if (url.pathname.match(/\.(css|js|png|jpg|jpeg|svg|ico|woff2?|ttf)$/)) {
+	event.respondWith(cacheFirst(event.request));
+	return;
+	}
+
+	// Default - network first with cache fallback
+	event.respondWith(
+	fetch(event.request)
+	  .catch(() => caches.match(event.request))
+	);
 });
 
 // Background sync for offline data
