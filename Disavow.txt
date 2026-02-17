@@ -1,0 +1,4 @@
+# Chặn các domain spam phát hiện từ Ahrefs
+domain:primeseo.xyz
+domain:seo-backlink.agency
+domain:backlinks-seorank.com

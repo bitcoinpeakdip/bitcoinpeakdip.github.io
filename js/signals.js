@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.23 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.24 - Fixed Click-to-Zoom Duplication
 
 let signalsData = [];
 let currentPage = 1;
@@ -27,7 +27,7 @@ let zoomState = {
 };
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.23';
+const APP_VERSION = '1.4.24';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
@@ -3932,7 +3932,7 @@ function addChartToolbarStyles() {
     document.head.appendChild(style);
 }
 
-// ========== TẠO TOOLBAR MỚI ==========
+// ========== TẠO TOOLBAR MỚI VỚI ZOOM CONTROLS Ở BOTTOM ==========
 function createChartToolbar() {
     const chartSection = document.querySelector('.chart-section');
     if (!chartSection) return;
@@ -3944,90 +3944,135 @@ function createChartToolbar() {
     }    
     
     // Xóa toolbar cũ nếu có
-    const oldToolbar = document.querySelector('.chart-tools-container');
+    const oldToolbar = document.querySelector('.zoom-toolbar');
     if (oldToolbar) oldToolbar.remove();
     
-    // Tạo container mới
-    const toolbar = document.createElement('div');
-    toolbar.className = 'chart-tools-container';
-    toolbar.id = 'chartTools';
+    const oldBottomContainer = document.querySelector('.zoom-bottom-container');
+    if (oldBottomContainer) oldBottomContainer.remove();
     
-    // Group 1: Navigation tools
-    const navGroup = document.createElement('div');
-    navGroup.className = 'tools-group';
-    navGroup.innerHTML = `
-        <button class="tool-btn active" id="toolCursor" data-tool="cursor" data-tooltip="Cursor (C)">
-            <i class="fas fa-mouse-pointer"></i>
-        </button>
-        <button class="tool-btn" id="toolPan" data-tool="pan" data-tooltip="Pan (P)">
-            <i class="fas fa-arrows-alt"></i>
-        </button>
-        <button class="tool-btn" id="toolZoom" data-tool="zoom" data-tooltip="Zoom Area (Z)">
-            <i class="fas fa-vector-square"></i>
-        </button>
-    `;
-    
-    // Group 2: History tools
-    const historyGroup = document.createElement('div');
-    historyGroup.className = 'tools-group';
-    historyGroup.innerHTML = `
-        <button class="tool-btn" id="toolUndo" data-tooltip="Undo (Ctrl+Z)">
-            <i class="fas fa-undo"></i>
-            <span class="history-badge" id="undoCount">0</span>
-        </button>
-        <button class="tool-btn" id="toolRedo" data-tooltip="Redo (Ctrl+Y)">
-            <i class="fas fa-redo"></i>
-            <span class="history-badge" id="redoCount">0</span>
-        </button>
-        <button class="tool-btn" id="toolReset" data-tooltip="Reset View">
-            <i class="fas fa-expand-alt"></i>
-        </button>
-    `;
-    
-    // Group 3: Timeline range
-    const timelineGroup = document.createElement('div');
-    timelineGroup.className = 'tools-group';
-    timelineGroup.style.flex = '1';
-    timelineGroup.innerHTML = `
-        <div class="timeline-range-container">
-            <div class="range-slider" id="rangeSlider">
-                <div class="range-fill" id="rangeFill"></div>
-                <div class="range-handle left" id="rangeHandleLeft"></div>
-                <div class="range-handle right" id="rangeHandleRight"></div>
-            </div>
-            <div class="range-labels">
-                <span id="rangeStartLabel">Start</span>
-                <span id="rangeEndLabel">End</span>
-            </div>
-        </div>
-    `;
-    
-    // Group 4: Zoom level
-    const zoomGroup = document.createElement('div');
-    zoomGroup.className = 'tools-group';
-    zoomGroup.innerHTML = `
-        <div class="zoom-level-indicator" id="zoomLevel">
-            <i class="fas fa-search"></i>
-            <span>100%</span>
-        </div>
-    `;
-    
-    toolbar.appendChild(navGroup);
-    toolbar.appendChild(historyGroup);
-    toolbar.appendChild(timelineGroup);
-    toolbar.appendChild(zoomGroup);
-    
-    // Thêm vào chart section (trước chart container)
+    // Tìm chart container
     const chartContainer = chartSection.querySelector('.chart-container');
-    chartSection.insertBefore(toolbar, chartContainer);
+    if (!chartContainer) return;
+    
+    // Tạo bottom container mới
+    const bottomContainer = document.createElement('div');
+    bottomContainer.className = 'zoom-bottom-container';
+    bottomContainer.id = 'zoomBottomContainer';
+    
+    // Kiểm tra xem đang dùng loại slider nào
+    const useRangeSlider = document.querySelector('.chart-tools-container') !== null;
+    
+    if (useRangeSlider) {
+        // Dùng range slider (toolbar mới)
+        bottomContainer.innerHTML = `
+            <div class="zoom-controls-group">
+                <button class="zoom-btn" id="zoomIn" data-tooltip="Zoom In (Ctrl+↑)">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="zoom-btn" id="zoomOut" data-tooltip="Zoom Out (Ctrl+↓)">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <button class="zoom-btn" id="zoomPan" data-tooltip="Pan Mode (P)">
+                    <i class="fas fa-arrows-alt"></i>
+                </button>
+                <button class="zoom-btn" id="zoomSelect" data-tooltip="Select Area (Z)">
+                    <i class="fas fa-vector-square"></i>
+                </button>
+                <button class="zoom-btn" id="zoomClick" data-tooltip="Click to Zoom (C)">
+                    <i class="fas fa-mouse-pointer"></i>
+                </button>
+                <button class="zoom-btn" id="zoomBack" data-tooltip="Undo Zoom">
+                    <i class="fas fa-undo-alt"></i>
+                </button>
+            </div>
+            
+            <div class="range-slider-container">
+                <div class="range-slider" id="rangeSlider">
+                    <div class="range-fill" id="rangeFill"></div>
+                    <div class="range-handle left" id="rangeHandleLeft"></div>
+                    <div class="range-handle right" id="rangeHandleRight"></div>
+                </div>
+                <div class="range-labels">
+                    <span id="rangeStartLabel">Start</span>
+                    <span id="rangeEndLabel">End</span>
+                </div>
+            </div>
+            
+            <div class="reset-btn-group">
+                <div class="zoom-info" id="zoomInfo">Full Range</div>
+                <button class="zoom-btn" id="resetViewBtn" data-tooltip="Reset View">
+                    <i class="fas fa-sync-alt"></i> Reset
+                </button>
+            </div>
+        `;
+    } else {
+        // Dùng timeline slider (toolbar cũ)
+        bottomContainer.innerHTML = `
+            <div class="zoom-controls-group">
+                <button class="zoom-btn" id="zoomIn" data-tooltip="Zoom In (Ctrl+↑)">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="zoom-btn" id="zoomOut" data-tooltip="Zoom Out (Ctrl+↓)">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <button class="zoom-btn" id="zoomPan" data-tooltip="Pan Mode (P)">
+                    <i class="fas fa-arrows-alt"></i>
+                </button>
+                <button class="zoom-btn" id="zoomSelect" data-tooltip="Select Area (Z)">
+                    <i class="fas fa-vector-square"></i>
+                </button>
+                <button class="zoom-btn" id="zoomClick" data-tooltip="Click to Zoom (C)">
+                    <i class="fas fa-mouse-pointer"></i>
+                </button>
+                <button class="zoom-btn" id="zoomBack" data-tooltip="Undo Zoom">
+                    <i class="fas fa-undo-alt"></i>
+                </button>
+            </div>
+            
+            <div class="timeline-controls">
+                <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="100" value="100">
+                <div class="timeline-labels">
+                    <span id="zoomStartLabel">Start</span>
+                    <span id="zoomEndLabel">End</span>
+                </div>
+            </div>
+            
+            <div class="reset-btn-group">
+                <div class="zoom-info" id="zoomInfo">Full Range</div>
+                <button class="zoom-btn" id="resetViewBtn" data-tooltip="Reset View">
+                    <i class="fas fa-sync-alt"></i> Reset
+                </button>
+            </div>
+        `;
+    }
+    
+    // Thêm bottom container sau chart container
+    chartContainer.parentNode.insertBefore(bottomContainer, chartContainer.nextSibling);
+    
+    // Ẩn chart-tools-container nếu có
+    const oldToolsContainer = document.querySelector('.chart-tools-container');
+    if (oldToolsContainer) {
+        oldToolsContainer.style.display = 'none';
+    }
     
     // Thêm event listeners
-    setupChartToolEvents();
+    setupZoomEventListeners();
     
-    // Thêm keyboard shortcuts
-    setupKeyboardShortcuts();
+    // Cập nhật range handles nếu dùng range slider
+    if (useRangeSlider) {
+        setTimeout(() => {
+            setupRangeSlider();
+            updateRangeHandles();
+        }, 100);
+    }
     
-    console.log('✅ Chart toolbar created');
+    // Cập nhật timeline slider
+    setTimeout(() => {
+        updateTimelineSlider();
+        updateZoomInfo();
+    }, 200);
+    
+    console.log('✅ Zoom controls moved to bottom');
 }
 
 // ========== SETUP TOOL EVENTS ==========
@@ -4749,6 +4794,7 @@ setTimeout(() => {
 }, 2000);
 
 // CẬP NHẬT HÀM INITIALIZE ZOOM CONTROLS - CHỈ GIỮ LẠI MỘT PHIÊN BẢN
+// CẬP NHẬT HÀM INITIALIZE ZOOM CONTROLS
 function initializeZoomControls() {
     console.log('🔍 Initializing zoom controls...');
     
@@ -4758,10 +4804,10 @@ function initializeZoomControls() {
         return;
     }
     
-    // Thêm styles
+    // Thêm styles (nếu chưa có)
     addChartToolbarStyles();
     
-    // Tạo toolbar mới
+    // Tạo toolbar mới với zoom controls ở bottom
     createChartToolbar();
     
     // Ẩn toolbar cũ nếu có
@@ -4770,7 +4816,6 @@ function initializeZoomControls() {
         oldToolbar.style.display = 'none';
     }
     
-    // === QUAN TRỌNG: KHỞI TẠO CLICK-TO-ZOOM ===
     // Tạo instructions panel cho click-to-zoom
     if (typeof createClickZoomInstructions === 'function') {
         createClickZoomInstructions();
@@ -4805,9 +4850,12 @@ function initializeZoomControls() {
         if (typeof updateRangeHandles === 'function') {
             updateRangeHandles();
         }
+        if (typeof updateTimelineSlider === 'function') {
+            updateTimelineSlider();
+        }
     }, 500);
     
-    console.log('✅ Zoom controls initialized');
+    console.log('✅ Zoom controls initialized with bottom layout');
 }
 
 // Đảm bảo toolbar được tạo sau khi có data
