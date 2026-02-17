@@ -273,3 +273,81 @@ window.addEventListener('online', function() {
     showNotification('Back online. Reloading data...', 'info');
     setTimeout(() => location.reload(), 2000);
 });
+
+// Mobile Menu Enhancement
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navMenu = document.getElementById('navMenu');
+    
+    if (mobileMenuBtn && navMenu) {
+        // Tạo overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'menu-overlay';
+        document.body.appendChild(overlay);
+        
+        // Xử lý click menu button
+        mobileMenuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            this.classList.toggle('active');
+            navMenu.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            // Prevent body scroll when menu is open
+            if (navMenu.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        });
+        
+        // Đóng menu khi click overlay
+        overlay.addEventListener('click', function() {
+            mobileMenuBtn.classList.remove('active');
+            navMenu.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        // Đóng menu khi click vào link
+        const navLinks = navMenu.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                mobileMenuBtn.classList.remove('active');
+                navMenu.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Xử lý resize window
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                mobileMenuBtn.classList.remove('active');
+                navMenu.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+        
+        // Swipe to close trên mobile
+        let touchStartY = 0;
+        navMenu.addEventListener('touchstart', function(e) {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        
+        navMenu.addEventListener('touchmove', function(e) {
+            if (!navMenu.classList.contains('active')) return;
+            
+            const touchY = e.touches[0].clientY;
+            const diff = touchY - touchStartY;
+            
+            // Nếu vuốt xuống từ đầu menu
+            if (diff > 50 && touchStartY < 100) {
+                mobileMenuBtn.classList.remove('active');
+                navMenu.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }, { passive: true });
+    }
+});
