@@ -1,6 +1,6 @@
 // ============================================
 // Bitcoin PeakDip Early Warning System - Signals
-// Version: 1.5.0 - CLEAN & OPTIMIZED
+// Version: 1.4.30 - CLEAN & OPTIMIZED
 // ============================================
 
 // ========== APP CONFIGURATION ==========
@@ -548,6 +548,9 @@ function createChartToolbar() {
             <button class="zoom-btn" id="zoomIn" data-tooltip="Zoom In"><i class="fas fa-search-plus"></i></button>
             <button class="zoom-btn" id="zoomOut" data-tooltip="Zoom Out"><i class="fas fa-search-minus"></i></button>
             <button class="zoom-btn" id="zoomBack" data-tooltip="Undo Zoom"><i class="fas fa-undo-alt"></i></button>
+            <button class="zoom-btn" id="panModeBtn" data-tooltip="Pan Mode (Drag to move chart)">
+                <i class="fas fa-hand-paper"></i>
+            </button>
         </div>
         <div class="range-slider-container">
             <div class="range-slider" id="rangeSlider">
@@ -568,9 +571,219 @@ function createChartToolbar() {
     
     chartSection.querySelector('.chart-container').after(container);
     setupZoomListeners();
+    setupPanMode(); // Thêm hàm mới
     setupRangeSlider();
 }
+// ========== PAN MODE ==========
+let panModeActive = false;
+let isPanning = false;
+let panStartX = null;
+let panStartMin = null;
+let panStartMax = null;
 
+function setupPanMode() {
+    const panBtn = document.getElementById('panModeBtn');
+    if (!panBtn) return;
+    
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (!chartCanvas) return;
+    
+    // Toggle pan mode
+    panBtn.addEventListener('click', function() {
+        panModeActive = !panModeActive;
+        this.classList.toggle('active', panModeActive);
+        
+        // Update cursor
+        chartCanvas.style.cursor = panModeActive ? 'grab' : 'default';
+        
+        // Show notification
+        if (panModeActive) {
+            showNotification('Pan Mode activated - Drag chart to move', 'info', 2000);
+        }
+        
+        // Remove any existing pan listeners if deactivating
+        if (!panModeActive) {
+            chartCanvas.style.cursor = 'default';
+        }
+    });
+    
+    // Pan mouse events
+    chartCanvas.addEventListener('mousedown', startPan);
+    chartCanvas.addEventListener('mousemove', pan);
+    chartCanvas.addEventListener('mouseup', endPan);
+    chartCanvas.addEventListener('mouseleave', endPan);
+    
+    // Touch events for mobile
+    chartCanvas.addEventListener('touchstart', startPanTouch);
+    chartCanvas.addEventListener('touchmove', panTouch);
+    chartCanvas.addEventListener('touchend', endPan);
+    chartCanvas.addEventListener('touchcancel', endPan);
+}
+
+function startPan(e) {
+    if (!panModeActive || !state.charts.bitcoin || !state.zoom.min || !state.zoom.max) return;
+    
+    e.preventDefault();
+    isPanning = true;
+    
+    const rect = e.target.getBoundingClientRect();
+    panStartX = e.clientX - rect.left;
+    panStartMin = new Date(state.zoom.min);
+    panStartMax = new Date(state.zoom.max);
+    
+    document.getElementById('bitcoinChart').style.cursor = 'grabbing';
+}
+
+function pan(e) {
+    if (!isPanning || !panModeActive || !state.charts.bitcoin) return;
+    
+    e.preventDefault();
+    
+    const rect = e.target.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const deltaX = currentX - panStartX;
+    
+    // Calculate time range
+    const totalRange = panStartMax - panStartMin;
+    const pixelsPerMs = rect.width / totalRange;
+    const deltaMs = deltaX / pixelsPerMs;
+    
+    // Calculate new min/max
+    let newMin = new Date(panStartMin.getTime() - deltaMs);
+    let newMax = new Date(panStartMax.getTime() - deltaMs);
+    
+    // Get full data range boundaries
+    if (state.historicalPriceData.length > 0) {
+        const dates = state.historicalPriceData.map(d => d.x);
+        const fullMin = new Date(Math.min(...dates));
+        const fullMax = new Date(Math.max(...dates));
+        
+        // Constrain to data boundaries
+        if (newMin < fullMin) {
+            const offset = fullMin - newMin;
+            newMin = fullMin;
+            newMax = new Date(panStartMax.getTime() - deltaMs + offset);
+        }
+        
+        if (newMax > fullMax) {
+            const offset = newMax - fullMax;
+            newMax = fullMax;
+            newMin = new Date(panStartMin.getTime() - deltaMs - offset);
+        }
+    }
+    
+    // Apply pan
+    state.zoom.min = newMin;
+    state.zoom.max = newMax;
+    
+    // Update chart
+    state.charts.bitcoin.options.scales.x.min = newMin;
+    state.charts.bitcoin.options.scales.x.max = newMax;
+    state.charts.bitcoin.update('none'); // 'none' for smoother panning
+    
+    // Update UI
+    updateZoomInfo();
+    updateRangeHandles();
+}
+
+function endPan() {
+    if (isPanning) {
+        isPanning = false;
+        document.getElementById('bitcoinChart').style.cursor = panModeActive ? 'grab' : 'default';
+        
+        // Save zoom state after pan
+        if (state.zoom.min && state.zoom.max) {
+            saveZoomState();
+        }
+    }
+}
+
+// Touch events for mobile
+function startPanTouch(e) {
+    if (!panModeActive || !state.charts.bitcoin || !state.zoom.min || !state.zoom.max) return;
+    if (e.touches.length !== 1) return;
+    
+    e.preventDefault();
+    isPanning = true;
+    
+    const touch = e.touches[0];
+    const rect = e.target.getBoundingClientRect();
+    panStartX = touch.clientX - rect.left;
+    panStartMin = new Date(state.zoom.min);
+    panStartMax = new Date(state.zoom.max);
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+}
+
+function panTouch(e) {
+    if (!isPanning || !panModeActive || !state.charts.bitcoin || e.touches.length !== 1) return;
+    
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const rect = e.target.getBoundingClientRect();
+    const currentX = touch.clientX - rect.left;
+    const deltaX = currentX - panStartX;
+    
+    const totalRange = panStartMax - panStartMin;
+    const pixelsPerMs = rect.width / totalRange;
+    const deltaMs = deltaX / pixelsPerMs;
+    
+    let newMin = new Date(panStartMin.getTime() - deltaMs);
+    let newMax = new Date(panStartMax.getTime() - deltaMs);
+    
+    // Constrain to data boundaries
+    if (state.historicalPriceData.length > 0) {
+        const dates = state.historicalPriceData.map(d => d.x);
+        const fullMin = new Date(Math.min(...dates));
+        const fullMax = new Date(Math.max(...dates));
+        
+        if (newMin < fullMin) {
+            const offset = fullMin - newMin;
+            newMin = fullMin;
+            newMax = new Date(panStartMax.getTime() - deltaMs + offset);
+        }
+        
+        if (newMax > fullMax) {
+            const offset = newMax - fullMax;
+            newMax = fullMax;
+            newMin = new Date(panStartMin.getTime() - deltaMs - offset);
+        }
+    }
+    
+    state.zoom.min = newMin;
+    state.zoom.max = newMax;
+    
+    state.charts.bitcoin.options.scales.x.min = newMin;
+    state.charts.bitcoin.options.scales.x.max = newMax;
+    state.charts.bitcoin.update('none');
+    
+    updateZoomInfo();
+    updateRangeHandles();
+    
+    // Show feedback on mobile
+    if (!document.getElementById('panFeedback')?.classList.contains('visible')) {
+        showPanFeedback();
+    }
+}
+
+function showPanFeedback() {
+    let fb = document.getElementById('panFeedback');
+    if (!fb) {
+        fb = document.createElement('div');
+        fb.id = 'panFeedback';
+        fb.className = 'slider-feedback pan-feedback';
+        fb.innerHTML = '<i class="fas fa-hand-paper"></i> Dragging to pan';
+        document.body.appendChild(fb);
+    }
+    fb.classList.add('visible');
+    
+    clearTimeout(window.panFeedbackTimeout);
+    window.panFeedbackTimeout = setTimeout(() => {
+        fb.classList.remove('visible');
+    }, 1000);
+}
 function setupZoomListeners() {
     document.getElementById('zoomIn')?.addEventListener('click', () => zoom(0.8));
     document.getElementById('zoomOut')?.addEventListener('click', () => zoom(1.2));
@@ -596,6 +809,16 @@ function zoom(factor) {
 
 function resetZoom() {
     if (state.historicalPriceData.length === 0) return;
+    
+    // Exit pan mode if active
+    if (panModeActive) {
+        panModeActive = false;
+        const panBtn = document.getElementById('panModeBtn');
+        if (panBtn) {
+            panBtn.classList.remove('active');
+        }
+        document.getElementById('bitcoinChart').style.cursor = 'default';
+    }
     
     saveZoomState();
     
@@ -974,6 +1197,23 @@ function refreshData() {
 function initMobileFeatures() {
     addMobileStyles();
     setupMobileSliderHints();
+    
+    // Add pan mode hint for mobile
+    if (window.innerWidth <= 768) {
+        setTimeout(() => {
+            if (!document.querySelector('.pan-mode-hint')) {
+                const hint = document.createElement('div');
+                hint.className = 'pan-mode-hint mobile-scroll-hint';
+                hint.innerHTML = '<i class="fas fa-hand-paper"></i> Bật Pan Mode (👆) để kéo đồ thị';
+                document.querySelector('.zoom-controls-group')?.after(hint);
+                
+                setTimeout(() => {
+                    hint.style.opacity = '0';
+                    setTimeout(() => hint.remove(), 2000);
+                }, 5000);
+            }
+        }, 3000);
+    }
     
     window.addEventListener('resize', debounce(() => {
         updateRangeHandles();

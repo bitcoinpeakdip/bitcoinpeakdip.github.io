@@ -2850,3 +2850,99 @@ body.slider-active {
     z-index: 1000;
     pointer-events: none;
 }
+
+/* Pan Mode Styles */
+#panModeBtn {
+    position: relative;
+}
+
+#panModeBtn.active {
+    background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+    animation: panPulse 2s infinite;
+}
+
+#panModeBtn.active i {
+    animation: handWave 2s infinite;
+}
+
+@keyframes panPulse {
+    0%, 100% {
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(0, 212, 255, 0.8);
+    }
+}
+
+@keyframes handWave {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(10deg);
+    }
+    75% {
+        transform: rotate(-10deg);
+    }
+}
+
+/* Pan cursor styles */
+#bitcoinChart.pan-active {
+    cursor: grab;
+}
+
+#bitcoinChart.pan-active:active {
+    cursor: grabbing;
+}
+
+/* Pan feedback for mobile */
+.pan-feedback {
+    background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: bold;
+    box-shadow: 0 5px 20px rgba(0, 212, 255, 0.5);
+    border: 2px solid white;
+}
+
+/* Tooltip for pan button */
+#panModeBtn[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    border: 1px solid var(--wave-trough);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Disable text selection while panning */
+body.panning {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #panModeBtn {
+        width: 42px;
+        height: 42px;
+    }
+    
+    .pan-feedback {
+        bottom: 30px;
+        padding: 10px 20px;
+        font-size: 0.9em;
+    }
+}
