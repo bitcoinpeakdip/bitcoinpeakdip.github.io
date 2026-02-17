@@ -1,6 +1,6 @@
 // EWS Signals Page JavaScript - FIXED VERSION (REMOVED CLICK-TO-ZOOM)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.27 - Removed Click-to-Zoom
+// Version: 1.4.28 - Removed Click-to-Zoom
 
 let signalsData = [];
 let currentPage = 1;
@@ -30,7 +30,7 @@ let undoStack = [];
 let redoStack = [];
 
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.27';
+const APP_VERSION = '1.4.28';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
@@ -5200,6 +5200,294 @@ document.addEventListener('chartDataUpdated', function() {
 });
 
 console.log('✅ Mobile zoom slider fix loaded');
+
+// ========== FIX PAN MODE - THÊM VÀO CUỐI FILE signals.js ==========
+
+/**
+ * FIX: Pan Mode không hoạt động
+ * Nguyên nhân: Biến chartCanvas không được định nghĩa trong các hàm pan
+ * Giải pháp: Sửa lại các hàm startPan, doPan, endPan
+ */
+
+// Lưu lại reference đến chart canvas
+let panCanvas = null;
+
+// Override hàm startPan
+function startPan(e) {
+    console.log('🖱️ Pan mode STARTED');
+    
+    // Lấy canvas reference
+    if (!panCanvas) {
+        panCanvas = document.getElementById('bitcoinChart');
+    }
+    
+    if (!panCanvas || !bitcoinChart || !zoomState.min || !zoomState.max) {
+        console.warn('⚠️ Cannot pan: missing chart data');
+        return;
+    }
+    
+    isDragging = true;
+    dragStartX = e.clientX;
+    
+    // Lưu trạng thái zoom hiện tại
+    if (!panZoomStartState) {
+        panZoomStartState = {
+            min: new Date(zoomState.min.getTime()),
+            max: new Date(zoomState.max.getTime())
+        };
+    }
+    
+    panCanvas.style.cursor = 'grabbing';
+    
+    // Ngăn chặn sự kiện mặc định
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+// Lưu trạng thái zoom khi bắt đầu pan
+let panZoomStartState = null;
+
+// Override hàm doPan
+function doPan(e) {
+    if (!isDragging || !bitcoinChart || !zoomState.min || !zoomState.max) {
+        return;
+    }
+    
+    if (!panCanvas) {
+        panCanvas = document.getElementById('bitcoinChart');
+    }
+    
+    if (!panCanvas) return;
+    
+    // Tính toán delta
+    const deltaX = e.clientX - dragStartX;
+    const chartWidth = panCanvas.width || panCanvas.clientWidth;
+    
+    // Tính range thời gian
+    const timeRange = zoomState.max.getTime() - zoomState.min.getTime();
+    const timePerPixel = timeRange / chartWidth;
+    
+    // Tính delta thời gian
+    const timeDelta = deltaX * timePerPixel;
+    
+    // Tính new min/max
+    let newMinTime = zoomState.min.getTime() - timeDelta;
+    let newMaxTime = zoomState.max.getTime() - timeDelta;
+    
+    // Giới hạn trong phạm vi dữ liệu
+    const fullData = historicalPriceData;
+    if (fullData && fullData.length > 0) {
+        const validDates = fullData
+            .map(d => d.x)
+            .filter(date => date && date instanceof Date && !isNaN(date.getTime()));
+        
+        if (validDates.length > 0) {
+            const fullMinTime = Math.min(...validDates.map(d => d.getTime()));
+            const fullMaxTime = Math.max(...validDates.map(d => d.getTime()));
+            
+            // Thêm padding
+            const range = fullMaxTime - fullMinTime;
+            const paddedMin = fullMinTime - range * 0.05;
+            const paddedMax = fullMaxTime + range * 0.05;
+            
+            // Giới hạn
+            newMinTime = Math.max(paddedMin, Math.min(paddedMax - (newMaxTime - newMinTime), newMinTime));
+            newMaxTime = newMinTime + (newMaxTime - newMinTime);
+            
+            if (newMaxTime > paddedMax) {
+                newMaxTime = paddedMax;
+                newMinTime = newMaxTime - (newMaxTime - newMinTime);
+            }
+        }
+    }
+    
+    // Tạo Date objects mới
+    const newMin = new Date(newMinTime);
+    const newMax = new Date(newMaxTime);
+    
+    // Cập nhật zoom state
+    zoomState.min = newMin;
+    zoomState.max = newMax;
+    
+    // Cập nhật chart
+    bitcoinChart.options.scales.x.min = newMin;
+    bitcoinChart.options.scales.x.max = newMax;
+    bitcoinChart.update('none'); // 'none' để tránh animation giật
+    
+    // Cập nhật UI
+    updateRangeHandles();
+    updateZoomInfo();
+    updateTimelineSlider();
+    
+    // Cập nhật drag start
+    dragStartX = e.clientX;
+    
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+// Override hàm endPan
+function endPan(e) {
+    if (!isDragging) return;
+    
+    console.log('🖱️ Pan mode ENDED');
+    isDragging = false;
+    
+    if (panCanvas) {
+        panCanvas.style.cursor = currentTool === 'pan' ? 'grab' : '';
+    }
+    
+    // Lưu trạng thái zoom
+    if (bitcoinChart) {
+        saveZoomState();
+    }
+    
+    panZoomStartState = null;
+    
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+// Cập nhật hàm setActiveTool để đảm bảo cursor đúng
+const originalSetActiveTool = setActiveTool;
+setActiveTool = function(tool) {
+    // Gọi hàm gốc
+    if (originalSetActiveTool) {
+        originalSetActiveTool(tool);
+    }
+    
+    // Cập nhật cursor
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (!chartCanvas) return;
+    
+    switch(tool) {
+        case 'pan':
+            chartCanvas.style.cursor = 'grab';
+            break;
+        case 'zoom':
+            chartCanvas.style.cursor = 'crosshair';
+            break;
+        default:
+            chartCanvas.style.cursor = 'default';
+    }
+};
+
+// Thêm event listeners trực tiếp cho chart canvas
+function setupPanModeDirectly() {
+    console.log('🔧 Setting up Pan Mode directly...');
+    
+    const chartCanvas = document.getElementById('bitcoinChart');
+    if (!chartCanvas) {
+        setTimeout(setupPanModeDirectly, 500);
+        return;
+    }
+    
+    // Xóa event listeners cũ (nếu có)
+    chartCanvas.removeEventListener('mousedown', handlePanMouseDown);
+    chartCanvas.removeEventListener('mousemove', handlePanMouseMove);
+    chartCanvas.removeEventListener('mouseup', handlePanMouseUp);
+    chartCanvas.removeEventListener('mouseleave', handlePanMouseLeave);
+    
+    // Thêm event listeners mới
+    chartCanvas.addEventListener('mousedown', handlePanMouseDown);
+    chartCanvas.addEventListener('mousemove', handlePanMouseMove);
+    chartCanvas.addEventListener('mouseup', handlePanMouseUp);
+    chartCanvas.addEventListener('mouseleave', handlePanMouseLeave);
+    
+    // Touch events cho mobile
+    chartCanvas.addEventListener('touchstart', handlePanTouchStart, { passive: false });
+    chartCanvas.addEventListener('touchmove', handlePanTouchMove, { passive: false });
+    chartCanvas.addEventListener('touchend', handlePanTouchEnd);
+    chartCanvas.addEventListener('touchcancel', handlePanTouchEnd);
+    
+    console.log('✅ Pan Mode direct setup complete');
+}
+
+// Handlers cho mouse events
+function handlePanMouseDown(e) {
+    if (currentTool !== 'pan') return;
+    startPan(e);
+}
+
+function handlePanMouseMove(e) {
+    if (currentTool !== 'pan' || !isDragging) return;
+    doPan(e);
+}
+
+function handlePanMouseUp(e) {
+    if (currentTool !== 'pan' || !isDragging) return;
+    endPan(e);
+}
+
+function handlePanMouseLeave(e) {
+    if (currentTool === 'pan' && isDragging) {
+        endPan(e);
+    }
+}
+
+// Handlers cho touch events
+function handlePanTouchStart(e) {
+    if (currentTool !== 'pan') return;
+    e.preventDefault();
+    
+    if (e.touches.length > 0) {
+        // Tạo fake mouse event từ touch
+        const touch = e.touches[0];
+        const fakeEvent = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            preventDefault: () => {},
+            stopPropagation: () => {}
+        };
+        startPan(fakeEvent);
+    }
+}
+
+function handlePanTouchMove(e) {
+    if (currentTool !== 'pan' || !isDragging) return;
+    e.preventDefault();
+    
+    if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        const fakeEvent = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            preventDefault: () => {},
+            stopPropagation: () => {}
+        };
+        doPan(fakeEvent);
+    }
+}
+
+function handlePanTouchEnd(e) {
+    if (currentTool !== 'pan' || !isDragging) return;
+    e.preventDefault();
+    
+    const fakeEvent = {
+        preventDefault: () => {},
+        stopPropagation: () => {}
+    };
+    endPan(fakeEvent);
+}
+
+// Khởi tạo pan mode sau khi chart load
+document.addEventListener('DOMContentLoaded', function() {
+    // Đợi chart load xong
+    setTimeout(setupPanModeDirectly, 2000);
+});
+
+// Khởi tạo lại khi chart được cập nhật
+document.addEventListener('chartDataUpdated', function() {
+    setTimeout(setupPanModeDirectly, 500);
+});
+
+// Export các hàm cần thiết
+window.startPan = startPan;
+window.doPan = doPan;
+window.endPan = endPan;
+window.setupPanModeDirectly = setupPanModeDirectly;
+
+console.log('✅ Pan Mode fix loaded - Press P key to activate Pan Mode');
 
 function debugStats() {
     console.log('🔍 Debug Stats:');
