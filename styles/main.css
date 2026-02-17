@@ -1573,19 +1573,9 @@ footer {
     color: #00d4ff !important;
 }
 
-/* ========== MOBILE MENU IMPROVEMENTS ========== */
+/* ========== MOBILE MENU - CLEAN VERSION ========== */
 @media (max-width: 768px) {
-    /* Cập nhật navigation container */
-    .navigation {
-        padding: 12px 0;
-    }
-    
-    .nav-container {
-        padding: 0 15px;
-        position: relative;
-    }
-    
-    /* Style cho mobile menu button */
+    /* Mobile menu button */
     .mobile-menu-btn {
         display: flex;
         align-items: center;
@@ -1597,224 +1587,97 @@ footer {
         border-radius: 12px;
         color: var(--wave-trough);
         font-size: 1.3em;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        z-index: 1001;
     }
     
-    .mobile-menu-btn:hover {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.1));
-        border-color: var(--wave-trough);
-        transform: translateY(-2px);
-    }
-    
-    .mobile-menu-btn.active {
-        background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
-        color: white;
-        border-color: transparent;
-        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
-    }
-    
-    .mobile-menu-btn.active i {
-        transform: rotate(90deg);
-        transition: transform 0.3s ease;
-    }
-    
-    /* Menu container - thay đổi hoàn toàn */
+    /* Menu container - QUAN TRỌNG: chỉ style khi active */
     .nav-menu {
-        position: absolute;
-        top: calc(100% + 10px);
-        left: 15px;
-        right: 15px;
-        width: auto; /* Thay đổi từ width: 100% */
-        background: rgba(10, 14, 23, 0.98);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(0, 212, 255, 0.2);
-        border-radius: 24px; /* Bo tròn nhiều hơn */
-        padding: 12px;
-        flex-direction: column;
-        gap: 4px;
-        transform: translateY(-10px);
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 212, 255, 0.1);
-        z-index: 1000;
-        max-width: 400px; /* Giới hạn chiều rộng tối đa */
-        margin: 0 auto; /* Canh giữa */
-        pointer-events: none;
+        position: absolute !important;
+        top: calc(100% + 10px) !important;
+        left: 50% !important;
+        transform: translateX(-50%) translateY(-10px) !important;
+        width: auto !important;
+        min-width: 200px !important;
+        max-width: 90vw !important;
+        background: rgba(10, 14, 23, 0.98) !important;
+        backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(0, 212, 255, 0.2) !important;
+        border-radius: 24px !important;
+        padding: 12px !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+        z-index: 1000 !important;
+        pointer-events: none !important;
     }
     
-    /* Hiển thị menu khi active */
+    /* Khi active */
     .nav-menu.active {
-        transform: translateY(0);
-        opacity: 1;
-        visibility: visible;
-        pointer-events: all;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateX(-50%) translateY(0) !important;
+        pointer-events: all !important;
     }
     
-    /* Animation cho từng menu item */
+    /* Menu items */
     .nav-menu .nav-item {
-        width: 100%;
-        opacity: 0;
-        transform: translateX(-10px);
-        transition: all 0.3s ease;
-        transition-delay: calc(0.05s * var(--item-index, 0));
+        width: 100% !important;
+        margin: 0 !important;
     }
     
-    .nav-menu.active .nav-item {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    
-    /* Style cho nav items trong menu mobile */
     .nav-menu .nav-link {
-        display: flex;
-        align-items: center;
-        padding: 14px 20px;
-        border-radius: 16px;
-        font-size: 1.1em;
-        font-weight: 600;
-        color: var(--text-glow);
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid transparent;
-        transition: all 0.3s ease;
-        width: 100%;
-        white-space: nowrap;
+        display: flex !important;
+        align-items: center !important;
+        padding: 12px 20px !important;
+        border-radius: 16px !important;
+        font-size: 1em !important;
+        color: var(--text-glow) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        white-space: nowrap !important;
+        width: 100% !important;
+        border: none !important;
     }
     
-    /* Hover state */
-    .nav-menu .nav-link:hover {
-        background: rgba(0, 212, 255, 0.1);
-        border-color: rgba(0, 212, 255, 0.2);
-        transform: translateX(5px);
-        color: var(--wave-trough);
+    .nav-menu .nav-link i {
+        width: 24px !important;
+        margin-right: 12px !important;
+        color: var(--wave-mid) !important;
     }
     
     /* Active state */
     .nav-menu .nav-link.active {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(0, 212, 255, 0.05));
-        border-color: var(--wave-trough);
-        color: var(--wave-trough);
-        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.15);
-        position: relative;
-        overflow: hidden;
+        background: rgba(0, 212, 255, 0.15) !important;
+        color: var(--wave-trough) !important;
     }
     
-    .nav-menu .nav-link.active::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        background: linear-gradient(to bottom, var(--wave-trough), var(--wave-mid), var(--wave-peak));
-        border-radius: 4px 0 0 4px;
-    }
-    
-    /* Icon trong menu */
-    .nav-menu .nav-link i {
-        width: 24px;
-        margin-right: 12px;
-        font-size: 1.2em;
-        color: var(--wave-mid);
-        transition: all 0.3s ease;
-    }
-    
-    .nav-menu .nav-link:hover i,
     .nav-menu .nav-link.active i {
-        color: var(--wave-trough);
-        transform: scale(1.1);
+        color: var(--wave-trough) !important;
     }
     
-    /* Thêm hiệu ứng mũi tên cho dropdown (nếu có) */
-    .nav-link.dropdown-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    
-    .nav-link.dropdown-toggle .dropdown-arrow {
-        margin-left: 8px;
-        font-size: 0.9em;
-        transition: transform 0.3s ease;
-    }
-    
-    .nav-link.dropdown-toggle.active .dropdown-arrow {
-        transform: rotate(180deg);
-    }
-    
-    /* Style cho mũi tên của menu */
+    /* Mũi tên nhỏ */
     .nav-menu::before {
-        content: '';
-        position: absolute;
-        top: -8px;
-        right: 20px;
-        width: 16px;
-        height: 16px;
-        background: rgba(10, 14, 23, 0.98);
-        border-left: 1px solid rgba(0, 212, 255, 0.2);
-        border-top: 1px solid rgba(0, 212, 255, 0.2);
-        transform: rotate(45deg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 4px 0 0 0;
+        content: '' !important;
+        position: absolute !important;
+        top: -8px !important;
+        right: 20px !important;
+        width: 16px !important;
+        height: 16px !important;
+        background: rgba(10, 14, 23, 0.98) !important;
+        border-left: 1px solid rgba(0, 212, 255, 0.2) !important;
+        border-top: 1px solid rgba(0, 212, 255, 0.2) !important;
+        transform: rotate(45deg) !important;
+        border-radius: 4px 0 0 0 !important;
     }
     
-    /* Animation cho từng item */
-    .nav-item:nth-child(1) { --item-index: 1; }
-    .nav-item:nth-child(2) { --item-index: 2; }
-    .nav-item:nth-child(3) { --item-index: 3; }
-    .nav-item:nth-child(4) { --item-index: 4; }
-    .nav-item:nth-child(5) { --item-index: 5; }
-    .nav-item:nth-child(6) { --item-index: 6; }
-    .nav-item:nth-child(7) { --item-index: 7; }
-    
-    /* Khi menu đóng */
-    .nav-menu:not(.active) .nav-item {
-        opacity: 0;
-        transform: translateX(-10px);
-    }
-    
-    /* Responsive cho màn hình rất nhỏ */
-    @media (max-width: 480px) {
-        .nav-menu {
-            left: 10px;
-            right: 10px;
-            padding: 10px;
-            border-radius: 20px;
-        }
-        
-        .nav-menu .nav-link {
-            padding: 12px 16px;
-            font-size: 1em;
-        }
-        
-        .nav-menu .nav-link i {
-            width: 22px;
-            margin-right: 10px;
-            font-size: 1.1em;
-        }
-    }
-    
-    /* Thêm overlay khi menu mở */
-    .menu-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
-        z-index: 999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-    
-    .menu-overlay.active {
-        opacity: 1;
-        visibility: visible;
+    /* Reset mọi style cũ */
+    .nav-menu {
+        display: flex !important;
+        position: absolute !important;
+        list-style: none !important;
+        margin: 0 !important;
     }
 }
