@@ -1,6 +1,6 @@
-// EWS Signals Page JavaScript - FIXED VERSION (REMOVED CLICK-TO-ZOOM)
+// EWS Signals Page JavaScript - CLEAN VERSION
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.28 - Removed Click-to-Zoom
+// Version: 1.4.29 - Removed Pan Mode & Select Area
 
 let signalsData = [];
 let currentPage = 1;
@@ -21,20 +21,12 @@ let zoomState = {
     zoomHistory: []
 };
 
-// ========== CHART INTERACTION TOOLS ==========
-let currentTool = 'cursor'; // 'cursor', 'pan', 'zoom'
-let isDragging = false;
-let dragStartX = null;
-let selectionRect = null;
-let undoStack = [];
-let redoStack = [];
-
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.28';
+const APP_VERSION = '1.4.29';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
-console.log('🚀 signals.js loaded - Debug mode ON');
+console.log('🚀 signals.js loaded - CLEAN VERSION (No Pan/Select)');
 
 // Kiểm tra và xử lý cache khi version thay đổi
 function handleCacheVersion() {
@@ -1841,13 +1833,7 @@ function setupZoomEventListeners() {
         resetZoom();
     });
     
-    document.getElementById('zoomPan')?.addEventListener('click', function() {
-        togglePanMode();
-    });
-    
-    document.getElementById('zoomSelect')?.addEventListener('click', function() {
-        toggleSelectMode();
-    });
+    // Đã xóa zoomPan và zoomSelect
     
     const timelineSlider = document.getElementById('timelineSlider');
     if (timelineSlider) {
@@ -1938,135 +1924,6 @@ function applyTimeframePreset(preset) {
     updateTimelineSlider();
 }
 
-function setupDragToZoom() {
-    const chartCanvas = document.getElementById('bitcoinChart');
-    if (!chartCanvas) return;
-    
-    let isSelecting = false;
-    let startX, startY;
-    let selectionRect = null;
-    
-    chartCanvas.addEventListener('mousedown', function(e) {
-        const selectBtn = document.getElementById('zoomSelect');
-        if (!selectBtn || !selectBtn.classList.contains('active')) return;
-        
-        const rect = chartCanvas.getBoundingClientRect();
-        startX = e.clientX - rect.left;
-        startY = e.clientY - rect.top;
-        
-        selectionRect = document.createElement('div');
-        selectionRect.className = 'selection-rectangle';
-        selectionRect.style.left = startX + 'px';
-        selectionRect.style.top = startY + 'px';
-        chartCanvas.parentNode.appendChild(selectionRect);
-        
-        isSelecting = true;
-    });
-    
-    chartCanvas.addEventListener('mousemove', function(e) {
-        if (!isSelecting || !selectionRect) return;
-        
-        const rect = chartCanvas.getBoundingClientRect();
-        const currentX = e.clientX - rect.left;
-        const currentY = e.clientY - rect.top;
-        
-        const width = currentX - startX;
-        const height = currentY - startY;
-        
-        selectionRect.style.width = Math.abs(width) + 'px';
-        selectionRect.style.height = Math.abs(height) + 'px';
-        
-        if (width < 0) {
-            selectionRect.style.left = currentX + 'px';
-        }
-        if (height < 0) {
-            selectionRect.style.top = currentY + 'px';
-        }
-    });
-    
-    chartCanvas.addEventListener('mouseup', function(e) {
-        if (!isSelecting || !selectionRect) return;
-        
-        const rect = chartCanvas.getBoundingClientRect();
-        const endX = e.clientX - rect.left;
-        
-        const xScale = bitcoinChart.scales.x;
-        
-        const minPixel = Math.min(startX, endX);
-        const maxPixel = Math.max(startX, endX);
-        
-        const minDate = xScale.getValueForPixel(minPixel);
-        const maxDate = xScale.getValueForPixel(maxPixel);
-        
-        if (minDate && maxDate && (maxDate - minDate) > 0) {
-            zoomToRange(minDate, maxDate);
-        }
-        
-        if (selectionRect.parentNode) {
-            selectionRect.parentNode.removeChild(selectionRect);
-        }
-        selectionRect = null;
-        isSelecting = false;
-    });
-    
-    let isPanning = false;
-    let panStartX = 0;
-    
-    chartCanvas.addEventListener('mousedown', function(e) {
-        const panBtn = document.getElementById('zoomPan');
-        if (!panBtn || !panBtn.classList.contains('active')) return;
-        
-        isPanning = true;
-        panStartX = e.clientX;
-        chartCanvas.style.cursor = 'grabbing';
-    });
-    
-    chartCanvas.addEventListener('mousemove', function(e) {
-        if (!isPanning) return;
-        
-        const deltaX = e.clientX - panStartX;
-        const panSpeed = 0.5;
-        
-        if (zoomState.min && zoomState.max) {
-            const range = zoomState.max - zoomState.min;
-            const pixelRange = chartCanvas.width;
-            const datePerPixel = range / pixelRange;
-            
-            const dateDelta = deltaX * datePerPixel * panSpeed;
-            
-            zoomState.min = new Date(zoomState.min.getTime() - dateDelta);
-            zoomState.max = new Date(zoomState.max.getTime() - dateDelta);
-            
-            bitcoinChart.options.scales.x.min = zoomState.min;
-            bitcoinChart.options.scales.x.max = zoomState.max;
-            bitcoinChart.update();
-            
-            panStartX = e.clientX;
-        }
-    });
-    
-    chartCanvas.addEventListener('mouseup', function() {
-        if (isPanning) {
-            isPanning = false;
-            chartCanvas.style.cursor = '';
-        }
-    });
-    
-    chartCanvas.addEventListener('mouseleave', function() {
-        if (isPanning) {
-            isPanning = false;
-            chartCanvas.style.cursor = '';
-        }
-        if (isSelecting && selectionRect) {
-            if (selectionRect.parentNode) {
-                selectionRect.parentNode.removeChild(selectionRect);
-            }
-            selectionRect = null;
-            isSelecting = false;
-        }
-    });
-}
-
 function zoomChart(factor) {
     if (!bitcoinChart) return;
     
@@ -2153,33 +2010,7 @@ function zoomBack() {
     }
 }
 
-function togglePanMode() {
-    const panBtn = document.getElementById('zoomPan');
-    const selectBtn = document.getElementById('zoomSelect');
-    
-    if (panBtn.classList.contains('active')) {
-        panBtn.classList.remove('active');
-        document.getElementById('bitcoinChart').style.cursor = '';
-    } else {
-        panBtn.classList.add('active');
-        if (selectBtn) selectBtn.classList.remove('active');
-        document.getElementById('bitcoinChart').style.cursor = 'grab';
-    }
-}
-
-function toggleSelectMode() {
-    const selectBtn = document.getElementById('zoomSelect');
-    const panBtn = document.getElementById('zoomPan');
-    
-    if (selectBtn.classList.contains('active')) {
-        selectBtn.classList.remove('active');
-        document.getElementById('bitcoinChart').style.cursor = '';
-    } else {
-        selectBtn.classList.add('active');
-        if (panBtn) panBtn.classList.remove('active');
-        document.getElementById('bitcoinChart').style.cursor = 'crosshair';
-    }
-}
+// Đã xóa togglePanMode và toggleSelectMode
 
 function updateZoomFromSlider(value) {
     if (!bitcoinChart || !historicalPriceData || historicalPriceData.length === 0) {
@@ -2940,9 +2771,6 @@ if (window.bitcoinPriceData && typeof window.bitcoinPriceData === 'string') {
 console.log('✅ signals.js (REAL BITCOIN PRICE DATA VERSION) loaded successfully');
 console.log('ℹ️  This version uses REAL Bitcoin price data from Binance CSV');
 
-// ========== CHART INTERACTION TOOLS ==========
-// Đã khai báo ở đầu file
-
 // ========== THÊM CSS CHO TOOLBAR MỚI ==========
 function addChartToolbarStyles() {
     const style = document.createElement('style');
@@ -3241,12 +3069,6 @@ function createChartToolbar() {
                 <button class="zoom-btn" id="zoomOut" data-tooltip="Zoom Out (Ctrl+↓)">
                     <i class="fas fa-search-minus"></i>
                 </button>
-                <button class="zoom-btn" id="zoomPan" data-tooltip="Pan Mode (P)">
-                    <i class="fas fa-arrows-alt"></i>
-                </button>
-                <button class="zoom-btn" id="zoomSelect" data-tooltip="Select Area (Z)">
-                    <i class="fas fa-vector-square"></i>
-                </button>
                 <button class="zoom-btn" id="zoomBack" data-tooltip="Undo Zoom">
                     <i class="fas fa-undo-alt"></i>
                 </button>
@@ -3279,12 +3101,6 @@ function createChartToolbar() {
                 </button>
                 <button class="zoom-btn" id="zoomOut" data-tooltip="Zoom Out (Ctrl+↓)">
                     <i class="fas fa-search-minus"></i>
-                </button>
-                <button class="zoom-btn" id="zoomPan" data-tooltip="Pan Mode (P)">
-                    <i class="fas fa-arrows-alt"></i>
-                </button>
-                <button class="zoom-btn" id="zoomSelect" data-tooltip="Select Area (Z)">
-                    <i class="fas fa-vector-square"></i>
                 </button>
                 <button class="zoom-btn" id="zoomBack" data-tooltip="Undo Zoom">
                     <i class="fas fa-undo-alt"></i>
@@ -3333,76 +3149,10 @@ function createChartToolbar() {
 }
 
 // ========== SETUP TOOL EVENTS ==========
-function setupChartToolEvents() {
-    // Cursor tool
-    document.getElementById('toolCursor')?.addEventListener('click', () => {
-        setActiveTool('cursor');
-    });
-    
-    // Pan tool
-    document.getElementById('toolPan')?.addEventListener('click', () => {
-        setActiveTool('pan');
-    });
-    
-    // Zoom tool
-    document.getElementById('toolZoom')?.addEventListener('click', () => {
-        setActiveTool('zoom');
-    });
-    
-    // Undo
-    document.getElementById('toolUndo')?.addEventListener('click', () => {
-        undoZoom();
-    });
-    
-    // Redo
-    document.getElementById('toolRedo')?.addEventListener('click', () => {
-        redoZoom();
-    });
-    
-    // Reset
-    document.getElementById('toolReset')?.addEventListener('click', () => {
-        resetFullView();
-    });
-    
-    // Range slider handles
-    setupRangeSlider();
-    
-    // Chart mouse events for pan and zoom
-    setupChartMouseEvents();
-}
+// Đã xóa setupChartToolEvents
 
 // ========== SET ACTIVE TOOL ==========
-function setActiveTool(tool) {
-    currentTool = tool;
-    
-    document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    if (tool !== 'undo' && tool !== 'redo') {
-        const activeBtn = document.getElementById(`tool${tool.charAt(0).toUpperCase() + tool.slice(1)}`);
-        if (activeBtn) activeBtn.classList.add('active');
-    }
-    
-    const chartCanvas = document.getElementById('bitcoinChart');
-    if (!chartCanvas) return;
-    
-    chartCanvas.classList.remove('tool-cursor', 'tool-pan', 'tool-zoom');
-    
-    switch(tool) {
-        case 'cursor':
-            chartCanvas.classList.add('tool-cursor');
-            break;
-        case 'pan':
-            chartCanvas.classList.add('tool-pan');
-            break;
-        case 'zoom':
-            chartCanvas.classList.add('tool-zoom');
-            break;
-    }
-    
-    console.log(`🛠️ Tool activated: ${tool}`);
-}
+// Đã xóa setActiveTool
 
 // ========== SETUP RANGE SLIDER ==========
 function setupRangeSlider() {
@@ -3553,145 +3303,13 @@ function setupRangeSlider() {
 }
 
 // ========== SETUP CHART MOUSE EVENTS ==========
-function setupChartMouseEvents() {
-    const chartCanvas = document.getElementById('bitcoinChart');
-    if (!chartCanvas) return;
-    
-    chartCanvas.addEventListener('mousedown', (e) => {
-        if (currentTool === 'pan') {
-            startPan(e);
-        } else if (currentTool === 'zoom') {
-            startZoomSelection(e);
-        }
-    });
-    
-    chartCanvas.addEventListener('mousemove', (e) => {
-        if (currentTool === 'pan' && isDragging) {
-            doPan(e);
-        } else if (currentTool === 'zoom' && isDragging) {
-            updateZoomSelection(e);
-        }
-    });
-    
-    chartCanvas.addEventListener('mouseup', (e) => {
-        if (currentTool === 'pan' && isDragging) {
-            endPan(e);
-        } else if (currentTool === 'zoom' && isDragging) {
-            endZoomSelection(e);
-        }
-    });
-    
-    chartCanvas.addEventListener('mouseleave', () => {
-        if (isDragging) {
-            if (currentTool === 'zoom' && selectionRect) {
-                selectionRect.remove();
-                selectionRect = null;
-            }
-            isDragging = false;
-        }
-    });
-}
+// Đã xóa setupChartMouseEvents
 
 // ========== PAN FUNCTIONS ==========
-function startPan(e) {
-    isDragging = true;
-    dragStartX = e.clientX;
-    chartCanvas.style.cursor = 'grabbing';
-}
-
-function doPan(e) {
-    if (!isDragging || !bitcoinChart || !zoomState.min || !zoomState.max) return;
-    
-    const deltaX = e.clientX - dragStartX;
-    const chartWidth = chartCanvas.width;
-    const timeRange = zoomState.max - zoomState.min;
-    const timePerPixel = timeRange / chartWidth;
-    
-    const timeDelta = deltaX * timePerPixel;
-    
-    const newMin = new Date(zoomState.min.getTime() - timeDelta);
-    const newMax = new Date(zoomState.max.getTime() - timeDelta);
-    
-    const fullData = historicalPriceData;
-    const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
-    const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
-    
-    if (newMin >= fullMin && newMax <= fullMax) {
-        zoomState.min = newMin;
-        zoomState.max = newMax;
-        
-        bitcoinChart.options.scales.x.min = newMin;
-        bitcoinChart.options.scales.x.max = newMax;
-        bitcoinChart.update();
-        
-        updateRangeHandles();
-    }
-    
-    dragStartX = e.clientX;
-}
-
-function endPan(e) {
-    isDragging = false;
-    chartCanvas.style.cursor = 'grab';
-    saveZoomState();
-}
+// Đã xóa startPan, doPan, endPan
 
 // ========== ZOOM SELECTION FUNCTIONS ==========
-function startZoomSelection(e) {
-    isDragging = true;
-    
-    const rect = chartCanvas.getBoundingClientRect();
-    dragStartX = e.clientX - rect.left;
-    
-    selectionRect = document.createElement('div');
-    selectionRect.className = 'chart-selection-rect';
-    selectionRect.style.left = dragStartX + 'px';
-    selectionRect.style.top = '0';
-    selectionRect.style.height = chartCanvas.height + 'px';
-    selectionRect.style.width = '0px';
-    
-    chartCanvas.parentNode.appendChild(selectionRect);
-}
-
-function updateZoomSelection(e) {
-    if (!isDragging || !selectionRect) return;
-    
-    const rect = chartCanvas.getBoundingClientRect();
-    const currentX = e.clientX - rect.left;
-    
-    const left = Math.min(dragStartX, currentX);
-    const width = Math.abs(currentX - dragStartX);
-    
-    selectionRect.style.left = left + 'px';
-    selectionRect.style.width = width + 'px';
-}
-
-function endZoomSelection(e) {
-    if (!isDragging || !selectionRect || !bitcoinChart) {
-        if (selectionRect) selectionRect.remove();
-        isDragging = false;
-        return;
-    }
-    
-    const rect = chartCanvas.getBoundingClientRect();
-    const endX = e.clientX - rect.left;
-    
-    const minX = Math.min(dragStartX, endX);
-    const maxX = Math.max(dragStartX, endX);
-    
-    const xScale = bitcoinChart.scales.x;
-    const minDate = xScale.getValueForPixel(minX);
-    const maxDate = xScale.getValueForPixel(maxX);
-    
-    if (minDate && maxDate && (maxDate - minDate) > 0) {
-        zoomToRange(minDate, maxDate);
-        saveZoomState();
-    }
-    
-    selectionRect.remove();
-    selectionRect = null;
-    isDragging = false;
-}
+// Đã xóa startZoomSelection, updateZoomSelection, endZoomSelection
 
 // ========== UNDO/REDO FUNCTIONS ==========
 function saveZoomState() {
@@ -3892,11 +3510,11 @@ function setupKeyboardShortcuts() {
         
         switch(e.key.toLowerCase()) {
             case 'c':
-                setActiveTool('cursor');
+                // Đã xóa setActiveTool
                 e.preventDefault();
                 break;
             case 'p':
-                setActiveTool('pan');
+                // Đã xóa setActiveTool
                 e.preventDefault();
                 break;
             case 'z':
@@ -3916,7 +3534,7 @@ function setupKeyboardShortcuts() {
                 }
                 break;
             case 'escape':
-                setActiveTool('cursor');
+                // Đã xóa setActiveTool
                 if (selectionRect) {
                     selectionRect.remove();
                     selectionRect = null;
@@ -5201,293 +4819,7 @@ document.addEventListener('chartDataUpdated', function() {
 
 console.log('✅ Mobile zoom slider fix loaded');
 
-// ========== FIX PAN MODE - THÊM VÀO CUỐI FILE signals.js ==========
-
-/**
- * FIX: Pan Mode không hoạt động
- * Nguyên nhân: Biến chartCanvas không được định nghĩa trong các hàm pan
- * Giải pháp: Sửa lại các hàm startPan, doPan, endPan
- */
-
-// Lưu lại reference đến chart canvas
-let panCanvas = null;
-
-// Override hàm startPan
-function startPan(e) {
-    console.log('🖱️ Pan mode STARTED');
-    
-    // Lấy canvas reference
-    if (!panCanvas) {
-        panCanvas = document.getElementById('bitcoinChart');
-    }
-    
-    if (!panCanvas || !bitcoinChart || !zoomState.min || !zoomState.max) {
-        console.warn('⚠️ Cannot pan: missing chart data');
-        return;
-    }
-    
-    isDragging = true;
-    dragStartX = e.clientX;
-    
-    // Lưu trạng thái zoom hiện tại
-    if (!panZoomStartState) {
-        panZoomStartState = {
-            min: new Date(zoomState.min.getTime()),
-            max: new Date(zoomState.max.getTime())
-        };
-    }
-    
-    panCanvas.style.cursor = 'grabbing';
-    
-    // Ngăn chặn sự kiện mặc định
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-// Lưu trạng thái zoom khi bắt đầu pan
-let panZoomStartState = null;
-
-// Override hàm doPan
-function doPan(e) {
-    if (!isDragging || !bitcoinChart || !zoomState.min || !zoomState.max) {
-        return;
-    }
-    
-    if (!panCanvas) {
-        panCanvas = document.getElementById('bitcoinChart');
-    }
-    
-    if (!panCanvas) return;
-    
-    // Tính toán delta
-    const deltaX = e.clientX - dragStartX;
-    const chartWidth = panCanvas.width || panCanvas.clientWidth;
-    
-    // Tính range thời gian
-    const timeRange = zoomState.max.getTime() - zoomState.min.getTime();
-    const timePerPixel = timeRange / chartWidth;
-    
-    // Tính delta thời gian
-    const timeDelta = deltaX * timePerPixel;
-    
-    // Tính new min/max
-    let newMinTime = zoomState.min.getTime() - timeDelta;
-    let newMaxTime = zoomState.max.getTime() - timeDelta;
-    
-    // Giới hạn trong phạm vi dữ liệu
-    const fullData = historicalPriceData;
-    if (fullData && fullData.length > 0) {
-        const validDates = fullData
-            .map(d => d.x)
-            .filter(date => date && date instanceof Date && !isNaN(date.getTime()));
-        
-        if (validDates.length > 0) {
-            const fullMinTime = Math.min(...validDates.map(d => d.getTime()));
-            const fullMaxTime = Math.max(...validDates.map(d => d.getTime()));
-            
-            // Thêm padding
-            const range = fullMaxTime - fullMinTime;
-            const paddedMin = fullMinTime - range * 0.05;
-            const paddedMax = fullMaxTime + range * 0.05;
-            
-            // Giới hạn
-            newMinTime = Math.max(paddedMin, Math.min(paddedMax - (newMaxTime - newMinTime), newMinTime));
-            newMaxTime = newMinTime + (newMaxTime - newMinTime);
-            
-            if (newMaxTime > paddedMax) {
-                newMaxTime = paddedMax;
-                newMinTime = newMaxTime - (newMaxTime - newMinTime);
-            }
-        }
-    }
-    
-    // Tạo Date objects mới
-    const newMin = new Date(newMinTime);
-    const newMax = new Date(newMaxTime);
-    
-    // Cập nhật zoom state
-    zoomState.min = newMin;
-    zoomState.max = newMax;
-    
-    // Cập nhật chart
-    bitcoinChart.options.scales.x.min = newMin;
-    bitcoinChart.options.scales.x.max = newMax;
-    bitcoinChart.update('none'); // 'none' để tránh animation giật
-    
-    // Cập nhật UI
-    updateRangeHandles();
-    updateZoomInfo();
-    updateTimelineSlider();
-    
-    // Cập nhật drag start
-    dragStartX = e.clientX;
-    
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-// Override hàm endPan
-function endPan(e) {
-    if (!isDragging) return;
-    
-    console.log('🖱️ Pan mode ENDED');
-    isDragging = false;
-    
-    if (panCanvas) {
-        panCanvas.style.cursor = currentTool === 'pan' ? 'grab' : '';
-    }
-    
-    // Lưu trạng thái zoom
-    if (bitcoinChart) {
-        saveZoomState();
-    }
-    
-    panZoomStartState = null;
-    
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-// Cập nhật hàm setActiveTool để đảm bảo cursor đúng
-const originalSetActiveTool = setActiveTool;
-setActiveTool = function(tool) {
-    // Gọi hàm gốc
-    if (originalSetActiveTool) {
-        originalSetActiveTool(tool);
-    }
-    
-    // Cập nhật cursor
-    const chartCanvas = document.getElementById('bitcoinChart');
-    if (!chartCanvas) return;
-    
-    switch(tool) {
-        case 'pan':
-            chartCanvas.style.cursor = 'grab';
-            break;
-        case 'zoom':
-            chartCanvas.style.cursor = 'crosshair';
-            break;
-        default:
-            chartCanvas.style.cursor = 'default';
-    }
-};
-
-// Thêm event listeners trực tiếp cho chart canvas
-function setupPanModeDirectly() {
-    console.log('🔧 Setting up Pan Mode directly...');
-    
-    const chartCanvas = document.getElementById('bitcoinChart');
-    if (!chartCanvas) {
-        setTimeout(setupPanModeDirectly, 500);
-        return;
-    }
-    
-    // Xóa event listeners cũ (nếu có)
-    chartCanvas.removeEventListener('mousedown', handlePanMouseDown);
-    chartCanvas.removeEventListener('mousemove', handlePanMouseMove);
-    chartCanvas.removeEventListener('mouseup', handlePanMouseUp);
-    chartCanvas.removeEventListener('mouseleave', handlePanMouseLeave);
-    
-    // Thêm event listeners mới
-    chartCanvas.addEventListener('mousedown', handlePanMouseDown);
-    chartCanvas.addEventListener('mousemove', handlePanMouseMove);
-    chartCanvas.addEventListener('mouseup', handlePanMouseUp);
-    chartCanvas.addEventListener('mouseleave', handlePanMouseLeave);
-    
-    // Touch events cho mobile
-    chartCanvas.addEventListener('touchstart', handlePanTouchStart, { passive: false });
-    chartCanvas.addEventListener('touchmove', handlePanTouchMove, { passive: false });
-    chartCanvas.addEventListener('touchend', handlePanTouchEnd);
-    chartCanvas.addEventListener('touchcancel', handlePanTouchEnd);
-    
-    console.log('✅ Pan Mode direct setup complete');
-}
-
-// Handlers cho mouse events
-function handlePanMouseDown(e) {
-    if (currentTool !== 'pan') return;
-    startPan(e);
-}
-
-function handlePanMouseMove(e) {
-    if (currentTool !== 'pan' || !isDragging) return;
-    doPan(e);
-}
-
-function handlePanMouseUp(e) {
-    if (currentTool !== 'pan' || !isDragging) return;
-    endPan(e);
-}
-
-function handlePanMouseLeave(e) {
-    if (currentTool === 'pan' && isDragging) {
-        endPan(e);
-    }
-}
-
-// Handlers cho touch events
-function handlePanTouchStart(e) {
-    if (currentTool !== 'pan') return;
-    e.preventDefault();
-    
-    if (e.touches.length > 0) {
-        // Tạo fake mouse event từ touch
-        const touch = e.touches[0];
-        const fakeEvent = {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            preventDefault: () => {},
-            stopPropagation: () => {}
-        };
-        startPan(fakeEvent);
-    }
-}
-
-function handlePanTouchMove(e) {
-    if (currentTool !== 'pan' || !isDragging) return;
-    e.preventDefault();
-    
-    if (e.touches.length > 0) {
-        const touch = e.touches[0];
-        const fakeEvent = {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            preventDefault: () => {},
-            stopPropagation: () => {}
-        };
-        doPan(fakeEvent);
-    }
-}
-
-function handlePanTouchEnd(e) {
-    if (currentTool !== 'pan' || !isDragging) return;
-    e.preventDefault();
-    
-    const fakeEvent = {
-        preventDefault: () => {},
-        stopPropagation: () => {}
-    };
-    endPan(fakeEvent);
-}
-
-// Khởi tạo pan mode sau khi chart load
-document.addEventListener('DOMContentLoaded', function() {
-    // Đợi chart load xong
-    setTimeout(setupPanModeDirectly, 2000);
-});
-
-// Khởi tạo lại khi chart được cập nhật
-document.addEventListener('chartDataUpdated', function() {
-    setTimeout(setupPanModeDirectly, 500);
-});
-
-// Export các hàm cần thiết
-window.startPan = startPan;
-window.doPan = doPan;
-window.endPan = endPan;
-window.setupPanModeDirectly = setupPanModeDirectly;
-
-console.log('✅ Pan Mode fix loaded - Press P key to activate Pan Mode');
+// Đã xóa toàn bộ phần FIX PAN MODE
 
 function debugStats() {
     console.log('🔍 Debug Stats:');
