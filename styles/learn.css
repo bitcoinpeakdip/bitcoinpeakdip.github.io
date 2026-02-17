@@ -464,3 +464,123 @@
 .learn-card:hover p {
     color: #ffffff !important;
 }
+
+/* Learn page specific styles */
+.market-analysis-section,
+.video-tutorials-section {
+    margin: 60px 0;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-title {
+    color: #ffffff;
+    font-size: 2em;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.section-title i {
+    color: var(--wave-trough);
+}
+
+.analysis-grid,
+.videos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.analysis-card,
+.video-card {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.analysis-card:hover,
+.video-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--wave-trough);
+    box-shadow: 0 10px 20px rgba(0, 212, 255, 0.2);
+}
+
+.analysis-date {
+    color: var(--wave-trough);
+    font-size: 0.85em;
+    margin-bottom: 10px;
+}
+
+.analysis-card h3,
+.video-card h3 {
+    color: #ffffff;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.analysis-card p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9em;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.analysis-meta,
+.video-meta {
+    display: flex;
+    gap: 15px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85em;
+}
+
+.analysis-meta i,
+.video-meta i {
+    color: var(--wave-mid);
+    margin-right: 5px;
+}
+
+.video-thumbnail {
+    background: linear-gradient(135deg, rgba(0,212,255,0.2), rgba(156,39,176,0.2));
+    height: 140px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.video-thumbnail i {
+    font-size: 3em;
+    color: var(--wave-trough);
+    opacity: 0.8;
+}
+
+.video-duration {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+@media (max-width: 768px) {
+    .market-analysis-section,
+    .video-tutorials-section {
+        padding: 20px;
+    }
+    
+    .section-title {
+        font-size: 1.6em;
+    }
+}
