@@ -465,8 +465,32 @@
                 <a href="#" class="footer-link">Risk Disclosure</a>
             </div>
         </footer>
-    </div>
-    
+    </div> 
+	<!-- Active Menu Fix -->
+	<script>
+		// Set active menu item based on current page
+		(function() {
+			const currentPage = 'about.html';
+			const navLinks = document.querySelectorAll('.nav-link');
+			
+			navLinks.forEach(link => {
+				// Remove active class from all
+				link.classList.remove('active');
+				
+				// Add active class to matching page
+				if (link.getAttribute('href') === currentPage) {
+					link.classList.add('active');
+				}
+				
+				// Special case for index.html (Home)
+				if (currentPage === 'index.html' && link.getAttribute('href') === 'index.html') {
+					link.classList.add('active');
+				}
+			});
+			
+			console.log('Active menu set for:', currentPage);
+		})();
+	</script>	
     <script src="js/main.js?v=1.4.35"></script>
     <script src="js/interactions.js?v=1.4.35"></script>
 </body>
