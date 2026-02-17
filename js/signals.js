@@ -1,6 +1,6 @@
-// EWS Signals Page JavaScript - FIXED VERSION (REAL BITCOIN PRICE DATA)
+// EWS Signals Page JavaScript - FIXED VERSION (REMOVED CLICK-TO-ZOOM)
 // Bitcoin PeakDip Early Warning System Signals Log
-// Version: 1.4.26 - Fixed Click-to-Zoom Duplication
+// Version: 1.4.27 - Removed Click-to-Zoom
 
 let signalsData = [];
 let currentPage = 1;
@@ -21,14 +21,20 @@ let zoomState = {
     zoomHistory: []
 };
 
+// ========== CHART INTERACTION TOOLS ==========
+let currentTool = 'cursor'; // 'cursor', 'pan', 'zoom'
+let isDragging = false;
+let dragStartX = null;
+let selectionRect = null;
+let undoStack = [];
+let redoStack = [];
+
 // ========== VERSION CONTROL & CACHE BUSTING ==========
-const APP_VERSION = '1.4.26';
+const APP_VERSION = '1.4.27';
 const VERSION_KEY = 'peakdip_version';
 
 // Thêm ở đầu file sau các khai báo biến
 console.log('🚀 signals.js loaded - Debug mode ON');
-console.log('📍 clickZoomMode initial:', clickZoomMode);
-console.log('📍 clickZoomPoints initial:', clickZoomPoints);
 
 // Kiểm tra và xử lý cache khi version thay đổi
 function handleCacheVersion() {
@@ -141,6 +147,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup drag scroll
     setTimeout(setupTableDragScroll, 1000);
     
+    // Add zoom styles
+    addZoomStyles();
+    
     // ===== PHẦN MỚI THÊM: KHỞI TẠO MOBILE FEATURES =====
     
     // Khởi tạo mobile features sau khi chart load (2 giây)
@@ -189,6 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('📱 Mobile features initialization completed');
 });
+
 // ========== BITCOIN PRICE DATA LOADING ==========
 async function loadBitcoinPriceData() {
     try {
@@ -843,8 +853,6 @@ function updateLastUpdated() {
     }
 }
 
-// Sửa lại hàm updateStats() để cập nhật cả stats cũ và mới (nếu còn)
-
 function updateStats() {
     if (signalsData.length === 0) {
         // Nếu không có data, vẫn hiển thị mặc định
@@ -871,17 +879,10 @@ function updateStats() {
     
     // Cập nhật tất cả các elements có thể có
     const elements = {
-        // Stats mới trong chart
         peakCount: document.getElementById('peakCount'),
         dipCount: document.getElementById('dipCount'),
         totalCount: document.getElementById('totalCount'),
-        accuracyRate: document.getElementById('accuracyRate'),
-        
-        // Stats cũ (nếu còn)
-        peakCountOld: document.getElementById('peakCount'),
-        dipCountOld: document.getElementById('dipCount'),
-        totalCountOld: document.getElementById('totalCount'),
-        accuracyRateOld: document.getElementById('accuracyRate')
+        accuracyRate: document.getElementById('accuracyRate')
     };
     
     // Cập nhật
@@ -1175,9 +1176,6 @@ function highlightSignalOnChart(signal) {
     console.log(`📊 Chart highlight for ${signal.signal_type} at $${signal.price}`);
 }
 
-// Thêm vào phần khởi tạo chart trong hàm initializeCharts()
-// Tìm phần options của chart và thêm callback cho legend click
-
 function initializeCharts() {
     console.log('📊 Initializing charts with REAL Bitcoin price data...');
     
@@ -1205,7 +1203,7 @@ function initializeCharts() {
                     tension: 0.1,
                     pointRadius: 0,
                     pointHoverRadius: 3,
-                    hidden: false // Thêm thuộc tính hidden
+                    hidden: false
                 },
                 {
                     label: 'Peak Signals',
@@ -1217,7 +1215,7 @@ function initializeCharts() {
                     pointStyle: 'triangle',
                     pointRotation: 180,
                     showLine: false,
-                    hidden: false // Thêm thuộc tính hidden
+                    hidden: false
                 },
                 {
                     label: 'Dip Signals',
@@ -1228,7 +1226,7 @@ function initializeCharts() {
                     pointRadius: 6,
                     pointStyle: 'triangle',
                     showLine: false,
-                    hidden: false // Thêm thuộc tính hidden
+                    hidden: false
                 }
             ]
         },
@@ -1246,25 +1244,19 @@ function initializeCharts() {
                     labels: {
                         color: 'rgba(255, 255, 255, 0.7)',
                         font: { size: 12 },
-                        // Thêm filter để xử lý khi click vào legend
                         filter: function(item, chart) {
-                            return true; // Giữ nguyên filter mặc định
+                            return true;
                         }
                     },
-                    // THÊM CALLBACK NÀY - XỬ LÝ KHI CLICK VÀO LEGEND
                     onClick: function(e, legendItem, legend) {
-                        // Gọi hàm onClick mặc định của Chart.js
                         const index = legendItem.datasetIndex;
                         const ci = legend.chart;
                         
-                        // Toggle visibility của dataset được click
                         const meta = ci.getDatasetMeta(index);
                         meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
                         
-                        // Cập nhật chart
                         ci.update();
                         
-                        // === THÊM PHẦN XỬ LÝ SCALE TỰ ĐỘNG ===
                         setTimeout(() => {
                             autoScaleChartAfterLegendClick(ci);
                         }, 50);
@@ -1351,11 +1343,9 @@ function initializeCharts() {
     }, 500);
 }
 
-// THÊM HÀM MỚI - Auto scale chart khi tắt đường Bitcoin Price
 function autoScaleChartAfterLegendClick(chart) {
     if (!chart) return;
     
-    // Kiểm tra dataset nào đang hiển thị
     const priceDatasetVisible = !chart.getDatasetMeta(0).hidden;
     const peakDatasetVisible = !chart.getDatasetMeta(1).hidden;
     const dipDatasetVisible = !chart.getDatasetMeta(2).hidden;
@@ -1363,11 +1353,9 @@ function autoScaleChartAfterLegendClick(chart) {
     console.log('🔄 Auto-scaling chart - Price visible:', priceDatasetVisible, 
                 'Peak visible:', peakDatasetVisible, 'Dip visible:', dipDatasetVisible);
     
-    // Nếu tắt đường giá (price) nhưng vẫn còn Peak/Dip
     if (!priceDatasetVisible && (peakDatasetVisible || dipDatasetVisible)) {
         console.log('📊 Scaling chart to fit Peak/Dip signals only');
         
-        // Lấy tất cả signal data từ dataset 1 và 2
         const allSignals = [];
         
         if (peakDatasetVisible) {
@@ -1381,12 +1369,10 @@ function autoScaleChartAfterLegendClick(chart) {
         }
         
         if (allSignals.length > 0) {
-            // Tìm min và max date từ signals
             const dates = allSignals.map(s => s.x.getTime());
             const minDate = new Date(Math.min(...dates));
             const maxDate = new Date(Math.max(...dates));
             
-            // Thêm padding 10% mỗi bên
             const range = maxDate - minDate;
             const padding = range * 0.1;
             
@@ -1395,17 +1381,14 @@ function autoScaleChartAfterLegendClick(chart) {
             
             console.log(`📅 Scaling to signals range: ${formatDate(startDate)} - ${formatDate(endDate)}`);
             
-            // Lưu vào zoom history
             zoomState.zoomHistory.push({
                 min: chart.options.scales.x.min,
                 max: chart.options.scales.x.max
             });
             
-            // Áp dụng zoom mới
             chart.options.scales.x.min = startDate;
             chart.options.scales.x.max = endDate;
             
-            // Xác định time unit phù hợp
             const days = range / (1000 * 60 * 60 * 24);
             if (days <= 30) {
                 chart.options.scales.x.time.unit = 'day';
@@ -1421,18 +1404,15 @@ function autoScaleChartAfterLegendClick(chart) {
             
             chart.update();
             
-            // Cập nhật UI
             updateZoomInfo();
             updateTimelineSlider();
             
             showNotification('Chart auto-scaled to show all signals', 'info', 2000);
         }
     }
-    // Nếu bật lại đường giá
     else if (priceDatasetVisible && !zoomState.isZoomed) {
         console.log('📊 Restoring full price range');
         
-        // Restore về full range
         if (historicalPriceData.length > 0) {
             const fullData = historicalPriceData;
             const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
@@ -1457,7 +1437,6 @@ function autoScaleChartAfterLegendClick(chart) {
     }
 }
 
-// Cập nhật hàm updateChartsWithData() để thêm data và đảm bảo auto-scale hoạt động
 function updateChartsWithData() {
     if (!bitcoinChart) {
         console.warn('⚠️ Cannot update chart: no chart');
@@ -1486,7 +1465,6 @@ function updateChartsWithData() {
         });
     }
     
-    // Update chart datasets
     bitcoinChart.data.datasets[0].data = historicalPriceData;
     bitcoinChart.data.datasets[1].data = peakSignals.map(signal => ({
         x: signal.timestamp,
@@ -1499,12 +1477,10 @@ function updateChartsWithData() {
         signal: signal
     }));
     
-    // Reset hidden state (đảm bảo tất cả đều hiển thị ban đầu)
     bitcoinChart.data.datasets[0].hidden = false;
     bitcoinChart.data.datasets[1].hidden = false;
     bitcoinChart.data.datasets[2].hidden = false;
     
-    // Update chart title to show data source
     const isSynthetic = historicalPriceData.some(d => d.synthetic);
     if (isSynthetic) {
         bitcoinChart.data.datasets[0].label = 'Bitcoin Price (Synthetic Fallback)';
@@ -1515,7 +1491,6 @@ function updateChartsWithData() {
     
     bitcoinChart.update();
     
-    // Auto-scale nếu cần (kiểm tra trạng thái hiện tại)
     setTimeout(() => {
         const priceVisible = !bitcoinChart.getDatasetMeta(0).hidden;
         if (!priceVisible && (peakSignals.length > 0 || dipSignals.length > 0)) {
@@ -1526,16 +1501,13 @@ function updateChartsWithData() {
     console.log(`✅ Charts updated with REAL Bitcoin price data`);
 }
 
-// Thêm CSS cho notification mới
 const additionalStyle = document.createElement('style');
 additionalStyle.textContent = `
-    /* Style cho legend khi hover */
     .chartjs-legend li:hover {
         opacity: 0.8;
         cursor: pointer;
     }
     
-    /* Animation khi auto-scale */
     .chart-container {
         transition: box-shadow 0.3s ease;
     }
@@ -1877,8 +1849,6 @@ function setupZoomEventListeners() {
         toggleSelectMode();
     });
     
-    // XÓA hoàn toàn phần xử lý zoomClick
-    
     const timelineSlider = document.getElementById('timelineSlider');
     if (timelineSlider) {
         timelineSlider.addEventListener('input', function() {
@@ -2211,10 +2181,6 @@ function toggleSelectMode() {
     }
 }
 
-/**
- * Cập nhật zoom từ slider value
- * FIXED: Xử lý Invalid Date
- */
 function updateZoomFromSlider(value) {
     if (!bitcoinChart || !historicalPriceData || historicalPriceData.length === 0) {
         console.log('⏳ Cannot update zoom: no data');
@@ -2224,7 +2190,6 @@ function updateZoomFromSlider(value) {
     try {
         const fullData = historicalPriceData;
         
-        // Lọc dates hợp lệ
         const validDates = fullData
             .map(d => d.x)
             .filter(date => date && date instanceof Date && !isNaN(date.getTime()));
@@ -2237,7 +2202,6 @@ function updateZoomFromSlider(value) {
         const fullMin = new Date(Math.min(...validDates.map(d => d.getTime())));
         const fullMax = new Date(Math.max(...validDates.map(d => d.getTime())));
         
-        // Kiểm tra dates hợp lệ
         if (isNaN(fullMin.getTime()) || isNaN(fullMax.getTime())) {
             console.error('Invalid full range dates for zoom');
             return;
@@ -2245,27 +2209,22 @@ function updateZoomFromSlider(value) {
         
         const fullRange = fullMax - fullMin;
         
-        // value từ 0-100, 0 là zoom xa nhất (full range), 100 là zoom gần nhất
         const visiblePercentage = Math.min(100, Math.max(0, parseFloat(value) || 100)) / 100;
         
-        // Đảm bảo visiblePercentage hợp lệ
         if (isNaN(visiblePercentage) || visiblePercentage < 0.01) {
             return;
         }
         
         const visibleRange = fullRange * visiblePercentage;
         
-        // Tính toán start date (luôn kết thúc ở fullMax)
         const startDate = new Date(fullMax.getTime() - visibleRange);
         const endDate = new Date(fullMax.getTime());
         
-        // Kiểm tra kết quả
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
             console.error('Invalid zoom dates calculated');
             return;
         }
         
-        // Lưu vào history nếu đang zoom
         if (zoomState.isZoomed) {
             zoomState.zoomHistory.push({
                 min: bitcoinChart.options.scales.x.min,
@@ -2273,7 +2232,6 @@ function updateZoomFromSlider(value) {
             });
         }
         
-        // Áp dụng zoom
         zoomState.min = startDate;
         zoomState.max = endDate;
         zoomState.isZoomed = value < 100;
@@ -2283,10 +2241,8 @@ function updateZoomFromSlider(value) {
         
         bitcoinChart.update();
         
-        // Cập nhật UI
         updateZoomInfo();
         
-        // Cập nhật labels
         const startLabel = document.getElementById('zoomStartLabel');
         const endLabel = document.getElementById('zoomEndLabel');
         if (startLabel) startLabel.textContent = formatDateShort(startDate);
@@ -2297,16 +2253,12 @@ function updateZoomFromSlider(value) {
     }
 }
 
-/**
- * Kiểm tra dữ liệu historicalPriceData có hợp lệ không
- */
 function validateHistoricalData() {
     if (!historicalPriceData || historicalPriceData.length === 0) {
         console.warn('No historical price data');
         return false;
     }
     
-    // Kiểm tra 5 điểm dữ liệu đầu tiên
     const sampleSize = Math.min(5, historicalPriceData.length);
     let validCount = 0;
     
@@ -2447,7 +2399,6 @@ function updateChartTimeframe(timeframe) {
     updateTimelineSlider();
 }
 
-
 // ========== EVENT HANDLERS ==========
 function setupEventListeners() {
     console.log('🔧 Setting up event listeners...');
@@ -2552,12 +2503,7 @@ function setupEventListeners() {
         }
     });
     
-    const resetBtn = document.getElementById('resetViewBtn');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            resetZoom();
-        });
-    }
+    // Xóa hoàn toàn phần xử lý resetBtn vì đã xóa khỏi HTML
     
     console.log('✅ Event listeners setup complete');
 }
@@ -2769,21 +2715,15 @@ function formatDateTime(date) {
     return `${formatDate(date)} ${formatTime(date)}`;
 }
 
-/**
- * Format date ngắn gọn, an toàn (không bị Invalid Date)
- */
 function formatDateShort(date) {
-    // Kiểm tra đầu vào
     if (!date) {
         return 'N/A';
     }
     
-    // Nếu là string, thử chuyển thành Date
     if (typeof date === 'string') {
         date = new Date(date);
     }
     
-    // Kiểm tra date hợp lệ
     if (!(date instanceof Date) || isNaN(date.getTime())) {
         return 'Invalid';
     }
@@ -2984,9 +2924,7 @@ notificationStyle.textContent = `
 document.head.appendChild(notificationStyle);
 
 // ========== GLOBAL EXPORTS ==========
-window.closeClickZoomInstructions = closeClickZoomInstructions;
-window.resetZoomFromInstructions = resetZoomFromInstructions;
-window.exitClickZoomMode = exitClickZoomMode;
+// Xóa các dòng export click-to-zoom
 
 // ========== INITIAL LOAD ==========
 if (window.realCsvData && typeof window.realCsvData === 'string') {
@@ -3002,14 +2940,8 @@ if (window.bitcoinPriceData && typeof window.bitcoinPriceData === 'string') {
 console.log('✅ signals.js (REAL BITCOIN PRICE DATA VERSION) loaded successfully');
 console.log('ℹ️  This version uses REAL Bitcoin price data from Binance CSV');
 
-// Thêm vào phần khai báo biến (đầu file)
 // ========== CHART INTERACTION TOOLS ==========
-let currentTool = 'cursor'; // 'cursor', 'pan', 'zoom', 'undo'
-let isDragging = false;
-let dragStartX = null;
-let selectionRect = null;
-let undoStack = [];
-let redoStack = [];
+// Đã khai báo ở đầu file
 
 // ========== THÊM CSS CHO TOOLBAR MỚI ==========
 function addChartToolbarStyles() {
@@ -3275,6 +3207,7 @@ function addChartToolbarStyles() {
     document.head.appendChild(style);
 }
 
+// ========== TẠO TOOLBAR MỚI VỚI ZOOM CONTROLS Ở BOTTOM ==========
 function createChartToolbar() {
     const chartSection = document.querySelector('.chart-section');
     if (!chartSection) return;
@@ -3314,7 +3247,6 @@ function createChartToolbar() {
                 <button class="zoom-btn" id="zoomSelect" data-tooltip="Select Area (Z)">
                     <i class="fas fa-vector-square"></i>
                 </button>
-                <!-- ĐÃ XÓA nút zoomClick -->
                 <button class="zoom-btn" id="zoomBack" data-tooltip="Undo Zoom">
                     <i class="fas fa-undo-alt"></i>
                 </button>
@@ -3354,7 +3286,6 @@ function createChartToolbar() {
                 <button class="zoom-btn" id="zoomSelect" data-tooltip="Select Area (Z)">
                     <i class="fas fa-vector-square"></i>
                 </button>
-                <!-- ĐÃ XÓA nút zoomClick -->
                 <button class="zoom-btn" id="zoomBack" data-tooltip="Undo Zoom">
                     <i class="fas fa-undo-alt"></i>
                 </button>
@@ -3444,7 +3375,6 @@ function setupChartToolEvents() {
 function setActiveTool(tool) {
     currentTool = tool;
     
-    // Update button states
     document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
         btn.classList.remove('active');
     });
@@ -3454,7 +3384,6 @@ function setActiveTool(tool) {
         if (activeBtn) activeBtn.classList.add('active');
     }
     
-    // Update chart cursor
     const chartCanvas = document.getElementById('bitcoinChart');
     if (!chartCanvas) return;
     
@@ -3472,9 +3401,6 @@ function setActiveTool(tool) {
             break;
     }
     
-    // Exit other modes
-    deactivateAllModes();
-    
     console.log(`🛠️ Tool activated: ${tool}`);
 }
 
@@ -3491,7 +3417,6 @@ function setupRangeSlider() {
     
     let activeHandle = null;
     
-    // Get min/max dates from data
     const getFullRange = () => {
         if (historicalPriceData.length === 0) return { min: new Date(2020, 0, 1), max: new Date() };
         
@@ -3506,11 +3431,9 @@ function setupRangeSlider() {
         const leftPercent = parseFloat(leftHandle.style.left) || 0;
         const rightPercent = parseFloat(rightHandle.style.left) || 100;
         
-        // Update fill
         fill.style.left = leftPercent + '%';
         fill.style.width = (rightPercent - leftPercent) + '%';
         
-        // Update labels
         const fullRange = getFullRange();
         const rangeMs = fullRange.max - fullRange.min;
         
@@ -3520,16 +3443,13 @@ function setupRangeSlider() {
         startLabel.textContent = formatDateShort(startDate);
         endLabel.textContent = formatDateShort(endDate);
         
-        // Apply zoom to chart
         if (bitcoinChart) {
             zoomToRange(startDate, endDate);
         }
         
-        // Update zoom level
         updateZoomLevel(rightPercent - leftPercent);
     };
     
-    // Mouse down on handles
     leftHandle.addEventListener('mousedown', (e) => {
         activeHandle = leftHandle;
         e.stopPropagation();
@@ -3540,7 +3460,6 @@ function setupRangeSlider() {
         e.stopPropagation();
     });
     
-    // Mouse down on slider (for panning)
     slider.addEventListener('mousedown', (e) => {
         if (e.target === leftHandle || e.target === rightHandle) return;
         
@@ -3548,7 +3467,6 @@ function setupRangeSlider() {
         const clickX = e.clientX - rect.left;
         const percent = (clickX / rect.width) * 100;
         
-        // Move both handles (pan)
         const currentRange = parseFloat(rightHandle.style.left) - parseFloat(leftHandle.style.left);
         let newLeft = percent - (currentRange / 2);
         let newRight = percent + (currentRange / 2);
@@ -3568,7 +3486,6 @@ function setupRangeSlider() {
         updateRange();
     });
     
-    // Mouse move on document
     document.addEventListener('mousemove', (e) => {
         if (!activeHandle) return;
         
@@ -3580,36 +3497,32 @@ function setupRangeSlider() {
         
         if (activeHandle === leftHandle) {
             const rightPercent = parseFloat(rightHandle.style.left) || 100;
-            percent = Math.min(percent, rightPercent - 5); // Min width 5%
+            percent = Math.min(percent, rightPercent - 5);
             leftHandle.style.left = percent + '%';
         } else {
             const leftPercent = parseFloat(leftHandle.style.left) || 0;
-            percent = Math.max(percent, leftPercent + 5); // Min width 5%
+            percent = Math.max(percent, leftPercent + 5);
             rightHandle.style.left = percent + '%';
         }
         
         updateRange();
     });
     
-    // Mouse up
     document.addEventListener('mouseup', () => {
         if (activeHandle) {
-            // Save to undo stack
             saveZoomState();
             activeHandle = null;
         }
     });
 
-        // THÊM touch events cho mobile
     slider.addEventListener('touchstart', function(e) {
-        e.preventDefault(); // Ngăn scroll khi chạm vào slider
+        e.preventDefault();
         console.log('👆 Touch start on slider');
     }, { passive: false });
     
     slider.addEventListener('touchmove', function(e) {
-        e.preventDefault(); // Ngăn scroll khi kéo slider
+        e.preventDefault();
         const value = this.value;
-        deactivateAllModes();
         updateZoomFromSlider(value);
         console.log('👆 Touch move:', value);
     }, { passive: false });
@@ -3619,7 +3532,6 @@ function setupRangeSlider() {
         saveZoomState();
     });
     
-    // Cập nhật labels
     function updateLabels() {
         if (!bitcoinChart || historicalPriceData.length === 0) return;
         
@@ -3633,10 +3545,8 @@ function setupRangeSlider() {
         if (endLabel) endLabel.textContent = formatDateShort(currentMax);
     }
     
-    // Gọi updateLabels khi có thay đổi
     slider.addEventListener('touchmove', updateLabels);
 
-    // Initialize
     leftHandle.style.left = '0%';
     rightHandle.style.left = '100%';
     updateRange();
@@ -3647,7 +3557,6 @@ function setupChartMouseEvents() {
     const chartCanvas = document.getElementById('bitcoinChart');
     if (!chartCanvas) return;
     
-    // Mouse down for pan/zoom
     chartCanvas.addEventListener('mousedown', (e) => {
         if (currentTool === 'pan') {
             startPan(e);
@@ -3656,7 +3565,6 @@ function setupChartMouseEvents() {
         }
     });
     
-    // Mouse move for pan/zoom
     chartCanvas.addEventListener('mousemove', (e) => {
         if (currentTool === 'pan' && isDragging) {
             doPan(e);
@@ -3665,7 +3573,6 @@ function setupChartMouseEvents() {
         }
     });
     
-    // Mouse up
     chartCanvas.addEventListener('mouseup', (e) => {
         if (currentTool === 'pan' && isDragging) {
             endPan(e);
@@ -3674,7 +3581,6 @@ function setupChartMouseEvents() {
         }
     });
     
-    // Mouse leave
     chartCanvas.addEventListener('mouseleave', () => {
         if (isDragging) {
             if (currentTool === 'zoom' && selectionRect) {
@@ -3706,7 +3612,6 @@ function doPan(e) {
     const newMin = new Date(zoomState.min.getTime() - timeDelta);
     const newMax = new Date(zoomState.max.getTime() - timeDelta);
     
-    // Check bounds
     const fullData = historicalPriceData;
     const fullMin = new Date(Math.min(...fullData.map(d => d.x)));
     const fullMax = new Date(Math.max(...fullData.map(d => d.x)));
@@ -3807,7 +3712,6 @@ function saveZoomState() {
 function undoZoom() {
     if (undoStack.length === 0) return;
     
-    // Save current state to redo
     const currentState = {
         min: bitcoinChart.options.scales.x.min,
         max: bitcoinChart.options.scales.x.max,
@@ -3815,7 +3719,6 @@ function undoZoom() {
     };
     redoStack.push(currentState);
     
-    // Apply previous state
     const prevState = undoStack.pop();
     applyZoomState(prevState);
     
@@ -3825,7 +3728,6 @@ function undoZoom() {
 function redoZoom() {
     if (redoStack.length === 0) return;
     
-    // Save current state to undo
     const currentState = {
         min: bitcoinChart.options.scales.x.min,
         max: bitcoinChart.options.scales.x.max,
@@ -3833,7 +3735,6 @@ function redoZoom() {
     };
     undoStack.push(currentState);
     
-    // Apply next state
     const nextState = redoStack.pop();
     applyZoomState(nextState);
     
@@ -3883,7 +3784,6 @@ function resetFullView() {
     updateRangeHandles();
     updateZoomInfo();
     
-    // Reset handles
     document.getElementById('rangeHandleLeft').style.left = '0%';
     document.getElementById('rangeHandleRight').style.left = '100%';
     updateZoomLevel(100);
@@ -3904,11 +3804,6 @@ function updateHistoryCounters() {
     }
 }
 
-// ========== UPDATE RANGE HANDLES ==========
-/**
- * Cập nhật range handles dựa trên zoom state hiện tại
- * FIXED: Xử lý Invalid Date
- */
 function updateRangeHandles() {
     if (!bitcoinChart || !historicalPriceData || historicalPriceData.length === 0) {
         console.log('⏳ Cannot update range handles: no data');
@@ -3918,7 +3813,6 @@ function updateRangeHandles() {
     try {
         const fullData = historicalPriceData;
         
-        // Lọc dates hợp lệ
         const validDates = fullData
             .map(d => d.x)
             .filter(date => date && date instanceof Date && !isNaN(date.getTime()));
@@ -3931,7 +3825,6 @@ function updateRangeHandles() {
         const fullMin = new Date(Math.min(...validDates.map(d => d.getTime())));
         const fullMax = new Date(Math.max(...validDates.map(d => d.getTime())));
         
-        // Kiểm tra dates hợp lệ
         if (isNaN(fullMin.getTime()) || isNaN(fullMax.getTime())) {
             console.error('Invalid full range dates');
             return;
@@ -3939,35 +3832,29 @@ function updateRangeHandles() {
         
         const fullRange = fullMax - fullMin;
         
-        // Lấy current zoom range
         let currentMin = zoomState.min;
         let currentMax = zoomState.max;
         
-        // Nếu không có zoom state, dùng full range
         if (!currentMin || !currentMax || isNaN(currentMin.getTime()) || isNaN(currentMax.getTime())) {
             currentMin = fullMin;
             currentMax = fullMax;
         }
         
-        // Tính phần trăm
         const leftPercent = Math.max(0, Math.min(100, ((currentMin - fullMin) / fullRange) * 100));
         const rightPercent = Math.max(0, Math.min(100, ((currentMax - fullMin) / fullRange) * 100));
         
-        // Cập nhật handles
         const leftHandle = document.getElementById('rangeHandleLeft');
         const rightHandle = document.getElementById('rangeHandleRight');
         
         if (leftHandle) leftHandle.style.left = leftPercent + '%';
         if (rightHandle) rightHandle.style.left = rightPercent + '%';
         
-        // Update fill
         const fill = document.getElementById('rangeFill');
         if (fill) {
             fill.style.left = leftPercent + '%';
             fill.style.width = (rightPercent - leftPercent) + '%';
         }
         
-        // Update labels
         const startLabel = document.getElementById('rangeStartLabel');
         const endLabel = document.getElementById('rangeEndLabel');
         
@@ -3976,7 +3863,6 @@ function updateRangeHandles() {
             endLabel.textContent = formatDateShort(currentMax);
         }
         
-        // Update zoom level
         updateZoomLevel(rightPercent - leftPercent);
         
     } catch (error) {
@@ -4002,7 +3888,6 @@ function updateZoomLevel(percent) {
 // ========== KEYBOARD SHORTCUTS ==========
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
-        // Ignore if typing in input
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         
         switch(e.key.toLowerCase()) {
@@ -4017,16 +3902,16 @@ function setupKeyboardShortcuts() {
             case 'z':
                 if (e.ctrlKey) {
                     if (e.shiftKey) {
-                        redoZoom(); // Ctrl+Shift+Z = Redo
+                        redoZoom();
                     } else {
-                        undoZoom(); // Ctrl+Z = Undo
+                        undoZoom();
                     }
                     e.preventDefault();
                 }
                 break;
             case 'y':
                 if (e.ctrlKey) {
-                    redoZoom(); // Ctrl+Y = Redo
+                    redoZoom();
                     e.preventDefault();
                 }
                 break;
@@ -4042,8 +3927,7 @@ function setupKeyboardShortcuts() {
         }
     });
 }
-// ========== CẬP NHẬT HÀM UPDATE CHARTS WITH DATA ==========
-// Cập nhật hàm updateChartsWithData() - thay thế hoàn toàn
+
 function updateChartsWithData() {
     if (!bitcoinChart) {
         console.warn('⚠️ Cannot update chart: no chart');
@@ -4065,7 +3949,6 @@ function updateChartsWithData() {
     console.log(`- Peak signals: ${peakSignals.length}`);
     console.log(`- Dip signals: ${dipSignals.length}`);
     
-    // Update chart datasets
     bitcoinChart.data.datasets[0].data = historicalPriceData;
     bitcoinChart.data.datasets[1].data = peakSignals.map(signal => ({
         x: signal.timestamp,
@@ -4078,12 +3961,10 @@ function updateChartsWithData() {
         signal: signal
     }));
     
-    // Reset hidden state
     bitcoinChart.data.datasets[0].hidden = false;
     bitcoinChart.data.datasets[1].hidden = false;
     bitcoinChart.data.datasets[2].hidden = false;
     
-    // Update chart title
     const isSynthetic = historicalPriceData.some(d => d.synthetic);
     if (isSynthetic) {
         bitcoinChart.data.datasets[0].label = 'Bitcoin Price (Synthetic Fallback)';
@@ -4094,14 +3975,12 @@ function updateChartsWithData() {
     
     bitcoinChart.update();
     
-    // Cập nhật range handles sau khi chart update
     setTimeout(() => {
         if (typeof updateRangeHandles === 'function') {
             updateRangeHandles();
         }
     }, 100);
     
-    // Auto-scale nếu cần
     setTimeout(() => {
         const priceVisible = !bitcoinChart.getDatasetMeta(0).hidden;
         if (!priceVisible && (peakSignals.length > 0 || dipSignals.length > 0)) {
@@ -4112,66 +3991,29 @@ function updateChartsWithData() {
     console.log(`✅ Charts updated with REAL Bitcoin price data`);
 }
 
-// Thêm hàm này vào cuối file để đảm bảo toolbar được tạo sau khi chart load
 setTimeout(() => {
     if (bitcoinChart && !document.querySelector('.chart-tools-container')) {
         initializeZoomControls();
     }
 }, 2000);
 
-// CẬP NHẬT HÀM INITIALIZE ZOOM CONTROLS - CHỈ GIỮ LẠI MỘT PHIÊN BẢN
-// CẬP NHẬT HÀM INITIALIZE ZOOM CONTROLS
 function initializeZoomControls() {
     console.log('🔍 Initializing zoom controls...');
     
-    // Kiểm tra chart đã tồn tại chưa
     if (!bitcoinChart) {
         console.log('⏳ Chart not ready, will initialize zoom controls later');
         return;
     }
     
-    // Thêm styles (nếu chưa có)
     addChartToolbarStyles();
     
-    // Tạo toolbar mới với zoom controls ở bottom
     createChartToolbar();
     
-    // Ẩn toolbar cũ nếu có
     const oldToolbar = document.querySelector('.zoom-toolbar');
     if (oldToolbar) {
         oldToolbar.style.display = 'none';
     }
     
-    // Tạo instructions panel cho click-to-zoom
-    if (typeof createClickZoomInstructions === 'function') {
-        createClickZoomInstructions();
-    }
-    
-    // Kích hoạt click-to-zoom mode khi click vào nút tương ứng
-    const clickBtn = document.getElementById('zoomClick');
-    if (clickBtn) {
-        // Xóa event listener cũ nếu có
-        const newClickBtn = clickBtn.cloneNode(true);
-        clickBtn.parentNode.replaceChild(newClickBtn, clickBtn);
-        
-        // Thêm event listener mới
-        newClickBtn.addEventListener('click', function() {
-            const panBtn = document.getElementById('zoomPan');
-            const selectBtn = document.getElementById('zoomSelect');
-            
-            if (panBtn) panBtn.classList.remove('active');
-            if (selectBtn) selectBtn.classList.remove('active');
-            
-            this.classList.add('active');
-            
-            // Kích hoạt click-to-zoom
-            if (typeof activateClickZoomMode === 'function') {
-                activateClickZoomMode();
-            }
-        });
-    }
-    
-    // Cập nhật range handles
     setTimeout(() => {
         if (typeof updateRangeHandles === 'function') {
             updateRangeHandles();
@@ -4184,7 +4026,6 @@ function initializeZoomControls() {
     console.log('✅ Zoom controls initialized with bottom layout');
 }
 
-// Đảm bảo toolbar được tạo sau khi có data
 document.addEventListener('chartDataUpdated', function() {
     if (bitcoinChart && historicalPriceData.length > 0) {
         if (!document.querySelector('.chart-tools-container')) {
@@ -4195,7 +4036,6 @@ document.addEventListener('chartDataUpdated', function() {
     }
 });
 
-// Gọi event khi data được cập nhật
 const originalUpdateChartsWithData = updateChartsWithData;
 updateChartsWithData = function() {
     originalUpdateChartsWithData.apply(this, arguments);
@@ -4204,18 +4044,7 @@ updateChartsWithData = function() {
     }, 300);
 };
 
-// Thêm vào cuối file signals.js, trước dòng cuối cùng
-
 // ========== MOBILE ZOOM SLIDER FIX - COMPLETELY REWRITTEN ==========
-/**
- * Khởi tạo zoom slider cho mobile với touch events và ngăn scroll
- * FIXED: Touch position always stays on slider
- */
-// ========== MOBILE ZOOM SLIDER FIX - COMPLETELY REWRITTEN ==========
-/**
- * Khởi tạo zoom slider cho mobile với touch events và ngăn scroll
- * FIXED: Touch position always stays on slider
- */
 function initMobileZoomSlider() {
     console.log('📱 Initializing mobile zoom slider with improved touch handling...');
     
@@ -4226,29 +4055,22 @@ function initMobileZoomSlider() {
         return;
     }
     
-    // Xóa event listeners cũ để tránh duplicate
     const newSlider = slider.cloneNode(true);
     slider.parentNode.replaceChild(newSlider, slider);
     
-    // Biến để kiểm soát trạng thái
     let touchIdentifier = null;
     let isActive = false;
     
-    // === FIX CHÍNH: Giữ touch luôn trong phạm vi slider ===
     newSlider.addEventListener('touchstart', function(e) {
-        // Ngăn chặn hành vi mặc định và bubble
         e.preventDefault();
         e.stopPropagation();
         
-        // Lưu identifier của touch để theo dõi
         if (e.touches.length > 0) {
             touchIdentifier = e.touches[0].identifier;
             isActive = true;
             
-            // Thêm class để ngăn scroll body
             document.body.classList.add('slider-active');
             
-            // Tính toán và cập nhật giá trị ngay khi chạm
             updateSliderFromTouch(e, newSlider);
             
             console.log('👆 Touch START on slider - position locked');
@@ -4258,11 +4080,9 @@ function initMobileZoomSlider() {
     newSlider.addEventListener('touchmove', function(e) {
         if (!isActive) return;
         
-        // Ngăn scroll
         e.preventDefault();
         e.stopPropagation();
         
-        // Tìm đúng touch point dựa trên identifier
         let touch = null;
         for (let i = 0; i < e.touches.length; i++) {
             if (e.touches[i].identifier === touchIdentifier) {
@@ -4271,7 +4091,6 @@ function initMobileZoomSlider() {
             }
         }
         
-        // Nếu không tìm thấy touch đang theo dõi, dùng touch đầu tiên
         if (!touch && e.touches.length > 0) {
             touch = e.touches[0];
             touchIdentifier = touch.identifier;
@@ -4286,19 +4105,15 @@ function initMobileZoomSlider() {
         e.preventDefault();
         e.stopPropagation();
         
-        // Reset trạng thái
         isActive = false;
         touchIdentifier = null;
         
-        // Lưu state vào undo stack
         if (typeof saveZoomState === 'function') {
             setTimeout(() => saveZoomState(), 50);
         }
         
-        // Ẩn feedback
         hideSliderFeedback();
         
-        // Bỏ class ngăn scroll
         document.body.classList.remove('slider-active');
         
         console.log('👆 Touch END');
@@ -4314,11 +4129,16 @@ function initMobileZoomSlider() {
         hideSliderFeedback();
     });
     
-    // Helper function để cập nhật slider từ touch
-  /**
- * Helper function để cập nhật slider từ touch
- * FIXED: Thêm kiểm tra an toàn
- */
+    newSlider.addEventListener('mousedown', handleSliderMouseDown);
+    newSlider.addEventListener('mousemove', handleSliderMouseMove);
+    newSlider.addEventListener('mouseup', handleSliderMouseUp);
+    newSlider.addEventListener('mouseleave', handleSliderMouseLeave);
+    
+    addMobileSliderStyles();
+    
+    console.log('✅ Mobile zoom slider initialized with FIXED touch handling');
+}
+
 function updateSliderFromTouch(e, slider, touch = null) {
     if (!touch && e.touches.length > 0) {
         touch = e.touches[0];
@@ -4328,97 +4148,63 @@ function updateSliderFromTouch(e, slider, touch = null) {
     try {
         const rect = slider.getBoundingClientRect();
         
-        // Giới hạn touch X trong phạm vi slider
         let touchX = touch.clientX;
         
-        // Đảm bảo touch X luôn nằm trong bounds của slider
         if (touchX < rect.left) touchX = rect.left;
         if (touchX > rect.right) touchX = rect.right;
         
-        // Tính toán phần trăm dựa trên vị trí touch
         let x = touchX - rect.left;
         x = Math.max(0, Math.min(rect.width, x));
         
         const percent = (x / rect.width) * 100;
         
-        // Cập nhật giá trị slider (làm tròn để tránh nhảy)
         const roundedPercent = Math.round(percent * 10) / 10;
         slider.value = roundedPercent;
         
-        // Trigger zoom update
         if (typeof updateZoomFromSlider === 'function') {
             updateZoomFromSlider(roundedPercent);
         }
         
-        // Hiển thị feedback
         showSliderFeedback(roundedPercent);
         
     } catch (error) {
         console.error('Error updating slider from touch:', error);
     }
 }
-    
-    // Vẫn giữ mouse events cho desktop
-    newSlider.addEventListener('mousedown', handleSliderMouseDown);
-    newSlider.addEventListener('mousemove', handleSliderMouseMove);
-    newSlider.addEventListener('mouseup', handleSliderMouseUp);
-    newSlider.addEventListener('mouseleave', handleSliderMouseLeave);
-    
-    // Thêm CSS để cải thiện touch target
-    addMobileSliderStyles();
-    
-    console.log('✅ Mobile zoom slider initialized with FIXED touch handling');
-}
 
-/**
- * Xử lý mouse down cho desktop
- */
 function handleSliderMouseDown(e) {
     const slider = e.target;
     slider.dataset.mouseActive = 'true';
     
-    // Cập nhật giá trị ngay khi click
     updateSliderFromMouse(e, slider);
 }
 
-/**
- * Xử lý mouse move cho desktop
- */
-// function handleSliderMouseMove(e) {
-//     const slider = e.target;
-//     if (!slider.dataset.mouseActive) return;
+function handleSliderMouseMove(e) {
+    const slider = e.target;
+    if (!slider.dataset.mouseActive) return;
     
-//     updateSliderFromMouse(e, slider);
-// }
+    updateSliderFromMouse(e, slider);
+}
 
-/**
- * Xử lý mouse up cho desktop
- */
-// function handleSliderMouseUp(e) {
-//     const slider = e.target;
-//     slider.dataset.mouseActive = 'false';
+function handleSliderMouseUp(e) {
+    const slider = e.target;
+    slider.dataset.mouseActive = 'false';
     
-//     if (typeof saveZoomState === 'function') {
-//         saveZoomState();
-//     }
+    if (typeof saveZoomState === 'function') {
+        saveZoomState();
+    }
     
-//     hideSliderFeedback();
-// }
+    hideSliderFeedback();
+}
 
-/**
- * Xử lý mouse leave
- */
-// function handleSliderMouseLeave(e) {
-//     const slider = e.target;
-//     if (slider.dataset.mouseActive) {
-//         slider.dataset.mouseActive = 'false';
-//         hideSliderFeedback();
-//     }
-// }
+function handleSliderMouseLeave(e) {
+    const slider = e.target;
+    if (slider.dataset.mouseActive) {
+        slider.dataset.mouseActive = 'false';
+        hideSliderFeedback();
+    }
+}
 
-/**
- * Cập nhật slider từ mouse event
- */
 function updateSliderFromMouse(e, slider) {
     const rect = slider.getBoundingClientRect();
     let x = e.clientX - rect.left;
@@ -4436,9 +4222,6 @@ function updateSliderFromMouse(e, slider) {
     showSliderFeedback(roundedPercent);
 }
 
-/**
- * Hiển thị feedback khi kéo slider
- */
 function showSliderFeedback(percent) {
     let feedback = document.getElementById('sliderFeedback');
     
@@ -4447,7 +4230,6 @@ function showSliderFeedback(percent) {
         feedback.id = 'sliderFeedback';
         feedback.className = 'slider-feedback';
         
-        // Thêm vào container phù hợp
         const timelineControls = document.querySelector('.timeline-controls');
         if (timelineControls) {
             timelineControls.appendChild(feedback);
@@ -4461,9 +4243,6 @@ function showSliderFeedback(percent) {
     feedback.classList.add('visible');
 }
 
-/**
- * Ẩn feedback
- */
 function hideSliderFeedback() {
     const feedback = document.getElementById('sliderFeedback');
     if (feedback) {
@@ -4471,17 +4250,12 @@ function hideSliderFeedback() {
     }
 }
 
-/**
- * Thêm CSS cho mobile slider
- */
 function addMobileSliderStyles() {
-    // Kiểm tra style đã tồn tại chưa
     if (document.getElementById('mobileSliderStyles')) return;
     
     const style = document.createElement('style');
     style.id = 'mobileSliderStyles';
     style.textContent = `
-        /* Cải thiện touch target cho slider */
         .timeline-slider {
             height: 8px;
             margin: 15px 0;
@@ -4491,14 +4265,13 @@ function addMobileSliderStyles() {
             border-radius: 4px;
             outline: none;
             cursor: pointer;
-            touch-action: none; /* QUAN TRỌNG: Ngăn scroll khi chạm vào slider */
+            touch-action: none;
             -webkit-tap-highlight-color: transparent;
             width: 100%;
             position: relative;
             z-index: 10;
         }
         
-        /* Webkit (Chrome, Safari, Edge) */
         .timeline-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -4510,10 +4283,9 @@ function addMobileSliderStyles() {
             box-shadow: 0 0 15px rgba(0, 212, 255, 0.7);
             border: 2px solid white;
             transition: transform 0.1s ease;
-            margin-top: -8px; /* Căn giữa */
+            margin-top: -8px;
         }
         
-        /* Firefox */
         .timeline-slider::-moz-range-thumb {
             width: 24px;
             height: 24px;
@@ -4525,14 +4297,12 @@ function addMobileSliderStyles() {
             transition: transform 0.1s ease;
         }
         
-        /* Track - Firefox */
         .timeline-slider::-moz-range-track {
             height: 8px;
             background: rgba(255, 255, 255, 0.15);
             border-radius: 4px;
         }
         
-        /* Khi active */
         .timeline-slider:active::-webkit-slider-thumb {
             transform: scale(1.2);
             box-shadow: 0 0 20px rgba(0, 212, 255, 0.9);
@@ -4543,7 +4313,6 @@ function addMobileSliderStyles() {
             box-shadow: 0 0 20px rgba(0, 212, 255, 0.9);
         }
         
-        /* Slider feedback */
         .slider-feedback {
             position: fixed;
             bottom: 30px;
@@ -4577,7 +4346,6 @@ function addMobileSliderStyles() {
             font-size: 1.2em;
         }
         
-        /* Timeline controls trên mobile */
         @media (max-width: 768px) {
             .timeline-controls {
                 padding: 15px 0;
@@ -4587,7 +4355,7 @@ function addMobileSliderStyles() {
             }
             
             .timeline-slider {
-                height: 10px; /* Cao hơn cho dễ chạm */
+                height: 10px;
             }
             
             .timeline-slider::-webkit-slider-thumb {
@@ -4607,7 +4375,6 @@ function addMobileSliderStyles() {
             }
         }
         
-        /* Ngăn scroll khi kéo slider trên mobile */
         body.slider-active {
             overflow: hidden;
             position: fixed;
@@ -4616,12 +4383,10 @@ function addMobileSliderStyles() {
             touch-action: none;
         }
         
-        /* Đảm bảo slider không bị focus outline */
         .timeline-slider:focus {
             outline: none;
         }
         
-        /* Tăng vùng touch */
         .timeline-slider {
             padding: 10px 0;
             background-clip: content-box;
@@ -4630,9 +4395,6 @@ function addMobileSliderStyles() {
     document.head.appendChild(style);
 }
 
-/**
- * Xử lý touch start trên slider (fallback - không dùng nếu đã có initMobileZoomSlider)
- */
 function handleSliderTouchStart(e) {
     e.preventDefault();
     const slider = e.target;
@@ -4641,7 +4403,6 @@ function handleSliderTouchStart(e) {
     const rect = slider.getBoundingClientRect();
     const touch = e.touches[0];
     
-    // Giới hạn touch trong phạm vi slider
     let touchX = touch.clientX;
     if (touchX < rect.left) touchX = rect.left;
     if (touchX > rect.right) touchX = rect.right;
@@ -4661,9 +4422,6 @@ function handleSliderTouchStart(e) {
     showSliderFeedback(roundedPercent);
 }
 
-/**
- * Xử lý touch move trên slider (fallback)
- */
 function handleSliderTouchMove(e) {
     e.preventDefault();
     
@@ -4673,7 +4431,6 @@ function handleSliderTouchMove(e) {
     const rect = slider.getBoundingClientRect();
     const touch = e.touches[0];
     
-    // Giới hạn touch trong phạm vi slider
     let touchX = touch.clientX;
     if (touchX < rect.left) touchX = rect.left;
     if (touchX > rect.right) touchX = rect.right;
@@ -4693,9 +4450,6 @@ function handleSliderTouchMove(e) {
     showSliderFeedback(roundedPercent);
 }
 
-/**
- * Xử lý touch end trên slider (fallback)
- */
 function handleSliderTouchEnd(e) {
     const slider = e.target;
     slider.dataset.touchActive = 'false';
@@ -4706,17 +4460,7 @@ function handleSliderTouchEnd(e) {
     
     hideSliderFeedback();
 }
-/**
- * Xử lý mouse down cho desktop
- */
-// function handleSliderMouseDown(e) {
-//     const slider = e.target;
-//     slider.dataset.mouseActive = 'true';
-// }
 
-/**
- * Xử lý mouse move cho desktop
- */
 function handleSliderMouseMove(e) {
     const slider = e.target;
     if (!slider.dataset.mouseActive) return;
@@ -4735,30 +4479,6 @@ function handleSliderMouseMove(e) {
     showSliderFeedback(percent);
 }
 
-/**
- * Xử lý mouse move cho desktop
- */
-function handleSliderMouseMove(e) {
-    const slider = e.target;
-    if (!slider.dataset.mouseActive) return;
-    
-    const rect = slider.getBoundingClientRect();
-    let x = e.clientX - rect.left;
-    x = Math.max(0, Math.min(rect.width, x));
-    
-    const percent = (x / rect.width) * 100;
-    slider.value = percent;
-    
-    if (typeof updateZoomFromSlider === 'function') {
-        updateZoomFromSlider(percent);
-    }
-    
-    showSliderFeedback(percent);
-}
-
-/**
- * Xử lý mouse up cho desktop
- */
 function handleSliderMouseUp(e) {
     const slider = e.target;
     slider.dataset.mouseActive = 'false';
@@ -4770,9 +4490,6 @@ function handleSliderMouseUp(e) {
     hideSliderFeedback();
 }
 
-/**
- * Xử lý mouse leave
- */
 function handleSliderMouseLeave(e) {
     const slider = e.target;
     if (slider.dataset.mouseActive) {
@@ -4781,9 +4498,6 @@ function handleSliderMouseLeave(e) {
     }
 }
 
-/**
- * Hiển thị feedback khi kéo slider
- */
 function showSliderFeedback(percent) {
     let feedback = document.getElementById('sliderFeedback');
     
@@ -4799,9 +4513,6 @@ function showSliderFeedback(percent) {
     feedback.classList.add('visible');
 }
 
-/**
- * Ẩn feedback
- */
 function hideSliderFeedback() {
     const feedback = document.getElementById('sliderFeedback');
     if (feedback) {
@@ -4809,17 +4520,12 @@ function hideSliderFeedback() {
     }
 }
 
-/**
- * Thêm CSS cho mobile slider
- */
 function addMobileSliderStyles() {
-    // Kiểm tra style đã tồn tại chưa
     if (document.getElementById('mobileSliderStyles')) return;
     
     const style = document.createElement('style');
     style.id = 'mobileSliderStyles';
     style.textContent = `
-        /* Cải thiện touch target cho slider */
         .timeline-slider {
             height: 8px;
             margin: 15px 0;
@@ -4829,10 +4535,9 @@ function addMobileSliderStyles() {
             border-radius: 4px;
             outline: none;
             cursor: pointer;
-            touch-action: none; /* QUAN TRỌNG: Ngăn scroll khi chạm vào slider */
+            touch-action: none;
         }
         
-        /* Webkit (Chrome, Safari, Edge) */
         .timeline-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -4846,7 +4551,6 @@ function addMobileSliderStyles() {
             transition: transform 0.1s ease;
         }
         
-        /* Firefox */
         .timeline-slider::-moz-range-thumb {
             width: 24px;
             height: 24px;
@@ -4858,7 +4562,6 @@ function addMobileSliderStyles() {
             transition: transform 0.1s ease;
         }
         
-        /* Khi active */
         .timeline-slider:active::-webkit-slider-thumb {
             transform: scale(1.2);
             box-shadow: 0 0 20px rgba(0, 212, 255, 0.9);
@@ -4869,7 +4572,6 @@ function addMobileSliderStyles() {
             box-shadow: 0 0 20px rgba(0, 212, 255, 0.9);
         }
         
-        /* Slider feedback */
         .slider-feedback {
             position: fixed;
             bottom: 30px;
@@ -4903,7 +4605,6 @@ function addMobileSliderStyles() {
             font-size: 1.2em;
         }
         
-        /* Timeline controls trên mobile */
         @media (max-width: 768px) {
             .timeline-controls {
                 padding: 10px 0;
@@ -4911,7 +4612,7 @@ function addMobileSliderStyles() {
             }
             
             .timeline-slider {
-                height: 10px; /* Cao hơn cho dễ chạm */
+                height: 10px;
             }
             
             .timeline-slider::-webkit-slider-thumb {
@@ -4930,7 +4631,6 @@ function addMobileSliderStyles() {
             }
         }
         
-        /* Ngăn scroll khi kéo slider trên mobile */
         body.slider-active {
             overflow: hidden;
             position: fixed;
@@ -4939,12 +4639,10 @@ function addMobileSliderStyles() {
             touch-action: none;
         }
         
-        /* Đảm bảo slider không bị focus outline */
         .timeline-slider:focus {
             outline: none;
         }
         
-        /* Ngăn Chrome tự động scroll khi focus */
         .timeline-slider {
             -webkit-tap-highlight-color: transparent;
         }
@@ -4952,19 +4650,13 @@ function addMobileSliderStyles() {
     document.head.appendChild(style);
 }
 
-// ========== CẢI THIỆN RANGE SLIDER CHO MOBILE ==========
-/**
- * Cập nhật range slider để hỗ trợ touch tốt hơn
- */
 function enhanceRangeSliderForMobile() {
     const rangeSlider = document.getElementById('rangeSlider');
     if (!rangeSlider) return;
     
-    // Tăng kích thước touch target
     rangeSlider.style.minHeight = '40px';
     rangeSlider.style.padding = '10px 0';
     
-    // Cải thiện handles
     const handles = rangeSlider.querySelectorAll('.range-handle');
     handles.forEach(handle => {
         handle.style.width = '24px';
@@ -4972,15 +4664,11 @@ function enhanceRangeSliderForMobile() {
         handle.style.borderWidth = '3px';
     });
     
-    // Thêm touch events
     rangeSlider.addEventListener('touchstart', handleRangeTouchStart, { passive: false });
     rangeSlider.addEventListener('touchmove', handleRangeTouchMove, { passive: false });
     rangeSlider.addEventListener('touchend', handleRangeTouchEnd);
 }
 
-/**
- * Xử lý touch start trên range slider
- */
 function handleRangeTouchStart(e) {
     e.preventDefault();
     
@@ -4995,7 +4683,6 @@ function handleRangeTouchStart(e) {
     const x = touch.clientX - rect.left;
     const percent = (x / rect.width) * 100;
     
-    // Xác định handle nào gần nhất
     const leftPercent = parseFloat(leftHandle.style.left) || 0;
     const rightPercent = parseFloat(rightHandle.style.left) || 100;
     
@@ -5009,7 +4696,6 @@ function handleRangeTouchStart(e) {
         rangeSlider.dataset.activeHandle = 'right';
         rightHandle.classList.add('active');
     } else {
-        // Click vào khoảng giữa - pan
         rangeSlider.dataset.activeHandle = 'pan';
     }
     
@@ -5019,9 +4705,6 @@ function handleRangeTouchStart(e) {
     rangeSlider.dataset.startRight = rightPercent;
 }
 
-/**
- * Xử lý touch move trên range slider
- */
 function handleRangeTouchMove(e) {
     e.preventDefault();
     
@@ -5041,17 +4724,14 @@ function handleRangeTouchMove(e) {
     const activeHandle = rangeSlider.dataset.activeHandle;
     
     if (activeHandle === 'left') {
-        // Di chuyển left handle
         const rightPercent = parseFloat(rangeSlider.dataset.startRight) || 100;
         const newLeft = Math.min(percent, rightPercent - 5);
         leftHandle.style.left = newLeft + '%';
     } else if (activeHandle === 'right') {
-        // Di chuyển right handle
         const leftPercent = parseFloat(rangeSlider.dataset.startLeft) || 0;
         const newRight = Math.max(percent, leftPercent + 5);
         rightHandle.style.left = newRight + '%';
     } else if (activeHandle === 'pan') {
-        // Pan cả hai handles
         const deltaX = touch.clientX - parseFloat(rangeSlider.dataset.startX);
         const deltaPercent = (deltaX / rect.width) * 100;
         
@@ -5078,13 +4758,9 @@ function handleRangeTouchMove(e) {
         rangeSlider.dataset.startRight = newRight;
     }
     
-    // Update fill và labels
     updateRangeFillAndLabels();
 }
 
-/**
- * Xử lý touch end trên range slider
- */
 function handleRangeTouchEnd(e) {
     const rangeSlider = e.currentTarget;
     rangeSlider.dataset.touchActive = 'false';
@@ -5095,17 +4771,9 @@ function handleRangeTouchEnd(e) {
     if (leftHandle) leftHandle.classList.remove('active');
     if (rightHandle) rightHandle.classList.remove('active');
     
-    // Apply zoom to chart
     applyRangeZoom();
 }
 
-/**
- * Cập nhật fill và labels cho range slider
- */
-/**
- * Cập nhật fill và labels cho range slider
- * FIXED: Xử lý Invalid Date
- */
 function updateRangeFillAndLabels() {
     const leftHandle = document.getElementById('rangeHandleLeft');
     const rightHandle = document.getElementById('rangeHandleRight');
@@ -5123,14 +4791,11 @@ function updateRangeFillAndLabels() {
         fill.style.width = (rightPercent - leftPercent) + '%';
     }
     
-    // Update labels - THÊM KIỂM TRA DỮ LIỆU
     if (startLabel && endLabel) {
-        // Kiểm tra historicalPriceData có dữ liệu không
         if (historicalPriceData && historicalPriceData.length > 0) {
             try {
                 const fullData = historicalPriceData;
                 
-                // Lọc bỏ các điểm dữ liệu không hợp lệ
                 const validDates = fullData
                     .map(d => d.x)
                     .filter(date => date && date instanceof Date && !isNaN(date.getTime()));
@@ -5144,7 +4809,6 @@ function updateRangeFillAndLabels() {
                 const fullMin = new Date(Math.min(...validDates.map(d => d.getTime())));
                 const fullMax = new Date(Math.max(...validDates.map(d => d.getTime())));
                 
-                // Kiểm tra lại sau khi tính toán
                 if (isNaN(fullMin.getTime()) || isNaN(fullMax.getTime())) {
                     startLabel.textContent = 'Invalid range';
                     endLabel.textContent = 'Invalid range';
@@ -5153,14 +4817,12 @@ function updateRangeFillAndLabels() {
                 
                 const fullRange = fullMax - fullMin;
                 
-                // Tính toán dates dựa trên phần trăm
                 const startTime = fullMin.getTime() + (fullRange * leftPercent / 100);
                 const endTime = fullMin.getTime() + (fullRange * rightPercent / 100);
                 
                 const startDate = new Date(startTime);
                 const endDate = new Date(endTime);
                 
-                // Kiểm tra kết quả
                 if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
                     startLabel.textContent = 'Invalid date';
                     endLabel.textContent = 'Invalid date';
@@ -5176,16 +4838,12 @@ function updateRangeFillAndLabels() {
                 endLabel.textContent = 'Error';
             }
         } else {
-            // Fallback khi chưa có data
             startLabel.textContent = 'Loading...';
             endLabel.textContent = 'Loading...';
         }
     }
 }
 
-/**
- * Áp dụng zoom từ range slider
- */
 function applyRangeZoom() {
     if (!bitcoinChart || historicalPriceData.length === 0) return;
     
@@ -5209,20 +4867,13 @@ function applyRangeZoom() {
     saveZoomState();
 }
 
-// ========== KHỞI TẠO TẤT CẢ TÍNH NĂNG MOBILE ==========
-/**
- * Khởi tạo tất cả tính năng mobile
- */
 function initMobileFeatures() {
     console.log('📱 Initializing mobile features...');
     
-    // Khởi tạo zoom slider cho mobile
     initMobileZoomSlider();
     
-    // Cải thiện range slider
     setTimeout(enhanceRangeSliderForMobile, 1000);
     
-    // Thêm CSS để ngăn scroll khi kéo slider
     document.addEventListener('touchstart', function(e) {
         if (e.target.classList.contains('timeline-slider') || 
             e.target.closest('.range-slider')) {
@@ -5234,7 +4885,6 @@ function initMobileFeatures() {
         document.body.classList.remove('slider-active');
     });
     
-    // Cập nhật lại range handles khi xoay màn hình
     window.addEventListener('resize', function() {
         if (typeof updateRangeHandles === 'function') {
             setTimeout(updateRangeHandles, 100);
@@ -5244,41 +4894,29 @@ function initMobileFeatures() {
     console.log('✅ Mobile features initialized');
 }
 
-// Gọi khởi tạo mobile features sau khi DOM ready
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(initMobileFeatures, 2000);
 });
 
-// Cũng gọi lại khi chart data được cập nhật
 document.addEventListener('chartDataUpdated', function() {
     setTimeout(initMobileZoomSlider, 500);
 });
 
-// ========== FIX MOBILE ZOOM SLIDER - MERGED VERSION ==========
-/**
- * Hợp nhất và sửa lỗi mobile zoom slider
- * Gọi function này sau khi toolbar được tạo
- */
 function fixMobileZoomSlider() {
     console.log('🔧 Fixing mobile zoom slider...');
     
-    // Tìm slider đang active
     const timelineSlider = document.getElementById('timelineSlider');
     const rangeSlider = document.getElementById('rangeSlider');
     
-    // Nếu đang dùng range slider (toolbar mới)
     if (rangeSlider && !document.querySelector('.range-slider-improved')) {
         console.log('📱 Adding touch support to range slider');
         
-        // Đánh dấu đã xử lý
         rangeSlider.classList.add('range-slider-improved');
         
-        // Tăng kích thước touch target
         rangeSlider.style.minHeight = '44px';
         rangeSlider.style.padding = '10px 0';
         rangeSlider.style.touchAction = 'none';
         
-        // Cải thiện handles
         const leftHandle = document.getElementById('rangeHandleLeft');
         const rightHandle = document.getElementById('rangeHandleRight');
         
@@ -5291,21 +4929,16 @@ function fixMobileZoomSlider() {
             });
         }
         
-        // Thêm touch events
         setupRangeSliderTouchEvents();
     }
     
-    // Nếu đang dùng timeline slider (toolbar cũ)
     if (timelineSlider && !timelineSlider.classList.contains('touch-fixed')) {
         console.log('📱 Re-initializing timeline slider with touch support');
         timelineSlider.classList.add('touch-fixed');
-        initMobileZoomSlider(); // Gọi lại hàm khởi tạo
+        initMobileZoomSlider();
     }
 }
 
-/**
- * Setup touch events cho range slider
- */
 function setupRangeSliderTouchEvents() {
     const rangeSlider = document.getElementById('rangeSlider');
     const leftHandle = document.getElementById('rangeHandleLeft');
@@ -5317,7 +4950,6 @@ function setupRangeSliderTouchEvents() {
     let activeHandleType = null;
     let startLeft, startRight, startX;
     
-    // Touch start
     rangeSlider.addEventListener('touchstart', function(e) {
         e.preventDefault();
         
@@ -5327,7 +4959,6 @@ function setupRangeSliderTouchEvents() {
             const touchX = touch.clientX - rect.left;
             const percent = (touchX / rect.width) * 100;
             
-            // Xác định handle nào gần nhất
             const leftPercent = parseFloat(leftHandle.style.left) || 0;
             const rightPercent = parseFloat(rightHandle.style.left) || 100;
             
@@ -5353,13 +4984,11 @@ function setupRangeSliderTouchEvents() {
         }
     }, { passive: false });
     
-    // Touch move
     rangeSlider.addEventListener('touchmove', function(e) {
         e.preventDefault();
         
         if (activeTouch === null) return;
         
-        // Tìm đúng touch point
         let touch = null;
         for (let i = 0; i < e.touches.length; i++) {
             if (e.touches[i].identifier === activeTouch) {
@@ -5382,17 +5011,14 @@ function setupRangeSliderTouchEvents() {
         const percent = (touchX / rect.width) * 100;
         
         if (activeHandleType === 'left') {
-            // Di chuyển left handle
             const newLeft = Math.min(percent, startRight - 5);
             leftHandle.style.left = newLeft + '%';
         } 
         else if (activeHandleType === 'right') {
-            // Di chuyển right handle
             const newRight = Math.max(percent, startLeft + 5);
             rightHandle.style.left = newRight + '%';
         } 
         else if (activeHandleType === 'pan') {
-            // Pan cả hai handles
             const deltaX = touch.clientX - startX;
             const deltaPercent = (deltaX / rect.width) * 100;
             const range = startRight - startLeft;
@@ -5413,15 +5039,12 @@ function setupRangeSliderTouchEvents() {
             rightHandle.style.left = newRight + '%';
         }
         
-        // Update UI
         updateRangeFillAndLabels();
         
-        // Hiển thị feedback
         showRangeFeedback(percent, activeHandleType);
         
     }, { passive: false });
     
-    // Touch end
     rangeSlider.addEventListener('touchend', function(e) {
         e.preventDefault();
         
@@ -5434,11 +5057,9 @@ function setupRangeSliderTouchEvents() {
         document.body.classList.remove('slider-active');
         hideRangeFeedback();
         
-        // Apply zoom
         applyRangeZoom();
     });
     
-    // Touch cancel
     rangeSlider.addEventListener('touchcancel', function(e) {
         e.preventDefault();
         
@@ -5453,9 +5074,6 @@ function setupRangeSliderTouchEvents() {
     });
 }
 
-/**
- * Hiển thị feedback cho range slider
- */
 function showRangeFeedback(percent, type) {
     let feedback = document.getElementById('rangeFeedback');
     
@@ -5479,9 +5097,6 @@ function showRangeFeedback(percent, type) {
     feedback.classList.add('visible');
 }
 
-/**
- * Ẩn range feedback
- */
 function hideRangeFeedback() {
     const feedback = document.getElementById('rangeFeedback');
     if (feedback) {
@@ -5489,16 +5104,12 @@ function hideRangeFeedback() {
     }
 }
 
-/**
- * Cập nhật CSS cho mobile
- */
 function addMobileRangeStyles() {
     if (document.getElementById('mobileRangeStyles')) return;
     
     const style = document.createElement('style');
     style.id = 'mobileRangeStyles';
     style.textContent = `
-        /* Mobile improvements for range slider */
         @media (max-width: 768px) {
             .range-slider {
                 min-height: 44px !important;
@@ -5523,7 +5134,6 @@ function addMobileRangeStyles() {
                 margin-top: 12px !important;
             }
             
-            /* Feedback positioning */
             .slider-feedback {
                 bottom: 20px !important;
                 left: 50% !important;
@@ -5537,7 +5147,6 @@ function addMobileRangeStyles() {
             }
         }
         
-        /* Prevent body scroll when using slider */
         body.slider-active {
             overflow: hidden !important;
             position: fixed !important;
@@ -5546,7 +5155,6 @@ function addMobileRangeStyles() {
             touch-action: none !important;
         }
         
-        /* Active handle glow */
         .range-handle.active {
             box-shadow: 0 0 30px rgba(0, 212, 255, 0.9) !important;
             animation: handlePulse 1s infinite !important;
@@ -5562,15 +5170,11 @@ function addMobileRangeStyles() {
     document.head.appendChild(style);
 }
 
-// ========== HOOK VÀO HÀM TẠO TOOLBAR ==========
-// Lưu lại hàm createChartToolbar gốc
 const originalCreateChartToolbar = createChartToolbar;
 
-// Override để thêm fix sau khi tạo toolbar
 createChartToolbar = function() {
     const result = originalCreateChartToolbar.apply(this, arguments);
     
-    // Thêm fix sau 500ms
     setTimeout(() => {
         fixMobileZoomSlider();
         addMobileRangeStyles();
@@ -5579,29 +5183,24 @@ createChartToolbar = function() {
     return result;
 };
 
-// ========== KHỞI TẠO KHI DOM READY ==========
 document.addEventListener('DOMContentLoaded', function() {
-    // Thêm CSS
     addMobileRangeStyles();
     
-    // Kiểm tra và fix sau khi load
     setTimeout(() => {
         fixMobileZoomSlider();
     }, 3000);
     
-    // Kiểm tra lại sau khi chart data load
     setTimeout(() => {
         fixMobileZoomSlider();
     }, 5000);
 });
 
-// Lắng nghe sự kiện chart data updated
 document.addEventListener('chartDataUpdated', function() {
     setTimeout(fixMobileZoomSlider, 500);
 });
 
 console.log('✅ Mobile zoom slider fix loaded');
-// Debug function để kiểm tra stats
+
 function debugStats() {
     console.log('🔍 Debug Stats:');
     console.log('- peakCount element:', document.getElementById('peakCount'));
@@ -5615,5 +5214,4 @@ function debugStats() {
     }
 }
 
-// Gọi debug sau khi load
 setTimeout(debugStats, 3000);
