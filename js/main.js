@@ -529,86 +529,55 @@ class ArticlePushSimple {
         
         if (articles.length === 1) {
             const article = articles[0];
+            
+            // Tạo notification KHÔNG có actions
             const notification = new Notification('📚 Bài viết mới từ Bitcoin PeakDip', {
                 body: `${article.title}\n⏱️ ${article.reading_time} phút đọc • ${article.level}`,
                 icon: '/icons/icon-192x192.png',
                 badge: '/icons/icon-72x72.png',
                 tag: `article-${article.id}`,
                 renotify: true,
-                requireInteraction: true, // Giữ notification直到 người dùng tương tác
+                requireInteraction: true,
+                silent: false,
                 data: {
                     url: `/learn/article.html?id=${article.slug}`,
                     articleId: article.id,
                     title: article.title
                 }
+                // ĐÃ XÓA ACTIONS HOÀN TOÀN
             });
             
-            // Xử lý khi click vào notification
-            notification.onclick = function(event) {
-                event.preventDefault();
+            // Xử lý click
+            notification.onclick = function(e) {
+                e.preventDefault();
                 window.focus();
-                // Mở bài viết
-                window.open(event.target.data.url, '_blank');                
-                if (event.action === 'read') {
-                    // Mở bài viết
-                    window.open(event.target.data.url, '_blank');
-                } else if (event.action === 'later') {
-                    // Lưu vào reading list
-                    const readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
-                    readingList.push({
-                        id: article.id,
-                        title: article.title,
-                        url: event.target.data.url,
-                        savedAt: new Date().toISOString(),
-                        read: false
-                    });
-                    localStorage.setItem('reading_list', JSON.stringify(readingList));
-                    
-                    // Cập nhật badge
-                    if (typeof updateReadingListBadge === 'function') {
-                        updateReadingListBadge();
-                    }
-                    
-                    // Thông báo đã lưu
-                    alert('✅ Đã lưu vào danh sách đọc sau');
-                } else {
-                    // Click vào thân notification (không phải nút)
-                    window.open(event.target.data.url, '_blank');
-                }
+                window.open(e.target.data.url, '_blank');
             };
             
         } else {
             // Nhiều bài viết
             const notification = new Notification(`📚 ${articles.length} bài viết mới`, {
-                body: articles.map(a => `• ${a.title}`).join('\n').substring(0, 100) + '...',
+                body: articles.map(a => `• ${a.title}`).join('\n').substring(0, 150),
                 icon: '/icons/icon-192x192.png',
                 badge: '/icons/icon-72x72.png',
                 tag: 'multiple-articles',
                 requireInteraction: true,
                 data: {
                     url: '/learn/'
-                },
-                actions: [
-                    {
-                        action: 'view',
-                        title: '👀 Xem tất cả'
-                    }
-                ]
+                }
             });
             
-            notification.onclick = function(event) {
-                event.preventDefault();
+            notification.onclick = function(e) {
+                e.preventDefault();
                 window.focus();
-                
-                if (event.action === 'view') {
-                    window.open('/learn/', '_blank');
-                } else {
-                    window.open('/learn/', '_blank');
-                }
+                window.open('/learn/', '_blank');
             };
         }
+        
+        // Log success
+        console.log('✅ Notification sent for', articles.length, 'articles');
     }
-    
+        
     testNotification() {
         new Notification('✅ Đã bật thông báo', {
             body: 'Bạn sẽ nhận được thông báo khi có bài viết mới',

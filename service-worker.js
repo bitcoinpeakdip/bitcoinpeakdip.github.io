@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
 // Version: 1.4.0
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.7.6';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.7.6';
+const CACHE_NAME = 'bitcoin-peakdip-v1.7.7';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.7.7';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -136,21 +136,32 @@ function cacheFirst(request) {
 
 // Helper: Stale while revalidate for assets
 function staleWhileRevalidate(request) {
-  const cachedResponse = caches.match(request);
+  // Bỏ qua chrome-extension requests
+  if (request.url.startsWith('chrome-extension://')) {
+    return fetch(request);
+  }
   
-  const fetchPromise = fetch(request)
-    .then(networkResponse => {
-      caches.open(DYNAMIC_CACHE)
-        .then(cache => {
-          cache.put(request, networkResponse.clone());
-        });
-      return networkResponse;
-    })
-    .catch(() => {
-      console.log('Network request failed, using cache only');
-    });
-  
-  return cachedResponse.then(response => response || fetchPromise);
+  return caches.match(request).then(cachedResponse => {
+    const fetchPromise = fetch(request)
+      .then(networkResponse => {
+        // Kiểm tra response hợp lệ và clone trước khi dùng
+        if (networkResponse && networkResponse.ok) {
+          // Clone response để cache và trả về
+          const responseToCache = networkResponse.clone();
+          caches.open(DYNAMIC_CACHE)
+            .then(cache => {
+              cache.put(request, responseToCache);
+            });
+        }
+        return networkResponse;
+      })
+      .catch(error => {
+        console.log('Network request failed:', error);
+        return cachedResponse || new Response('Offline', { status: 408 });
+      });
+    
+    return cachedResponse || fetchPromise;
+  });
 }
 
 // Fetch event - handle requests
