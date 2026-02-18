@@ -564,7 +564,7 @@ body {
 
 .btn-telegram { background: #0088cc; }
 .btn-discord { background: #7289da; }
-.btn-twitter { background: #1da1f2; }
+.btn-xcom { background: #1da1f2; }
 .btn-beincom { background: linear-gradient(to right, #4CAF50, #2E7D32); }
 
 /* Footer */
@@ -1828,97 +1828,110 @@ footer {
 }
 
 /* ===== X.COM (TWITTER) STYLES - THAY THẾ HOÀN TOÀN ===== */
-/* ========== X.COM STYLES - MÀU TRẮNG TRÊN NỀN TỐI ========== */
+/* ===== X.COM (TWITTER) STYLES - ĐÃ SỬA ĐỒNG BỘ VỚI TELEGRAM/LINKEDIN ===== */
 
-/* Channel button - X.com với màu trắng */
+/* Channel button - X.com với icon X */
 .btn-xcom { 
-    background: #ffffff;  /* ĐỔI: từ đen sang trắng */
-    color: #000000 !important;  /* THÊM: chữ màu đen để tương phản */
+    background: #000000;
+    color: #ffffff;
 }
 
 .btn-xcom i {
-    color: #000000 !important;  /* Icon màu đen trên nền trắng */
+    color: #ffffff;
 }
 
 .btn-xcom:hover {
-    background: #f0f0f0;  /* Trắng xám khi hover */
+    background: #333333;
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(255, 255, 255, 0.2);  /* ĐỔI: shadow trắng */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
-/* Footer Contact - X.com với màu trắng */
+/* Footer Contact - X.com với icon X */
 .footer-contact-item:has(.fa-x-twitter) {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 8px 18px;
-    background: rgba(255, 255, 255, 0.1);  /* Nền trắng trong suốt */
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
 }
 
 .footer-contact-item:has(.fa-x-twitter) i {
-    color: #ffffff;  /* ĐỔI: icon màu trắng */
+    color: #000000;
     font-size: 1.1em;
     transition: all 0.3s ease;
+    background: #ffffff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
 }
 
 .footer-contact-item:has(.fa-x-twitter) a {
-    color: #ffffff;  /* ĐỔI: text màu trắng */
+    color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
     font-size: 0.95em;
     font-weight: 500;
     transition: all 0.3s ease;
 }
 
-/* Hover effects với màu trắng */
+/* Hover effects cho X.com - đồng bộ với các mạng khác */
 .footer-contact-item:has(.fa-x-twitter):hover {
-    border-color: #ffffff;  /* ĐỔI: viền trắng */
-    background: rgba(255, 255, 255, 0.2);  /* Nền trắng đậm hơn */
+    border-color: #000000;
+    background: rgba(0, 0, 0, 0.5);
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);  /* Shadow trắng */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 .footer-contact-item:has(.fa-x-twitter):hover i {
-    color: #ffffff;
-    transform: rotate(5deg) scale(1.1);
+    color: #000000;
+    background: #ffffff;
+    transform: scale(1.1);
 }
 
 .footer-contact-item:has(.fa-x-twitter):hover a {
     color: #ffffff;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
-/* Animation cho X.com với glow trắng */
-@keyframes xPulseWhite {
+/* Animation pulse cho X.com */
+@keyframes xPulse {
     0%, 100% {
-        box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
     }
     50% {
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
     }
 }
 
 .footer-contact-item:has(.fa-x-twitter):hover {
-    animation: xPulseWhite 1.5s infinite;
+    animation: xPulse 1.5s infinite;
 }
 
-/* Style cho channel button trong channels section */
+/* Style cho channel button với icon X */
 .channels-grid .btn-xcom {
-    background: #ffffff;
-    color: #000000;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: #000000;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .channels-grid .btn-xcom i {
-    color: #000000;
+    color: #ffffff;
+    background: transparent;
+    width: auto;
+    height: auto;
+    font-size: 1.2em;
 }
 
 .channels-grid .btn-xcom:hover {
-    background: #f0f0f0;
-    box-shadow: 0 10px 20px rgba(255, 255, 255, 0.2);
+    background: #333333;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
 /* Footer links */
@@ -2013,10 +2026,10 @@ footer {
 
 .btn-telegram { background: #0088cc; }
 .btn-discord { background: #7289da; }
-.btn-twitter { background: #000000; }  /* ĐÃ SỬA: từ #1da1f2 sang #000000 */
+.btn-xcom { background: #000000; }  /* ĐÃ SỬA: từ #1da1f2 sang #000000 */
 .btn-beincom { background: linear-gradient(to right, #4CAF50, #2E7D32); }
 
-.btn-twitter:hover {
+.btn-xcom:hover {
     background: #333333;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
