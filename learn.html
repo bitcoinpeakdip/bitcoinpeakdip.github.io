@@ -11,7 +11,7 @@
 </head>
 <body>
 
-    <!-- Navigation Menu - CHỈ GIỮ LẠI MỘT BẢN -->
+    <!-- Navigation Menu -->
     <nav class="navigation" id="navigation">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
@@ -219,87 +219,105 @@
             </div>
         </div>
         
-        <!-- Channels Section -->
+        <!-- Channels Section - ĐÃ SỬA -->
         <div class="channels">
             <h2 class="section-title">Join Our Early Warning Community</h2>
-            <!-- Copy channels section từ index.html -->
+            <p style="color: var(--text-glow); margin-bottom: 30px; font-size: 1.2em;">
+                Connect with our advanced early warning system across platforms
+            </p>
+            
+            <div class="channels-grid">
+                <a href="https://t.me/+CTfMMvKCVcFlMTE1" class="channel-btn btn-telegram">
+                    <i class="fab fa-telegram"></i>
+                    Telegram Signals
+                </a>
+                
+                <a href="https://discord.gg/58akuxegwK" class="channel-btn btn-discord">
+                    <i class="fab fa-discord"></i>
+                    Discord Community
+                </a>
+                
+                <a href="https://twitter.com/bitcoinpeakdip" class="channel-btn btn-twitter">
+                    <i class="fab fa-twitter"></i>
+                    Twitter Alerts
+                </a>
+                
+                <a href="https://group.beincom.com/ref/KkA8rZ" class="channel-btn btn-beincom">
+                    <i class="fas fa-globe-asia"></i>
+                    Beincom Vietnam
+                </a>
+            </div>
+            
+            <div class="disclaimer">
+                <strong>⚠️ Early Warning System Advisory:</strong> Our system uses advanced sensors and AI algorithms to analyze Bitcoin patterns, not financial advice. 
+                Cryptocurrency trading involves substantial risk. Pattern detection is based on technical analysis and does not guarantee future results.
+            </div>
         </div>
         
-        <!-- Footer -->
+        <!-- Recent Posts Section - ĐÃ DI CHUYỂN VÀO TRONG -->
+        <div class="recent-posts">
+            <h2><i class="fas fa-newspaper"></i> Latest Articles</h2>
+            <div id="articlesList" class="articles-grid"></div>
+        </div>
+        
+        <!-- Footer - ĐÃ SỬA ACTIVE CLASS -->
         <footer id="pageFooter">
-            <!-- Copy footer từ index.html -->
+            <p>© 2021 Nguyen Duc Hai Technologies. All rights reserved.</p>
+            
+            <div class="footer-contact">
+                <div class="footer-contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <a href="mailto:contact@bitcoinpeakdip.com">contact@bitcoinpeakdip.com</a>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fab fa-linkedin"></i>
+                    <a href="https://www.linkedin.com/in/hai-nguyen-duc-1a6b5563" target="_blank">LinkedIn</a>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fab fa-telegram"></i>
+                    <a href="https://t.me/bitcoinpeakdip" target="_blank">Telegram</a>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fab fa-twitter"></i>
+                    <a href="https://twitter.com/bitcoinpeakdip" target="_blank">Twitter</a>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                <a href="index.html" class="footer-link">Home</a>
+                <a href="about.html" class="footer-link">About</a>
+                <a href="product.html" class="footer-link">Product</a>
+                <a href="signals.html" class="footer-link">EWS Signals</a>
+                <a href="learn.html" class="footer-link active">Learn</a>
+                <a href="#contact" class="footer-link">Contact</a>
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">Risk Disclosure</a>
+            </div>
         </footer>
     </div>
-    <div class="recent-posts">
-        <h2><i class="fas fa-newspaper"></i> Latest Articles</h2>
-        <div id="articlesList" class="articles-grid"></div>
-    </div>  
-    <!-- CHỈ 1 FOOTER Ở ĐÂY -->
-    <footer id="pageFooter">
-        <p>© 2021 Nguyen Duc Hai Technologies. All rights reserved.</p>
-        
-        <div class="footer-contact">
-            <div class="footer-contact-item">
-                <i class="fas fa-envelope"></i>
-                <a href="mailto:contact@bitcoinpeakdip.com">contact@bitcoinpeakdip.com</a>
-            </div>
-            <div class="footer-contact-item">
-                <i class="fab fa-linkedin"></i>
-                <a href="https://www.linkedin.com/in/hai-nguyen-duc-1a6b5563" target="_blank">LinkedIn</a>
-            </div>
-            <div class="footer-contact-item">
-                <i class="fab fa-telegram"></i>
-                <a href="https://t.me/bitcoinpeakdip" target="_blank">Telegram</a>
-            </div>
-            <div class="footer-contact-item">
-                <i class="fab fa-twitter"></i>
-                <a href="https://twitter.com/bitcoinpeakdip" target="_blank">Twitter</a>
-            </div>
-        </div>
-        
-        <div class="footer-links">
-            <a href="index.html" class="footer-link">Home</a>
-            <a href="about.html" class="footer-link">About</a>
-            <a href="product.html" class="footer-link">Product</a>
-            <a href="signals.html" class="footer-link">EWS Signals</a>
-            <a href="learn.html" class="footer-link active">Learn</a>
-            <a href="#contact" class="footer-link">Contact</a>
-            <a href="#" class="footer-link">Privacy Policy</a>
-            <a href="#" class="footer-link">Terms of Service</a>
-            <a href="#" class="footer-link">Risk Disclosure</a>
-        </div>
-    </footer>      	
+    
     <script src="js/main.js?v=1.4.32"></script>
     <script src="js/interactions.js?v=1.4.32"></script>
     <script src="js/learn.js?v=1.4.32"></script>
     <!-- Simple Mobile Menu Fix -->
     <script>
     (function() {
-        // Đợi trang load xong
         document.addEventListener('DOMContentLoaded', function() {
             const menuBtn = document.getElementById('mobileMenuBtn');
             const navMenu = document.getElementById('navMenu');
             
             if (menuBtn && navMenu) {
-                console.log('✅ Mobile menu found'); // Kiểm tra console
-                
-                // Xóa bỏ các class cũ nếu có
                 menuBtn.classList.remove('active');
                 navMenu.classList.remove('active');
                 
-                // Xử lý click vào nút menu
                 menuBtn.onclick = function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    
-                    console.log('👆 Menu clicked'); // Kiểm tra click
-                    
-                    // Toggle class
                     this.classList.toggle('active');
                     navMenu.classList.toggle('active');
                 };
                 
-                // Click vào link thì đóng menu
                 const links = navMenu.querySelectorAll('.nav-link');
                 links.forEach(link => {
                     link.onclick = function() {
@@ -308,15 +326,12 @@
                     };
                 });
                 
-                // Click ra ngoài thì đóng menu
                 document.onclick = function(e) {
                     if (!menuBtn.contains(e.target) && !navMenu.contains(e.target)) {
                         menuBtn.classList.remove('active');
                         navMenu.classList.remove('active');
                     }
                 };
-            } else {
-                console.error('❌ Cannot find menu elements');
             }
         });
     })();

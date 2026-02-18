@@ -1779,3 +1779,66 @@ footer {
 .footer-link:hover::after {
     width: 100%;
 }
+
+/* ===== FIX: TWITTER -> X.COM KHI HOVER ===== */
+
+/* Cách 1: Đổi text khi hover */
+.footer-contact-item:has(.fa-twitter) a {
+    position: relative;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.footer-contact-item:has(.fa-twitter) a::before {
+    content: "Twitter";
+    transition: opacity 0.3s ease;
+}
+
+.footer-contact-item:has(.fa-twitter) a::after {
+    content: "X.com";
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+}
+
+.footer-contact-item:has(.fa-twitter):hover a::before {
+    opacity: 0;
+}
+
+.footer-contact-item:has(.fa-twitter):hover a::after {
+    opacity: 1;
+    color: #1da1f2;
+}
+
+/* Cách 2: Style cho Twitter khi hover */
+.footer-contact-item:has(.fa-twitter):hover {
+    border-color: #000000;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.footer-contact-item:has(.fa-twitter):hover i {
+    color: #000000;
+}
+
+/* Style cho Telegram hover */
+.footer-contact-item:has(.fa-telegram):hover {
+    border-color: #0088cc;
+    background: rgba(0, 136, 204, 0.1);
+}
+
+.footer-contact-item:has(.fa-telegram):hover i {
+    color: #0088cc;
+}
+
+/* Style cho LinkedIn hover */
+.footer-contact-item:has(.fa-linkedin):hover {
+    border-color: #0077b5;
+    background: rgba(0, 119, 181, 0.1);
+}
+
+.footer-contact-item:has(.fa-linkedin):hover i {
+    color: #0077b5;
+}
