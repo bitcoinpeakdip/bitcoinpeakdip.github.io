@@ -1838,6 +1838,10 @@ footer {
 
 .btn-xcom i {
     color: #ffffff;
+    background: transparent;
+    width: auto;
+    height: auto;
+    font-size: 1.2em;
 }
 
 .btn-xcom:hover {
@@ -1846,27 +1850,28 @@ footer {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
+
 /* Footer Contact - X.com với icon X */
 .footer-contact-item:has(.fa-x-twitter) {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 8px 18px;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
 }
 
 .footer-contact-item:has(.fa-x-twitter) i {
-    color: #000000;
+    color: #000000;  /* Màu đen cho icon */
     font-size: 1.1em;
     transition: all 0.3s ease;
-    background: #ffffff;
+    background: #ffffff;  /* Nền trắng */
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1881,7 +1886,7 @@ footer {
     transition: all 0.3s ease;
 }
 
-/* Hover effects cho X.com - đồng bộ với các mạng khác */
+/* Hover effects cho X.com */
 .footer-contact-item:has(.fa-x-twitter):hover {
     border-color: #000000;
     background: rgba(0, 0, 0, 0.5);
@@ -1890,17 +1895,16 @@ footer {
 }
 
 .footer-contact-item:has(.fa-x-twitter):hover i {
-    color: #000000;
-    background: #ffffff;
+    color: #ffffff;  /* Khi hover: icon trắng */
+    background: #000000;  /* Nền đen */
     transform: scale(1.1);
 }
 
 .footer-contact-item:has(.fa-x-twitter):hover a {
     color: #ffffff;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
-/* Animation pulse cho X.com */
+/* Animation pulse */
 @keyframes xPulse {
     0%, 100% {
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
