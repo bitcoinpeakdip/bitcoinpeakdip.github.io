@@ -540,24 +540,15 @@ class ArticlePushSimple {
                     url: `/learn/article.html?id=${article.slug}`,
                     articleId: article.id,
                     title: article.title
-                },
-                actions: [
-                    {
-                        action: 'read',
-                        title: '📖 Đọc ngay'
-                    },
-                    {
-                        action: 'later',
-                        title: '⏰ Đọc sau'
-                    }
-                ]
+                }
             });
             
             // Xử lý khi click vào notification
             notification.onclick = function(event) {
                 event.preventDefault();
                 window.focus();
-                
+                // Mở bài viết
+                window.open(event.target.data.url, '_blank');                
                 if (event.action === 'read') {
                     // Mở bài viết
                     window.open(event.target.data.url, '_blank');
