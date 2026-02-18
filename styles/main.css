@@ -1683,6 +1683,8 @@ footer {
 }
 /* ========== FOOTER CHUYÊN NGHIỆP ========== */
 
+/* ========== FOOTER CHUYÊN NGHIỆP ========== */
+
 /* Footer container */
 #pageFooter {
     text-align: center;
@@ -1694,29 +1696,57 @@ footer {
     backdrop-filter: blur(10px);
     border-radius: 20px 20px 0 0;
     border-top: 1px solid rgba(0, 212, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+#pageFooter::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        var(--wave-trough), 
+        var(--wave-mid), 
+        var(--wave-peak), 
+        var(--wave-trough), 
+        transparent);
+    opacity: 0.5;
+    animation: footerGlow 4s infinite;
+}
+
+@keyframes footerGlow {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
 }
 
 /* Copyright text - chỉ có 1 border duy nhất ở đây */
 #pageFooter > p:first-child {
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.95em;
+    letter-spacing: 1px;
     margin-bottom: 25px;
     padding-bottom: 25px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* CHỈ 1 BORDER */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: inline-block;
     width: 100%;
     max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Contact section - ĐÃ XÓA BORDER */
 .footer-contact {
     display: flex;
     justify-content: center;
-    gap: 40px;
+    gap: 30px;
     flex-wrap: wrap;
     margin: 0 auto 25px;
     padding: 10px 0;
-    border: none; /* QUAN TRỌNG: đã xóa border */
+    border: none;
     background: transparent;
 }
 
@@ -1725,29 +1755,143 @@ footer {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 15px;
+    padding: 8px 18px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 30px;
-    border: 1px solid rgba(0, 212, 255, 0.2);
-    transition: all 0.3s ease;
-}
-
-.footer-contact-item:hover {
-    transform: translateY(-3px);
-    border-color: var(--wave-trough);
-    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
 }
 
 .footer-contact-item i {
-    color: var(--wave-trough);
+    font-size: 1.1em;
+    transition: all 0.3s ease;
 }
 
 .footer-contact-item a {
     color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
+    font-size: 0.95em;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
 
-/* Footer links - giữ border nhưng chỉ 1 cái */
+/* ===== EMAIL STYLES ===== */
+.footer-contact-item:has(.fa-envelope) i {
+    color: #fbbc04;  /* Màu vàng Gmail */
+}
+
+.footer-contact-item:has(.fa-envelope):hover {
+    border-color: #fbbc04;
+    background: rgba(251, 188, 4, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(251, 188, 4, 0.2);
+}
+
+.footer-contact-item:has(.fa-envelope):hover i {
+    color: #fbbc04;
+    transform: scale(1.1);
+}
+
+/* ===== LINKEDIN STYLES ===== */
+.footer-contact-item:has(.fa-linkedin) i {
+    color: #0077b5;
+}
+
+.footer-contact-item:has(.fa-linkedin):hover {
+    border-color: #0077b5;
+    background: rgba(0, 119, 181, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 119, 181, 0.2);
+}
+
+.footer-contact-item:has(.fa-linkedin):hover i {
+    color: #0077b5;
+    transform: scale(1.1);
+}
+
+/* ===== TELEGRAM STYLES ===== */
+.footer-contact-item:has(.fa-telegram) i {
+    color: #0088cc;
+}
+
+.footer-contact-item:has(.fa-telegram):hover {
+    border-color: #0088cc;
+    background: rgba(0, 136, 204, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 136, 204, 0.2);
+}
+
+.footer-contact-item:has(.fa-telegram):hover i {
+    color: #0088cc;
+    transform: scale(1.1);
+}
+
+/* ===== X.COM (TWITTER) STYLES - THAY THẾ HOÀN TOÀN ===== */
+.footer-contact-item:has(.fa-twitter) i {
+    color: #1da1f2;  /* Màu xanh Twitter mặc định */
+    transition: all 0.3s ease;
+}
+
+.footer-contact-item:has(.fa-twitter) a {
+    position: relative;
+    display: inline-block;
+}
+
+/* Hiệu ứng chuyển từ Twitter sang X.com */
+.footer-contact-item:has(.fa-twitter) a::before {
+    content: "Twitter";
+    transition: opacity 0.3s ease;
+}
+
+.footer-contact-item:has(.fa-twitter) a::after {
+    content: "X.com";
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+/* Hover state - chuyển sang X.com */
+.footer-contact-item:has(.fa-twitter):hover {
+    border-color: #000000;
+    background: rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.footer-contact-item:has(.fa-twitter):hover i {
+    color: #000000;
+    transform: rotate(5deg) scale(1.1);
+}
+
+.footer-contact-item:has(.fa-twitter):hover a::before {
+    opacity: 0;
+}
+
+.footer-contact-item:has(.fa-twitter):hover a::after {
+    opacity: 1;
+    color: #000000;
+}
+
+/* Animation cho X.com */
+@keyframes xPulse {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+    }
+}
+
+.footer-contact-item:has(.fa-twitter):hover {
+    animation: xPulse 1.5s infinite;
+}
+
+/* Footer links */
 .footer-links {
     display: flex;
     justify-content: center;
@@ -1762,13 +1906,16 @@ footer {
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     font-size: 0.9em;
+    font-weight: 500;
+    padding: 5px 0;
     position: relative;
+    transition: all 0.3s ease;
 }
 
 .footer-link::after {
     content: '';
     position: absolute;
-    bottom: -2px;
+    bottom: 0;
     left: 0;
     width: 0;
     height: 2px;
@@ -1776,69 +1923,134 @@ footer {
     transition: width 0.3s ease;
 }
 
+.footer-link:hover {
+    color: white;
+}
+
 .footer-link:hover::after {
     width: 100%;
 }
 
-/* ===== FIX: TWITTER -> X.COM KHI HOVER ===== */
+/* Active state cho footer links */
+.footer-link.active {
+    color: var(--wave-trough);
+    font-weight: 600;
+}
 
-/* Cách 1: Đổi text khi hover */
-.footer-contact-item:has(.fa-twitter) a {
+.footer-link.active::after {
+    width: 100%;
+    background: var(--wave-trough);
+}
+
+/* ===== CHANNEL BUTTONS - CẬP NHẬT X.COM ===== */
+.channel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: all 0.5s ease;
+    border: none;
+    cursor: pointer;
     position: relative;
-    display: inline-block;
-    transition: all 0.3s ease;
+    overflow: hidden;
 }
 
-.footer-contact-item:has(.fa-twitter) a::before {
-    content: "Twitter";
-    transition: opacity 0.3s ease;
-}
-
-.footer-contact-item:has(.fa-twitter) a::after {
-    content: "X.com";
+.channel-btn::before {
+    content: '';
     position: absolute;
-    left: 0;
     top: 0;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    white-space: nowrap;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s;
 }
 
-.footer-contact-item:has(.fa-twitter):hover a::before {
-    opacity: 0;
+.channel-btn:hover::before {
+    left: 100%;
 }
 
-.footer-contact-item:has(.fa-twitter):hover a::after {
-    opacity: 1;
-    color: #1da1f2;
+.channel-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
-/* Cách 2: Style cho Twitter khi hover */
-.footer-contact-item:has(.fa-twitter):hover {
-    border-color: #000000;
-    background: rgba(0, 0, 0, 0.2);
+.btn-telegram { background: #0088cc; }
+.btn-discord { background: #7289da; }
+.btn-twitter { background: #000000; }  /* ĐÃ SỬA: từ #1da1f2 sang #000000 */
+.btn-beincom { background: linear-gradient(to right, #4CAF50, #2E7D32); }
+
+.btn-twitter:hover {
+    background: #333333;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
-.footer-contact-item:has(.fa-twitter):hover i {
-    color: #000000;
+/* Responsive */
+@media (max-width: 768px) {
+    .footer-contact {
+        gap: 15px;
+    }
+    
+    .footer-contact-item {
+        padding: 6px 12px;
+    }
+    
+    .footer-contact-item a {
+        font-size: 0.9em;
+    }
+    
+    .footer-links {
+        gap: 15px;
+    }
+    
+    .footer-link {
+        font-size: 0.85em;
+    }
 }
 
-/* Style cho Telegram hover */
-.footer-contact-item:has(.fa-telegram):hover {
-    border-color: #0088cc;
-    background: rgba(0, 136, 204, 0.1);
+@media (max-width: 480px) {
+    .footer-contact {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .footer-contact-item {
+        width: 100%;
+        max-width: 200px;
+        justify-content: center;
+    }
+    
+    .footer-links {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    
+    .footer-link {
+        font-size: 0.8em;
+        text-align: center;
+    }
 }
 
-.footer-contact-item:has(.fa-telegram):hover i {
-    color: #0088cc;
+/* Animation cho footer */
+@keyframes footerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* Style cho LinkedIn hover */
-.footer-contact-item:has(.fa-linkedin):hover {
-    border-color: #0077b5;
-    background: rgba(0, 119, 181, 0.1);
-}
-
-.footer-contact-item:has(.fa-linkedin):hover i {
-    color: #0077b5;
+#pageFooter {
+    animation: footerFadeIn 0.8s ease forwards;
 }
