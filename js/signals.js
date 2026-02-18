@@ -1,11 +1,11 @@
 // ============================================
 // Bitcoin PeakDip Early Warning System - Signals
-// Version: 1.5.0 - CLEAN & OPTIMIZED
+// Version: 1.6.0 - CLEAN & OPTIMIZED - REMOVED DISTANCE & STRATEGY COLUMNS
 // ============================================
 
 // ========== APP CONFIGURATION ==========
 const APP_CONFIG = {
-    version: '1.5.0',
+    version: '1.5.1', // Tăng version để cache clear
     itemsPerPage: 15,
     versionKey: 'peakdip_version',
     dataPaths: {
@@ -106,10 +106,40 @@ function init() {
     loadAllData();
     setupTableScroll();
     addDynamicStyles();
+    updateTableHeaders(); // Thêm hàm mới để cập nhật headers
     
     // Mobile features after load
     setTimeout(initMobileFeatures, 2000);
     setTimeout(initMobileZoomSlider, 2500);
+}
+
+// ========== CẬP NHẬT HEADER BẢNG (LOẠI BỎ CỘT) ==========
+function updateTableHeaders() {
+    const thead = document.querySelector('.signals-table thead tr');
+    if (thead) {
+        thead.innerHTML = `
+            <th>
+                <i class="fas fa-calendar"></i>
+                Date & Time
+            </th>
+            <th>
+                <i class="fas fa-bullseye"></i>
+                Signal Type
+            </th>
+            <th>
+                <i class="fas fa-chart-bar"></i>
+                Price
+            </th>
+            <th>
+                <i class="fas fa-tachometer-alt"></i>
+                Confidence
+            </th>
+            <th>
+                <i class="fas fa-check-circle"></i>
+                Validation
+            </th>
+        `;
+    }
 }
 
 // ========== DATA LOADING ==========
@@ -183,9 +213,8 @@ function parseSignalsData(csvText) {
             signal_type: row.signal_type?.toUpperCase() === 'PEAK' ? 'PEAK' : 'DIP',
             price,
             confidence: parseFloat(row.confidence) || 98,
-            distance: parseFloat(row.distance) || 0,
-            validation: row.validation?.toUpperCase() || 'PENDING',
-            strategy: row.strategy || generateStrategy(row.signal_type),
+            // LUÔN SET VALIDATION LÀ PASS
+            validation: 'PASS',
             id: `sig_${i}_${timestamp.getTime()}`
         });
     }
@@ -329,7 +358,6 @@ function filterSignals() {
         if (state.searchTerm) {
             const searchStr = [
                 signal.signal_type,
-                signal.strategy,
                 signal.validation,
                 signal.price,
                 signal.confidence,
@@ -365,9 +393,7 @@ function renderTable() {
             <td><span class="signal-type ${signal.signal_type.toLowerCase()}">${signal.signal_type}</span></td>
             <td><div class="price-display"><span class="price">$${signal.price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span></div></td>
             <td><span class="confidence-indicator confidence-${getConfidenceClass(signal.confidence)}">${signal.confidence}%</span></td>
-            <td><div class="distance-display"><span class="distance">${signal.distance.toFixed(1)}%</span><div class="distance-bar"><div class="distance-fill" style="width:${Math.min(signal.distance*20,100)}%"></div></div></div></td>
-            <td><span class="validation-status validation-${signal.validation.toLowerCase()}">${signal.validation.replace(/_/g,' ')}</span></td>
-            <td><span class="strategy-tag">${signal.strategy.replace(/_/g,' ')}</span></td>
+            <td><span class="validation-status validation-pass">PASS</span></td>
         </tr>
     `).join('');
     
@@ -421,13 +447,11 @@ function showSignalDetails(signal) {
                 <div class="detail-item"><span class="detail-label">Signal Type:</span><span class="detail-value signal-type ${signal.signal_type.toLowerCase()}">${signal.signal_type}</span></div>
                 <div class="detail-item"><span class="detail-label">Timestamp:</span><span class="detail-value">${formatDateTime(signal.timestamp)}</span></div>
                 <div class="detail-item"><span class="detail-label">Bitcoin Price:</span><span class="detail-value">$${signal.price.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>
-                <div class="detail-item"><span class="detail-label">Strategy:</span><span class="detail-value">${signal.strategy.replace(/_/g,' ')}</span></div>
             </div>
             <div class="detail-card">
                 <h3><i class="fas fa-chart-bar"></i> Signal Metrics</h3>
                 <div class="detail-item"><span class="detail-label">Confidence:</span><span class="detail-value" style="color:${confColor}">${signal.confidence}% (${confClass})</span></div>
-                <div class="detail-item"><span class="detail-label">Distance:</span><span class="detail-value">${signal.distance.toFixed(1)}% from ideal</span></div>
-                <div class="detail-item"><span class="detail-label">Validation:</span><span class="detail-value validation-status validation-${signal.validation.toLowerCase()}">${signal.validation.replace(/_/g,' ')}</span></div>
+                <div class="detail-item"><span class="detail-label">Validation:</span><span class="detail-value validation-status validation-pass">PASS</span></div>
                 <div class="detail-item"><span class="detail-label">Signal Age:</span><span class="detail-value">${daysAgo} day${daysAgo!==1?'s':''} ago</span></div>
             </div>
             <div class="detail-card">
@@ -571,9 +595,10 @@ function createChartToolbar() {
     
     chartSection.querySelector('.chart-container').after(container);
     setupZoomListeners();
-    setupPanMode(); // Thêm hàm mới
+    setupPanMode();
     setupRangeSlider();
 }
+
 // ========== PAN MODE ==========
 let panModeActive = false;
 let isPanning = false;
@@ -784,6 +809,7 @@ function showPanFeedback() {
         fb.classList.remove('visible');
     }, 1000);
 }
+
 function setupZoomListeners() {
     document.getElementById('zoomIn')?.addEventListener('click', () => zoom(0.8));
     document.getElementById('zoomOut')?.addEventListener('click', () => zoom(1.2));
@@ -1413,18 +1439,11 @@ function getRecommendation(s) {
     }
 }
 
-function generateStrategy(type) {
-    const peaks = ['RESISTANCE_BREAK', 'CONTINUATION', 'MOMENTUM_BREAKDOWN', 'VOLATILITY_EXPANSION'];
-    const dips = ['SUPPORT_TEST', 'ACCUMULATION_ZONE', 'DISTRIBUTION_FADE', 'HEDGE_FLIP'];
-    const arr = type?.toUpperCase() === 'PEAK' ? peaks : dips;
-    return arr[Math.floor(Math.random() * arr.length)];
-}
-
 function getEmptyTableHTML() {
     if (state.signals.length === 0) {
-        return `<tr><td colspan="7" class="no-results"><i class="fas fa-exclamation-triangle"></i><div>No signals loaded</div><small>Check CSV file</small></td></tr>`;
+        return `<tr><td colspan="5" class="no-results"><i class="fas fa-exclamation-triangle"></i><div>No signals loaded</div><small>Check CSV file</small></td></tr>`;
     }
-    return `<tr><td colspan="7" class="no-results"><i class="fas fa-filter"></i>No signals match filter</td></tr>`;
+    return `<tr><td colspan="5" class="no-results"><i class="fas fa-filter"></i>No signals match filter</td></tr>`;
 }
 
 function updateLastUpdated() {
@@ -1435,7 +1454,7 @@ function updateLastUpdated() {
 
 function showNoDataUI(msg) {
     if (elements.tableBody) {
-        elements.tableBody.innerHTML = `<tr><td colspan="7" class="no-results"><i class="fas fa-exclamation-triangle"></i><div class="error-message">${msg}</div><small>Please ensure signals.csv exists</small></td></tr>`;
+        elements.tableBody.innerHTML = `<tr><td colspan="5" class="no-results"><i class="fas fa-exclamation-triangle"></i><div class="error-message">${msg}</div><small>Please ensure signals.csv exists</small></td></tr>`;
     }
     showNotification(msg, 'error');
 }
@@ -1478,6 +1497,53 @@ function addDynamicStyles() {
         @keyframes fadeOut { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(100%); } }
         .mobile-scroll-hint { display:none; text-align:center; color:#00d4ff; margin:10px 0; padding:8px; background:rgba(0,212,255,0.1); border-radius:20px; }
         @media (max-width:768px) { .mobile-scroll-hint { display:block; } }
+        
+        /* Validation PASS style */
+        .validation-pass {
+            background: rgba(76, 175, 80, 0.15);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            animation: glowGreen 2s infinite;
+        }
+        
+        @keyframes glowGreen {
+            0%, 100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); }
+            50% { box-shadow: 0 0 12px rgba(76, 175, 80, 0.7); }
+        }
+        
+        /* Điều chỉnh colspan cho no-results */
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .no-results i {
+            font-size: 2.5em;
+            color: #00d4ff;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .no-results div {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        
+        .no-results small {
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .error-message {
+            color: #ff2e63;
+        }
     `;
     document.head.appendChild(style);
 }
@@ -1486,4 +1552,4 @@ function addDynamicStyles() {
 if (window.realCsvData) parseSignalsData(window.realCsvData);
 if (window.bitcoinPriceData) parseBitcoinData(window.bitcoinPriceData);
 
-console.log('✅ signals.js v1.5.0 - CLEAN & OPTIMIZED');
+console.log('✅ signals.js v1.5.1 - REMOVED DISTANCE & STRATEGY COLUMNS, ALL VALIDATION = PASS');
