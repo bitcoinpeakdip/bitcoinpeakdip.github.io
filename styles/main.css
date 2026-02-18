@@ -2330,3 +2330,60 @@ footer {
     align-items: center;
     gap: 5px;
 }
+/* Push Notification Button */
+.push-simple-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #00d4ff, #f7931a);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(0,212,255,0.3);
+    border: 2px solid white;
+    transition: all 0.3s ease;
+    animation: slideInRight 0.5s ease;
+}
+
+.push-simple-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,212,255,0.5);
+}
+
+.push-simple-btn.enabled {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+@media (max-width: 768px) {
+    .push-simple-btn {
+        bottom: 10px;
+        right: 10px;
+        padding: 10px 15px;
+    }
+    .push-simple-btn span {
+        display: none;
+    }
+    .push-simple-btn i {
+        font-size: 20px;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
 // Version: 1.4.0
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.7.3';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.7.3';
+const CACHE_NAME = 'bitcoin-peakdip-v1.7.4';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.7.4';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -107,22 +107,31 @@ function networkFirst(request) {
 }
 
 // Helper: Cache first strategy for static assets
+// Helper: Cache first strategy for static assets
 function cacheFirst(request) {
-  return caches.match(request)
-    .then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(request)
-        .then(response => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => {
-              cache.put(request, responseClone);
-            });
-          return response;
+    // Bỏ qua chrome-extension:// requests
+    if (request.url.startsWith('chrome-extension://')) {
+        return fetch(request);
+    }
+    
+    return caches.match(request)
+        .then(cachedResponse => {
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+            return fetch(request)
+                .then(response => {
+                    // Chỉ cache nếu response ok và không phải extension
+                    if (response && response.ok && !request.url.startsWith('chrome-extension://')) {
+                        const responseClone = response.clone();
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
+                                cache.put(request, responseClone);
+                            });
+                    }
+                    return response;
+                });
         });
-    });
 }
 
 // Helper: Stale while revalidate for assets
