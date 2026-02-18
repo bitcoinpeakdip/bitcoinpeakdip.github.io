@@ -314,7 +314,7 @@ function showToast(message, type = 'info', duration = 3000) {
 // ========== PUSH NOTIFICATION SIMPLE (POLLING) ==========
 class ArticlePushSimple {
     constructor() {
-        this.checkInterval = 60 * 1000; // 30 phút kiểm tra 1 lần
+        this.checkInterval = 5 * 60 * 1000; // 30 phút kiểm tra 1 lần
         this.lastCheckKey = 'article_last_check';
         this.savedArticlesKey = 'article_saved_ids';
         this.init();
@@ -611,7 +611,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Check periodically for new articles (every 30 minutes)
     setInterval(async () => {
         await articleManager.loadArticles();
-    }, 30 * 60 * 1000);
+    }, 5 * 60 * 1000);
     
     // Render article list if on learn page
     if (document.getElementById('articlesList')) {
