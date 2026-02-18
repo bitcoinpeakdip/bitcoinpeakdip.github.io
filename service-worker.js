@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
 // Version: 1.4.0
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.7.4';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.7.4';
+const CACHE_NAME = 'bitcoin-peakdip-v1.7.5';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.7.5';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -296,3 +296,47 @@ async function syncCSVData() {
     console.error('Background sync failed:', error);
   }
 }
+
+// Xử lý notification click khi app đang đóng
+self.addEventListener('notificationclick', function(event) {
+    console.log('🔔 Notification clicked:', event);
+    
+    event.notification.close();
+    
+    // Xử lý action buttons
+    if (event.action === 'later') {
+        // Lưu vào reading list - cần gửi message về client
+        event.waitUntil(
+            clients.matchAll({ type: 'window' }).then(function(clientList) {
+                if (clientList.length > 0) {
+                    clientList[0].postMessage({
+                        type: 'SAVE_FOR_LATER',
+                        articleId: event.notification.data.articleId,
+                        title: event.notification.data.title,
+                        url: event.notification.data.url
+                    });
+                }
+            })
+        );
+        return;
+    }
+    
+    // Mở URL (mặc định)
+    const urlToOpen = event.notification.data?.url || '/';
+    
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then(function(windowClients) {
+                // Kiểm tra xem đã có window nào mở chưa
+                for (let i = 0; i < windowClients.length; i++) {
+                    const client = windowClients[i];
+                    if (client.url === urlToOpen && 'focus' in client) {
+                        return client.focus();
+                    }
+                }
+                // Mở tab mới
+                return clients.openWindow(urlToOpen);
+            })
+    );
+});
+// <--- HẾT FILE

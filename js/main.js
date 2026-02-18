@@ -529,25 +529,92 @@ class ArticlePushSimple {
         
         if (articles.length === 1) {
             const article = articles[0];
-            new Notification('📚 Bài viết mới từ Bitcoin PeakDip', {
+            const notification = new Notification('📚 Bài viết mới từ Bitcoin PeakDip', {
                 body: `${article.title}\n⏱️ ${article.reading_time} phút đọc • ${article.level}`,
                 icon: '/icons/icon-192x192.png',
                 badge: '/icons/icon-72x72.png',
                 tag: `article-${article.id}`,
                 renotify: true,
-                requireInteraction: true,
+                requireInteraction: true, // Giữ notification直到 người dùng tương tác
                 data: {
-                    url: `/learn/article.html?id=${article.slug}`
-                }
+                    url: `/learn/article.html?id=${article.slug}`,
+                    articleId: article.id,
+                    title: article.title
+                },
+                actions: [
+                    {
+                        action: 'read',
+                        title: '📖 Đọc ngay'
+                    },
+                    {
+                        action: 'later',
+                        title: '⏰ Đọc sau'
+                    }
+                ]
             });
+            
+            // Xử lý khi click vào notification
+            notification.onclick = function(event) {
+                event.preventDefault();
+                window.focus();
+                
+                if (event.action === 'read') {
+                    // Mở bài viết
+                    window.open(event.target.data.url, '_blank');
+                } else if (event.action === 'later') {
+                    // Lưu vào reading list
+                    const readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
+                    readingList.push({
+                        id: article.id,
+                        title: article.title,
+                        url: event.target.data.url,
+                        savedAt: new Date().toISOString(),
+                        read: false
+                    });
+                    localStorage.setItem('reading_list', JSON.stringify(readingList));
+                    
+                    // Cập nhật badge
+                    if (typeof updateReadingListBadge === 'function') {
+                        updateReadingListBadge();
+                    }
+                    
+                    // Thông báo đã lưu
+                    alert('✅ Đã lưu vào danh sách đọc sau');
+                } else {
+                    // Click vào thân notification (không phải nút)
+                    window.open(event.target.data.url, '_blank');
+                }
+            };
+            
         } else {
-            new Notification(`📚 ${articles.length} bài viết mới`, {
-                body: 'Nhấn để xem danh sách',
+            // Nhiều bài viết
+            const notification = new Notification(`📚 ${articles.length} bài viết mới`, {
+                body: articles.map(a => `• ${a.title}`).join('\n').substring(0, 100) + '...',
                 icon: '/icons/icon-192x192.png',
                 badge: '/icons/icon-72x72.png',
                 tag: 'multiple-articles',
-                data: { url: '/learn/' }
+                requireInteraction: true,
+                data: {
+                    url: '/learn/'
+                },
+                actions: [
+                    {
+                        action: 'view',
+                        title: '👀 Xem tất cả'
+                    }
+                ]
             });
+            
+            notification.onclick = function(event) {
+                event.preventDefault();
+                window.focus();
+                
+                if (event.action === 'view') {
+                    window.open('/learn/', '_blank');
+                } else {
+                    window.open('/learn/', '_blank');
+                }
+            };
         }
     }
     
