@@ -15,66 +15,6 @@
       "level": "Beginner",
       "featured": true,
       "filename": "ews-basics.md"
-    },
-    {
-      "id": "ews-basics-sample",
-      "title": "EWS Fundamentals: How Our Early Warning System Works Sample Test Notification",
-      "slug": "ews-basics-sample",
-      "description": "Sample test article with notification demonstration for the Early Warning System.",
-      "author": "Bitcoin PeakDip Team",
-      "date": "2026-02-17",
-      "modified": "2026-02-17",
-      "category": "fundamentals",
-      "tags": ["beginner", "ews", "basics", "sample", "test"],
-      "reading_time": 8,
-      "level": "Beginner",
-      "featured": false,
-      "filename": "ews-basics_sample_article.md"
-    },	
-    {
-      "id": "strategy-guide",
-      "title": "8 Strategies Explained: RECLAIM_FAILURE, MOMENTUM_BREAKDOWN and More",
-      "slug": "strategy-guide",
-      "description": "Deep dive into all trading strategies including entry conditions, risk levels, and win rates.",
-      "author": "Bitcoin PeakDip Team",
-      "date": "2026-02-14",
-      "modified": "2026-02-16",
-      "category": "strategies",
-      "tags": ["intermediate", "strategies", "trading"],
-      "reading_time": 15,
-      "level": "Intermediate",
-      "featured": true,
-      "filename": "strategy-guide.md"
-    },
-    {
-      "id": "multi-tf-analysis",
-      "title": "Multi-Timeframe Guide: Master 5M, 15M, and 1H Confluence",
-      "slug": "multi-tf-analysis",
-      "description": "Master multi-timeframe confluence analysis for higher probability trades.",
-      "author": "Bitcoin PeakDip Team",
-      "date": "2026-02-13",
-      "modified": "2026-02-16",
-      "category": "advanced",
-      "tags": ["advanced", "timeframe", "analysis"],
-      "reading_time": 12,
-      "level": "Advanced",
-      "featured": true,
-      "filename": "multi-tf-analysis.md"
-    },
-	{
-	  "id": "btc-signal-trigger-dataset",
-	  "title": "BTC Signal Trigger Dataset: Complete History of Bitcoin Peak and Dip Signals (2022-2025)",
-	  "slug": "btc-signal-trigger-dataset",
-	  "description": "Comprehensive dataset of Bitcoin signal triggers including market events, on-chain analysis, sentiment, and funding rates from 2022 to 2025.",
-	  "author": "Bitcoin PeakDip Team",
-	  "date": "2026-02-18",
-	  "modified": "2026-02-18",
-	  "category": "data",
-	  "tags": ["bitcoin", "dataset", "signals", "historical", "analysis"],
-	  "reading_time": 15,
-	  "level": "Advanced",
-	  "featured": true,
-	  "filename": "btc-signal-trigger-dataset.md"
-	}	
+    }	
   ]
 }
