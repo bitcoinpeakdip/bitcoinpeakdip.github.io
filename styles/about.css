@@ -1348,3 +1348,125 @@
 .learn-card:nth-child(2) { animation-delay: 0.2s; }
 .learn-card:nth-child(3) { animation-delay: 0.3s; }
 .learn-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Founder Contact */
+.founder-contact {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    background: rgba(0, 212, 255, 0.05);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.contact-item i {
+    color: #00d4ff;
+    font-size: 1.2em;
+    width: 24px;
+}
+
+.contact-item a {
+    color: #ffffff;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid transparent;
+}
+
+.contact-item a:hover {
+    color: #00d4ff;
+    border-bottom-color: #00d4ff;
+}
+
+/* LinkedIn specific hover */
+.contact-item .fa-linkedin:hover {
+    color: #0077b5;
+    filter: drop-shadow(0 0 8px #0077b5);
+}
+
+/* Footer Contact */
+.footer-contact {
+    margin: 20px 0;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    padding: 15px 0;
+    border-top: 1px solid rgba(0, 212, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.footer-contact-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer-contact-item i {
+    color: #00d4ff;
+    font-size: 1.2em;
+}
+
+.footer-contact-item a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+.footer-contact-item a:hover {
+    color: #00d4ff;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.footer-contact-item .fa-linkedin:hover {
+    color: #0077b5;
+    text-shadow: 0 0 10px rgba(0, 119, 181, 0.5);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .founder-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .founder-avatar {
+        font-size: 100px;
+    }
+    
+    .founder-contact {
+        justify-content: center;
+    }
+    
+    .footer-contact {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .contact-item {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .founder-contact {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .footer-contact-item {
+        width: 100%;
+        justify-content: center;
+    }
+}
