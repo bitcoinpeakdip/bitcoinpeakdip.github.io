@@ -1828,67 +1828,97 @@ footer {
 }
 
 /* ===== X.COM (TWITTER) STYLES - THAY THẾ HOÀN TOÀN ===== */
-.footer-contact-item:has(.fa-twitter) i {
-    color: #1da1f2;  /* Màu xanh Twitter mặc định */
+/* ========== X.COM STYLES - MÀU TRẮNG TRÊN NỀN TỐI ========== */
+
+/* Channel button - X.com với màu trắng */
+.btn-xcom { 
+    background: #ffffff;  /* ĐỔI: từ đen sang trắng */
+    color: #000000 !important;  /* THÊM: chữ màu đen để tương phản */
+}
+
+.btn-xcom i {
+    color: #000000 !important;  /* Icon màu đen trên nền trắng */
+}
+
+.btn-xcom:hover {
+    background: #f0f0f0;  /* Trắng xám khi hover */
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(255, 255, 255, 0.2);  /* ĐỔI: shadow trắng */
+}
+
+/* Footer Contact - X.com với màu trắng */
+.footer-contact-item:has(.fa-x-twitter) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: rgba(255, 255, 255, 0.1);  /* Nền trắng trong suốt */
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+
+.footer-contact-item:has(.fa-x-twitter) i {
+    color: #ffffff;  /* ĐỔI: icon màu trắng */
+    font-size: 1.1em;
     transition: all 0.3s ease;
 }
 
-.footer-contact-item:has(.fa-twitter) a {
-    position: relative;
-    display: inline-block;
-}
-
-/* Hiệu ứng chuyển từ Twitter sang X.com */
-.footer-contact-item:has(.fa-twitter) a::before {
-    content: "Twitter";
-    transition: opacity 0.3s ease;
-}
-
-.footer-contact-item:has(.fa-twitter) a::after {
-    content: "X.com";
-    position: absolute;
-    left: 0;
-    top: 0;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    white-space: nowrap;
+.footer-contact-item:has(.fa-x-twitter) a {
+    color: #ffffff;  /* ĐỔI: text màu trắng */
+    text-decoration: none;
+    font-size: 0.95em;
     font-weight: 500;
+    transition: all 0.3s ease;
 }
 
-/* Hover state - chuyển sang X.com */
-.footer-contact-item:has(.fa-twitter):hover {
-    border-color: #000000;
-    background: rgba(0, 0, 0, 0.15);
+/* Hover effects với màu trắng */
+.footer-contact-item:has(.fa-x-twitter):hover {
+    border-color: #ffffff;  /* ĐỔI: viền trắng */
+    background: rgba(255, 255, 255, 0.2);  /* Nền trắng đậm hơn */
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);  /* Shadow trắng */
 }
 
-.footer-contact-item:has(.fa-twitter):hover i {
-    color: #000000;
+.footer-contact-item:has(.fa-x-twitter):hover i {
+    color: #ffffff;
     transform: rotate(5deg) scale(1.1);
 }
 
-.footer-contact-item:has(.fa-twitter):hover a::before {
-    opacity: 0;
+.footer-contact-item:has(.fa-x-twitter):hover a {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
 
-.footer-contact-item:has(.fa-twitter):hover a::after {
-    opacity: 1;
+/* Animation cho X.com với glow trắng */
+@keyframes xPulseWhite {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+    }
+}
+
+.footer-contact-item:has(.fa-x-twitter):hover {
+    animation: xPulseWhite 1.5s infinite;
+}
+
+/* Style cho channel button trong channels section */
+.channels-grid .btn-xcom {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.channels-grid .btn-xcom i {
     color: #000000;
 }
 
-/* Animation cho X.com */
-@keyframes xPulse {
-    0%, 100% {
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-    }
-    50% {
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
-    }
-}
-
-.footer-contact-item:has(.fa-twitter):hover {
-    animation: xPulse 1.5s infinite;
+.channels-grid .btn-xcom:hover {
+    background: #f0f0f0;
+    box-shadow: 0 10px 20px rgba(255, 255, 255, 0.2);
 }
 
 /* Footer links */
