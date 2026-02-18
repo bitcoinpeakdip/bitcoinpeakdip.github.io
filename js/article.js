@@ -314,7 +314,7 @@ function showToast(message, type = 'info', duration = 3000) {
 // ========== PUSH NOTIFICATION SIMPLE (POLLING) ==========
 class ArticlePushSimple {
     constructor() {
-        this.checkInterval = 30 * 60 * 1000; // 30 phút kiểm tra 1 lần
+        this.checkInterval = 60 * 1000; // 30 phút kiểm tra 1 lần
         this.lastCheckKey = 'article_last_check';
         this.savedArticlesKey = 'article_saved_ids';
         this.init();
@@ -678,8 +678,8 @@ async function loadArticlePage() {
 }
 
 // Add styles
-const style = document.createElement('style');
-style.textContent = `
+const articleStyle = document.createElement('style');
+articleStyle.textContent = `
     .toast-notification {
         position: fixed;
         bottom: 30px;
@@ -859,4 +859,4 @@ style.textContent = `
     }
 `;
 
-document.head.appendChild(style);
+document.head.appendChild(articleStyle);

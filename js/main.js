@@ -390,8 +390,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Thêm animation cho badge
-const style = document.createElement('style');
-style.textContent = `
+const mainStyle = document.createElement('style');
+mainStyle.textContent = `
     .reading-list-badge {
         position: absolute;
         top: -8px;
@@ -425,4 +425,4 @@ style.textContent = `
         gap: 5px;
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(mainStyle);

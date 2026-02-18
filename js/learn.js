@@ -127,8 +127,8 @@ function addTableOfContents() {
 }
 
 // Add CSS for learn features
-const style = document.createElement('style');
-style.textContent = `
+const learnStyle = document.createElement('style');
+learnStyle.textContent = `
     .reading-progress {
         position: fixed;
         top: 0;
@@ -208,4 +208,4 @@ style.textContent = `
         opacity: 0.7;
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(learnStyle);

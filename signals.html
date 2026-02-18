@@ -6,9 +6,9 @@
     
     <!-- CSS với version parameter -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/main.css?v=1.7.1">
-    <link rel="stylesheet" href="styles/signals.css?v=1.7.1">
-    <link rel="stylesheet" href="styles/zoom.css?v=1.7.1">
+    <link rel="stylesheet" href="styles/main.css?v=1.7.2">
+    <link rel="stylesheet" href="styles/signals.css?v=1.7.2">
+    <link rel="stylesheet" href="styles/zoom.css?v=1.7.2">
     
     <!-- JS với version parameter -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -126,8 +126,8 @@
 
 	<script>
 		// Add CSS for status banner
-		const style = document.createElement('style');
-		style.textContent = `
+		const bannerstyle = document.createElement('style');
+		bannerstyle.textContent = `
 			.data-status-banner {
 				position: fixed;
 				top: 70px;
@@ -159,7 +159,7 @@
 				background: rgba(255,255,255,0.3);
 			}
 		`;
-		document.head.appendChild(style);
+		document.head.appendChild(bannerstyle);
 	</script>	
 
     <!-- Interactive Background -->
@@ -693,8 +693,8 @@
 			console.log('Active menu set for:', currentPage);
 		})();
 	</script>	
-    <script src="js/main.js?v=1.7.1"></script>
-    <script src="js/signals.js?v=1.7.1"></script> <!-- Đổi số này mỗi lần update -->	
+    <script src="js/main.js?v=1.7.2"></script>
+    <script src="js/signals.js?v=1.7.2"></script> <!-- Đổi số này mỗi lần update -->	
     <!-- Simple Mobile Menu Fix -->
     <script>
     (function() {

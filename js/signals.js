@@ -1,6 +1,6 @@
 // ============================================
 // Bitcoin PeakDip Early Warning System - Signals
-// Version: 1.7.1 - CLEAN & OPTIMIZED - REMOVED DISTANCE & STRATEGY COLUMNS
+// Version: 1.7.2 - CLEAN & OPTIMIZED - REMOVED DISTANCE & STRATEGY COLUMNS
 // ============================================
 
 // ========== APP CONFIGURATION ==========
@@ -1340,9 +1340,9 @@ function hideSliderFeedback() {
 function addMobileStyles() {
     if (document.getElementById('mobileStyles')) return;
     
-    const style = document.createElement('style');
-    style.id = 'mobileStyles';
-    style.textContent = `
+    const signalsStyle = document.createElement('style');
+    signalsStyle.id = 'mobileStyles';
+    signalsStyle.textContent = `
         @media (max-width: 768px) {
             .timeline-slider { height: 10px !important; margin: 20px 0 !important; }
             .timeline-slider::-webkit-slider-thumb { width: 32px !important; height: 32px !important; }
@@ -1352,7 +1352,7 @@ function addMobileStyles() {
             body.slider-active { overflow: hidden; position: fixed; width: 100%; height: 100%; touch-action: none; }
         }
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(signalsStyle);
 }
 
 function setupMobileSliderHints() {
@@ -1486,8 +1486,8 @@ function showNotification(msg, type = 'info', duration = 3000) {
 
 // ========== ADD STYLES ==========
 function addDynamicStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
+    const dynamicstyle = document.createElement('style');
+    dynamicstyle.textContent = `
         .notification { position:fixed; top:20px; right:20px; background:rgba(0,0,0,0.95); color:white; padding:15px 25px; border-radius:10px; display:flex; align-items:center; gap:12px; z-index:10000; border-left:4px solid #f7931a; animation:slideInRight 0.3s ease; max-width:400px; backdrop-filter:blur(10px); }
         .notification-success { border-left-color:#4CAF50; }
         .notification-error { border-left-color:#f44336; }
@@ -1545,7 +1545,7 @@ function addDynamicStyles() {
             color: #ff2e63;
         }
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(dynamicstyle);
 }
 
 // ========== INITIAL LOAD IF DATA EXISTS ==========
