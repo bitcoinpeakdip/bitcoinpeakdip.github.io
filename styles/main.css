@@ -1828,19 +1828,28 @@ footer {
 }
 
 /* ===== X.COM (TWITTER) STYLES - THAY THẾ HOÀN TOÀN ===== */
-/* ===== X.COM (TWITTER) STYLES - ĐÃ SỬA ĐỒNG BỘ VỚI TELEGRAM/LINKEDIN ===== */
+/* ===== X.COM (TWITTER) STYLES - HIỂN THỊ CHỮ X ===== */
 
-/* Channel button - X.com với icon X */
+/* Channel button - X.com với chữ X */
 .btn-xcom { 
     background: #000000;
     color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
 }
 
 .btn-xcom i {
     color: #ffffff;
-    background: transparent;
-    width: auto;
-    height: auto;
+    font-size: 1.2em;
+    font-style: normal;
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+}
+
+.btn-xcom i::before {
+    content: "X";
     font-size: 1.2em;
 }
 
@@ -1850,8 +1859,7 @@ footer {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
-
-/* Footer Contact - X.com với icon X */
+/* Footer Contact - X.com với chữ X */
 .footer-contact-item:has(.fa-x-twitter) {
     display: inline-flex;
     align-items: center;
@@ -1865,16 +1873,23 @@ footer {
 }
 
 .footer-contact-item:has(.fa-x-twitter) i {
-    color: #000000;  /* Màu đen cho icon */
+    color: #ffffff;
     font-size: 1.1em;
     transition: all 0.3s ease;
-    background: #ffffff;  /* Nền trắng */
+    background: #000000;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-style: normal;
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+}
+
+.footer-contact-item:has(.fa-x-twitter) i::before {
+    content: "X";
     font-size: 0.9em;
 }
 
@@ -1886,17 +1901,17 @@ footer {
     transition: all 0.3s ease;
 }
 
-/* Hover effects cho X.com */
+/* Hover effects - đổi nền thành trắng, chữ X thành đen */
 .footer-contact-item:has(.fa-x-twitter):hover {
-    border-color: #000000;
-    background: rgba(0, 0, 0, 0.5);
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.2);
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
 }
 
 .footer-contact-item:has(.fa-x-twitter):hover i {
-    color: #ffffff;  /* Khi hover: icon trắng */
-    background: #000000;  /* Nền đen */
+    color: #000000;
+    background: #ffffff;
     transform: scale(1.1);
 }
 
@@ -1905,39 +1920,25 @@ footer {
 }
 
 /* Animation pulse */
-@keyframes xPulse {
+@keyframes xPulseWhite {
     0%, 100% {
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
     }
     50% {
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
     }
 }
 
 .footer-contact-item:has(.fa-x-twitter):hover {
-    animation: xPulse 1.5s infinite;
+    animation: xPulseWhite 1.5s infinite;
 }
 
-/* Style cho channel button với icon X */
-.channels-grid .btn-xcom {
-    background: #000000;
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.channels-grid .btn-xcom i {
-    color: #ffffff;
-    background: transparent;
-    width: auto;
-    height: auto;
+/* Đảm bảo icon trong channel button hiển thị chữ X */
+.channels-grid .btn-xcom i::before {
+    content: "X";
     font-size: 1.2em;
+    font-weight: bold;
 }
-
-.channels-grid .btn-xcom:hover {
-    background: #333333;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-}
-
 /* Footer links */
 .footer-links {
     display: flex;

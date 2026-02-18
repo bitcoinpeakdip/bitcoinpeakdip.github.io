@@ -1,6 +1,6 @@
 // ============================================
 // Bitcoin PeakDip Early Warning System - Signals
-// Version: 1.4.44 - CLEAN & OPTIMIZED
+// Version: 1.4.45 - CLEAN & OPTIMIZED
 // ============================================
 
 // ========== APP CONFIGURATION ==========
