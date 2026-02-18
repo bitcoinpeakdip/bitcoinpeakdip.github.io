@@ -2102,3 +2102,79 @@ footer {
 #pageFooter {
     animation: footerFadeIn 0.8s ease forwards;
 }
+
+/* ===== X.COM BUTTON - NỔI BẬT NHƯ CÁC NÚT KHÁC ===== */
+.btn-xcom { 
+    background: #000000;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: all 0.5s ease;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Icon X trong nút */
+.btn-xcom i {
+    color: #ffffff;
+    font-size: 1.3em;
+    font-style: normal;
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+    background: transparent;
+    width: auto;
+    height: auto;
+    display: inline-block;
+}
+
+/* Hiển thị chữ X */
+.btn-xcom i::before {
+    content: "X";
+    font-size: 1.3em;
+    font-weight: bold;
+}
+
+/* Hiệu ứng hover */
+.btn-xcom:hover {
+    background: #333333;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.btn-xcom:hover i {
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
+.btn-xcom::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s;
+}
+
+.btn-xcom:hover::before {
+    left: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .btn-xcom {
+        padding: 15px;
+        font-size: 1em;
+    }
+}
