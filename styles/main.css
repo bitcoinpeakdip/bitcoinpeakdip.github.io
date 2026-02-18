@@ -2103,78 +2103,130 @@ footer {
     animation: footerFadeIn 0.8s ease forwards;
 }
 
-/* ===== X.COM BUTTON - NỔI BẬT NHƯ CÁC NÚT KHÁC ===== */
-.btn-xcom { 
-    background: #000000;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    padding: 20px;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 1.1em;
-    transition: all 0.5s ease;
-    border: none;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+/* ===== FIX: X.COM BUTTON - ĐỒNG BỘ VỚI CÁC NÚT KHÁC ===== */
+
+/* Reset hoàn toàn cho btn-xcom */
+.btn-xcom {
+    background: #000000 !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 15px !important;
+    padding: 20px !important;
+    border-radius: 12px !important;
+    text-decoration: none !important;
+    font-weight: bold !important;
+    font-size: 1.1em !important;
+    transition: all 0.5s ease !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important; /* THÊM BORDER */
+    cursor: pointer !important;
+    position: relative !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    width: 100% !important;
+    min-height: 70px !important;
+    line-height: 1.2 !important;
 }
 
 /* Icon X trong nút */
 .btn-xcom i {
-    color: #ffffff;
-    font-size: 1.3em;
-    font-style: normal;
-    font-weight: bold;
-    font-family: 'Arial', sans-serif;
-    background: transparent;
-    width: auto;
-    height: auto;
-    display: inline-block;
+    color: #ffffff !important;
+    font-size: 1.5em !important;
+    font-style: normal !important;
+    font-weight: bold !important;
+    font-family: 'Arial', sans-serif !important;
+    background: transparent !important;
+    width: auto !important;
+    height: auto !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    line-height: 1 !important;
 }
 
 /* Hiển thị chữ X */
 .btn-xcom i::before {
-    content: "X";
-    font-size: 1.3em;
-    font-weight: bold;
+    content: "X" !important;
+    font-size: 1.3em !important;
+    font-weight: bold !important;
+    display: inline-block !important;
 }
 
-/* Hiệu ứng hover */
+/* Hiệu ứng hover - giống các nút khác */
 .btn-xcom:hover {
-    background: #333333;
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    background: #333333 !important;
+    transform: translateY(-5px) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important; /* Border sáng hơn khi hover */
 }
 
 .btn-xcom:hover i {
-    color: #ffffff;
-    transform: scale(1.1);
+    color: #ffffff !important;
+    transform: scale(1.1) !important;
 }
 
+/* Hiệu ứng trượt - giống các nút khác */
 .btn-xcom::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.6s;
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent) !important;
+    transition: left 0.6s !important;
+    pointer-events: none !important;
 }
 
 .btn-xcom:hover::before {
-    left: 100%;
+    left: 100% !important;
+}
+
+/* ===== ĐỒNG BỘ CÁC NÚT KHÁC (THÊM BORDER NẾU THIẾU) ===== */
+.btn-telegram,
+.btn-discord,
+.btn-beincom {
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    width: 100% !important;
+    min-height: 70px !important;
+}
+
+.btn-telegram:hover,
+.btn-discord:hover,
+.btn-beincom:hover {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    transform: translateY(-5px) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Đảm bảo các icon đều đồng bộ */
+.btn-telegram i,
+.btn-discord i,
+.btn-beincom i,
+.btn-xcom i {
+    font-size: 1.5em !important;
+    width: 24px !important;
+    text-align: center !important;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .btn-xcom {
-        padding: 15px;
-        font-size: 1em;
+    .btn-xcom,
+    .btn-telegram,
+    .btn-discord,
+    .btn-beincom {
+        padding: 15px !important;
+        font-size: 1em !important;
+        min-height: 60px !important;
+    }
+    
+    .btn-xcom i,
+    .btn-telegram i,
+    .btn-discord i,
+    .btn-beincom i {
+        font-size: 1.3em !important;
     }
 }
+
+
