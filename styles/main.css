@@ -1681,3 +1681,101 @@ footer {
         margin: 0 !important;
     }
 }
+/* ========== FOOTER CHUYÊN NGHIỆP ========== */
+
+/* Footer container */
+#pageFooter {
+    text-align: center;
+    margin-top: 60px;
+    padding: 40px 20px 20px;
+    width: 100%;
+    color: var(--text-glow);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+/* Copyright text - chỉ có 1 border duy nhất ở đây */
+#pageFooter > p:first-child {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95em;
+    margin-bottom: 25px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* CHỈ 1 BORDER */
+    display: inline-block;
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Contact section - ĐÃ XÓA BORDER */
+.footer-contact {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin: 0 auto 25px;
+    padding: 10px 0;
+    border: none; /* QUAN TRỌNG: đã xóa border */
+    background: transparent;
+}
+
+/* Contact items - thêm background đẹp */
+.footer-contact-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 30px;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.footer-contact-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--wave-trough);
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.footer-contact-item i {
+    color: var(--wave-trough);
+}
+
+.footer-contact-item a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+}
+
+/* Footer links - giữ border nhưng chỉ 1 cái */
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin: 25px 0 15px;
+    flex-wrap: wrap;
+    padding: 20px 0 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-link {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 0.9em;
+    position: relative;
+}
+
+.footer-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--wave-trough), var(--wave-mid));
+    transition: width 0.3s ease;
+}
+
+.footer-link:hover::after {
+    width: 100%;
+}
