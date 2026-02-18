@@ -6,9 +6,9 @@
     
     <!-- CSS với version parameter -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/main.css?v=1.6.0">
-    <link rel="stylesheet" href="styles/signals.css?v=1.6.0">
-    <link rel="stylesheet" href="styles/zoom.css?v=1.6.0">
+    <link rel="stylesheet" href="styles/main.css?v=1.7.0">
+    <link rel="stylesheet" href="styles/signals.css?v=1.7.0">
+    <link rel="stylesheet" href="styles/zoom.css?v=1.7.0">
     
     <!-- JS với version parameter -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -198,9 +198,13 @@
                         <i class="fas fa-graduation-cap"></i> Learn
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="#contact" class="nav-link">Contact</a>
-                </li>
+				<li class="nav-item">
+					<a href="reading-list.html" class="nav-link" id="readingListLink">
+						<i class="fas fa-bookmark"></i>
+						Reading List
+						<span class="reading-list-badge" id="readingListBadge">0</span>
+					</a>
+				</li>
             </ul>
         </div>
     </nav>
@@ -689,8 +693,8 @@
 			console.log('Active menu set for:', currentPage);
 		})();
 	</script>	
-    <script src="js/main.js?v=1.6.0"></script>
-    <script src="js/signals.js?v=1.6.0"></script> <!-- Đổi số này mỗi lần update -->	
+    <script src="js/main.js?v=1.7.0"></script>
+    <script src="js/signals.js?v=1.7.0"></script> <!-- Đổi số này mỗi lần update -->	
     <!-- Simple Mobile Menu Fix -->
     <script>
     (function() {

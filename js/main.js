@@ -351,3 +351,78 @@ document.addEventListener('DOMContentLoaded', function() {
         }, { passive: true });
     }
 });
+// ===== BADGE CHO READING LIST =====
+function updateReadingListBadge() {
+    const badge = document.getElementById('readingListBadge');
+    if (!badge) return;
+    
+    // Lấy danh sách đọc từ localStorage
+    const readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
+    const count = readingList.length;
+    
+    // Cập nhật badge
+    badge.textContent = count;
+    
+    if (count === 0) {
+        badge.style.display = 'none';
+    } else {
+        badge.style.display = 'flex';
+        // Thêm animation khi có số mới
+        badge.style.animation = 'none';
+        badge.offsetHeight; // Trigger reflow
+        badge.style.animation = 'badgePulse 0.5s ease';
+    }
+    
+    console.log('📊 Reading list badge updated:', count);
+}
+
+// Lắng nghe thay đổi từ localStorage (khi thêm/xóa ở tab khác)
+window.addEventListener('storage', function(e) {
+    if (e.key === 'reading_list') {
+        updateReadingListBadge();
+    }
+});
+
+// Gọi khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    // Gọi sau 500ms để đảm bảo DOM đã load xong
+    setTimeout(updateReadingListBadge, 500);
+});
+
+// Thêm animation cho badge
+const style = document.createElement('style');
+style.textContent = `
+    .reading-list-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: linear-gradient(135deg, var(--wave-peak), #ff6b00);
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        z-index: 1000;
+    }
+    
+    @keyframes badgePulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Style cho nav link chứa badge */
+    .nav-link {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+`;
+document.head.appendChild(style);
