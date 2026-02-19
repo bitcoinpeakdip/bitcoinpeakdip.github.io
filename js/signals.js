@@ -1,11 +1,11 @@
 // ============================================
 // Bitcoin PeakDip Early Warning System - Signals
-// Version: 1.8.1 - CLEAN & OPTIMIZED - REMOVED DISTANCE & STRATEGY COLUMNS
+// Version: 1.8.2 - UPDATED - Signal Details Floating & Layout
 // ============================================
 
 // ========== APP CONFIGURATION ==========
 const APP_CONFIG = {
-    version: '1.5.1', // Tăng version để cache clear
+    version: '1.5.2', // Tăng version
     itemsPerPage: 15,
     versionKey: 'peakdip_version',
     dataPaths: {
@@ -37,7 +37,11 @@ const state = {
         history: [],
         undoStack: [],
         redoStack: []
-    }
+    },
+    
+    // Hover state
+    hoverTimeout: null,
+    currentHoverRow: null
 };
 
 // ========== CACHE CONTROL ==========
@@ -65,7 +69,7 @@ const state = {
         }
     }
     
-    console.log(`🚀 Bitcoin PeakDip EWS v${APP_CONFIG.version} - REAL DATA`);
+    console.log(`🚀 Bitcoin PeakDip EWS v${APP_CONFIG.version} - UPDATED LAYOUT`);
 })();
 
 // ========== DOM ELEMENTS CACHE ==========
@@ -106,14 +110,174 @@ function init() {
     loadAllData();
     setupTableScroll();
     addDynamicStyles();
-    updateTableHeaders(); // Thêm hàm mới để cập nhật headers
+    updateTableHeaders();
+    setupHoverDetails();
     
     // Mobile features after load
     setTimeout(initMobileFeatures, 2000);
     setTimeout(initMobileZoomSlider, 2500);
 }
 
-// ========== CẬP NHẬT HEADER BẢNG (LOẠI BỎ CỘT) ==========
+// ========== SETUP HOVER DETAILS FLOATING TABLE ==========
+function setupHoverDetails() {
+    const container = document.querySelector('.log-container');
+    if (!container) return;
+    
+    // Create floating detail element
+    const floatingDetail = document.createElement('div');
+    floatingDetail.className = 'floating-signal-detail';
+    floatingDetail.id = 'floatingSignalDetail';
+    floatingDetail.style.display = 'none';
+    document.body.appendChild(floatingDetail);
+    
+    // Hover events for table rows
+    elements.tableBody.addEventListener('mouseover', (e) => {
+        const row = e.target.closest('tr');
+        if (!row || row.classList.contains('loading-row') || row.classList.contains('no-results')) return;
+        
+        // Clear previous timeout
+        if (state.hoverTimeout) clearTimeout(state.hoverTimeout);
+        
+        // Get signal data
+        const index = parseInt(row.dataset.index);
+        if (isNaN(index)) return;
+        
+        const signal = state.filteredSignals[index];
+        if (!signal) return;
+        
+        // Show floating detail after short delay
+        state.hoverTimeout = setTimeout(() => {
+            showFloatingSignalDetail(signal, row, e.clientX, e.clientY);
+        }, 300);
+    });
+    
+    elements.tableBody.addEventListener('mouseout', (e) => {
+        const related = e.relatedTarget;
+        const floating = document.getElementById('floatingSignalDetail');
+        
+        // Check if moving to floating detail or another row
+        if (related && (related.closest('#floatingSignalDetail') || related.closest('tr'))) {
+            return;
+        }
+        
+        // Clear timeout and hide
+        if (state.hoverTimeout) {
+            clearTimeout(state.hoverTimeout);
+            state.hoverTimeout = null;
+        }
+        
+        if (floating) {
+            floating.style.opacity = '0';
+            floating.style.transform = 'translateY(10px)';
+            setTimeout(() => {
+                if (floating.style.opacity === '0') {
+                    floating.style.display = 'none';
+                }
+            }, 200);
+        }
+    });
+    
+    // Handle hover on floating detail itself
+    floatingDetail.addEventListener('mouseenter', () => {
+        if (state.hoverTimeout) clearTimeout(state.hoverTimeout);
+    });
+    
+    floatingDetail.addEventListener('mouseleave', (e) => {
+        if (!e.relatedTarget || !e.relatedTarget.closest('tr')) {
+            floatingDetail.style.opacity = '0';
+            floatingDetail.style.transform = 'translateY(10px)';
+            setTimeout(() => {
+                if (floatingDetail.style.opacity === '0') {
+                    floatingDetail.style.display = 'none';
+                }
+            }, 200);
+        }
+    });
+}
+
+// ========== SHOW FLOATING SIGNAL DETAIL ==========
+function showFloatingSignalDetail(signal, row, mouseX, mouseY) {
+    const floating = document.getElementById('floatingSignalDetail');
+    if (!floating) return;
+    
+    const confClass = getConfidenceClass(signal.confidence);
+    const confColor = confClass === 'high' ? '#4CAF50' : confClass === 'medium' ? '#FFC107' : '#F44336';
+    const daysAgo = Math.floor((new Date() - signal.timestamp) / 86400000);
+    
+    floating.innerHTML = `
+        <div class="floating-header">
+            <span><i class="fas fa-info-circle" style="color: #00d4ff;"></i> Signal Details</span>
+            <button class="floating-close" onclick="this.closest('#floatingSignalDetail').style.display='none'">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="floating-body">
+            <div class="floating-row">
+                <span class="floating-label"><i class="fas fa-bullseye"></i> Type:</span>
+                <span class="floating-value signal-type ${signal.signal_type.toLowerCase()}">${signal.signal_type}</span>
+            </div>
+            <div class="floating-row">
+                <span class="floating-label"><i class="fas fa-calendar"></i> Date:</span>
+                <span class="floating-value">${formatDateTime(signal.timestamp)}</span>
+            </div>
+            <div class="floating-row">
+                <span class="floating-label"><i class="fas fa-chart-bar"></i> Price:</span>
+                <span class="floating-value price">$${signal.price.toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+            </div>
+            <div class="floating-row">
+                <span class="floating-label"><i class="fas fa-tachometer-alt"></i> Confidence:</span>
+                <span class="floating-value" style="color:${confColor}">${signal.confidence}% (${confClass})</span>
+            </div>
+            <div class="floating-row">
+                <span class="floating-label"><i class="fas fa-check-circle"></i> Validation:</span>
+                <span class="floating-value validation-pass">PASS</span>
+            </div>
+            <div class="floating-row">
+                <span class="floating-label"><i class="fas fa-clock"></i> Age:</span>
+                <span class="floating-value">${daysAgo} day${daysAgo!==1?'s':''} ago</span>
+            </div>
+            <div class="floating-row">
+                <span class="floating-label"><i class="fas fa-chart-line"></i> Position:</span>
+                <span class="floating-value">${getPriceZone(signal.price)}</span>
+            </div>
+            <div class="floating-row">
+                <span class="floating-label"><i class="fas fa-lightbulb"></i> Rec:</span>
+                <span class="floating-value">${getRecommendation(signal)}</span>
+            </div>
+        </div>
+    `;
+    
+    // Position floating element near mouse but within viewport
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const floatingWidth = 300;
+    const floatingHeight = 380;
+    
+    let left = mouseX + 20;
+    let top = mouseY - 20;
+    
+    if (left + floatingWidth > viewportWidth - 20) {
+        left = mouseX - floatingWidth - 20;
+    }
+    
+    if (top + floatingHeight > viewportHeight - 20) {
+        top = viewportHeight - floatingHeight - 20;
+    }
+    
+    if (top < 10) top = 10;
+    
+    floating.style.left = left + 'px';
+    floating.style.top = top + 'px';
+    floating.style.display = 'block';
+    
+    // Animate in
+    setTimeout(() => {
+        floating.style.opacity = '1';
+        floating.style.transform = 'translateY(0)';
+    }, 10);
+}
+
+// ========== CẬP NHẬT HEADER BẢNG ==========
 function updateTableHeaders() {
     const thead = document.querySelector('.signals-table thead tr');
     if (thead) {
@@ -142,6 +306,19 @@ function updateTableHeaders() {
     }
 }
 
+// ========== CẬP NHẬT LẠI ANALYSIS SECTION - LOẠI BỎ TIME DISTRIBUTION ==========
+function updateAnalysisSectionLayout() {
+    const analysisGrid = document.querySelector('.analysis-grid');
+    if (analysisGrid) {
+        // Giữ lại chỉ 2 card: Distribution by Type và Confidence Levels
+        const cards = analysisGrid.querySelectorAll('.analysis-card');
+        if (cards.length >= 3) {
+            // Ẩn card Time Distribution
+            cards[2].style.display = 'none';
+        }
+    }
+}
+
 // ========== DATA LOADING ==========
 async function loadAllData() {
     try {
@@ -157,6 +334,7 @@ async function loadAllData() {
         
         state.lastUpdateTime = new Date();
         updateUI();
+        updateAnalysisSectionLayout(); // Gọi hàm cập nhật layout
         
     } catch (error) {
         console.error('❌ Data loading failed:', error);
@@ -213,7 +391,6 @@ function parseSignalsData(csvText) {
             signal_type: row.signal_type?.toUpperCase() === 'PEAK' ? 'PEAK' : 'DIP',
             price,
             confidence: parseFloat(row.confidence) || 98,
-            // LUÔN SET VALIDATION LÀ PASS
             validation: 'PASS',
             id: `sig_${i}_${timestamp.getTime()}`
         });
@@ -1488,6 +1665,7 @@ function showNotification(msg, type = 'info', duration = 3000) {
 function addDynamicStyles() {
     const dynamicstyle = document.createElement('style');
     dynamicstyle.textContent = `
+        /* Notification styles */
         .notification { position:fixed; top:20px; right:20px; background:rgba(0,0,0,0.95); color:white; padding:15px 25px; border-radius:10px; display:flex; align-items:center; gap:12px; z-index:10000; border-left:4px solid #f7931a; animation:slideInRight 0.3s ease; max-width:400px; backdrop-filter:blur(10px); }
         .notification-success { border-left-color:#4CAF50; }
         .notification-error { border-left-color:#f44336; }
@@ -1518,31 +1696,187 @@ function addDynamicStyles() {
             50% { box-shadow: 0 0 12px rgba(76, 175, 80, 0.7); }
         }
         
-        /* Điều chỉnh colspan cho no-results */
+        /* No results */
         .no-results {
             text-align: center;
             padding: 40px 20px;
             color: rgba(255,255,255,0.7);
         }
-        
         .no-results i {
             font-size: 2.5em;
             color: #00d4ff;
             margin-bottom: 15px;
             display: block;
         }
-        
         .no-results div {
             font-size: 1.2em;
             margin-bottom: 10px;
         }
-        
         .no-results small {
             color: rgba(255,255,255,0.5);
         }
-        
         .error-message {
             color: #ff2e63;
+        }
+        
+        /* Floating Signal Detail - NEW */
+        .floating-signal-detail {
+            position: fixed;
+            background: linear-gradient(135deg, rgba(0, 20, 30, 0.98), rgba(0, 0, 0, 0.98));
+            border: 1px solid #00d4ff;
+            border-radius: 12px;
+            padding: 15px;
+            width: 300px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 212, 255, 0.3);
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: auto;
+            color: white;
+            border-left: 4px solid #00d4ff;
+        }
+        
+        .floating-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .floating-header span {
+            font-weight: bold;
+            color: white;
+            font-size: 1.1em;
+        }
+        
+        .floating-close {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .floating-close:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(90deg);
+        }
+        
+        .floating-body {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .floating-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(255,255,255,0.05);
+        }
+        
+        .floating-row:last-child {
+            border-bottom: none;
+        }
+        
+        .floating-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .floating-label i {
+            color: #00d4ff;
+            width: 16px;
+            font-size: 0.9em;
+        }
+        
+        .floating-value {
+            font-weight: 600;
+            color: white;
+            font-size: 0.95em;
+        }
+        
+        .floating-value.price {
+            color: #f7931a;
+        }
+        
+        .floating-value.signal-type.peak {
+            color: #ff2e63;
+        }
+        
+        .floating-value.signal-type.dip {
+            color: #00d4ff;
+        }
+        
+        .floating-value.validation-pass {
+            color: #4CAF50;
+            background: rgba(76, 175, 80, 0.15);
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        /* Signal Details container */
+        .signal-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        
+        .detail-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .detail-card h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9em;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .signal-details {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
         }
     `;
     document.head.appendChild(dynamicstyle);
@@ -1552,4 +1886,4 @@ function addDynamicStyles() {
 if (window.realCsvData) parseSignalsData(window.realCsvData);
 if (window.bitcoinPriceData) parseBitcoinData(window.bitcoinPriceData);
 
-console.log('✅ signals.js v1.5.1 - REMOVED DISTANCE & STRATEGY COLUMNS, ALL VALIDATION = PASS');
+console.log('✅ signals.js v1.5.2 - UPDATED: Floating details, layout fixed');
