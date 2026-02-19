@@ -97,6 +97,24 @@
     </style>
 </head>
 <body>
+    <script>
+        // PHÁT HIỆN MOBILE VÀ VÔ HIỆU HÓA HIỆU ỨNG
+        (function() {
+            // Kiểm tra user agent hoặc kích thước màn hình
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            
+            if (isMobile) {
+                console.log('📱 Mobile detected on this page: Disabling heavy effects');
+                // Gán biến toàn cục
+                window.IS_MOBILE = true;
+                
+                // Thêm class vào body để CSS xử lý
+                document.body.classList.add('mobile-device');
+            } else {
+                window.IS_MOBILE = false;
+            }
+        })();
+    </script>     
     <div class="content-container">
         <div class="reading-list-container">
             <div class="reading-list-title">

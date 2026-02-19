@@ -6,9 +6,9 @@
     
     <!-- CSS với version parameter -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/main.css?v=1.7.9">
-    <link rel="stylesheet" href="styles/signals.css?v=1.7.9">
-    <link rel="stylesheet" href="styles/zoom.css?v=1.7.9">
+    <link rel="stylesheet" href="styles/main.css?v=1.7.10">
+    <link rel="stylesheet" href="styles/signals.css?v=1.7.10">
+    <link rel="stylesheet" href="styles/zoom.css?v=1.7.10">
     
     <!-- JS với version parameter -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -113,6 +113,24 @@
 	
 </head>
 <body>
+    <script>
+        // PHÁT HIỆN MOBILE VÀ VÔ HIỆU HÓA HIỆU ỨNG
+        (function() {
+            // Kiểm tra user agent hoặc kích thước màn hình
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            
+            if (isMobile) {
+                console.log('📱 Mobile detected on this page: Disabling heavy effects');
+                // Gán biến toàn cục
+                window.IS_MOBILE = true;
+                
+                // Thêm class vào body để CSS xử lý
+                document.body.classList.add('mobile-device');
+            } else {
+                window.IS_MOBILE = false;
+            }
+        })();
+    </script>     
 	<!-- Thêm ngay sau <body> -->
 	<div class="data-status-banner" id="dataStatusBanner" style="display: none;">
 		<div class="status-content">
@@ -693,8 +711,8 @@
 			console.log('Active menu set for:', currentPage);
 		})();
 	</script>	
-    <script src="js/main.js?v=1.7.9"></script>
-    <script src="js/signals.js?v=1.7.9"></script> <!-- Đổi số này mỗi lần update -->	
+    <script src="js/main.js?v=1.7.10"></script>
+    <script src="js/signals.js?v=1.7.10"></script> <!-- Đổi số này mỗi lần update -->	
     <!-- Simple Mobile Menu Fix -->
     <script>
     (function() {

@@ -1,40 +1,10 @@
 // Interactive JavaScript - For home page interactions only
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (window.IS_MOBILE) {
-        console.log('📱 Running on mobile: All effects disabled.');
-        
-        // Set trạng thái tĩnh cho các phần tử
-        const peakMessage = document.getElementById('peakMessage');
-        const dipMessage = document.getElementById('dipMessage');
-        const statusLight = document.getElementById('statusLight');
-        const statusText = document.getElementById('statusText');
-        const aiBadge = document.getElementById('aiBadge');
-        
-        if (peakMessage) peakMessage.style.opacity = '0.2';
-        if (dipMessage) dipMessage.style.opacity = '0.2';
-        if (statusLight) {
-            statusLight.style.background = 'var(--wave-mid)';
-            statusLight.style.animation = 'none'; // Tắt pulse animation
-        }
-        if (statusText) {
-            statusText.textContent = 'MOBILE MODE ACTIVE';
-            statusText.style.color = 'var(--wave-mid)';
-        }
-        if (aiBadge) {
-            aiBadge.textContent = 'MOBILE OPTIMIZED';
-            aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), var(--wave-mid))';
-        }
-        return; // Thoát, không chạy code bên dưới
-    }
-    
-    // Chỉ chạy trên desktop
-    console.log('🖥️ Desktop detected: Interactive System Active');    
     // Only run on home page
     if (!document.getElementById('peakMessage')) return;
     
     console.log('Interactive System Active');
-    console.log('Sensor Network Monitoring');
     
     const peakMessage = document.getElementById('peakMessage');
     const dipMessage = document.getElementById('dipMessage');
@@ -48,98 +18,48 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let wavePhase = 0;
     let lastUpdate = 0;
-    const waveFrequency = 0.125/3;
-    const updateInterval = 1000 / 60;
+    const waveFrequency = 0.125/3; // Tần số wave
+    const updateInterval = 2000; // 0.5Hz = 2000ms (2 giây một lần)
     let lastInteractionTime = 0;
+    
+    // Kiểm tra mobile
+    const isMobile = window.IS_MOBILE || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
+    if (isMobile) {
+        console.log('📱 Mobile mode: Wave updates at 0.5Hz (every 2 seconds), effects disabled');
+        
+        // Ẩn các hiệu ứng nặng
+        const sensorRings = document.querySelectorAll('.sensor-ring');
+        const energyParticles = document.getElementById('energyParticles');
+        const bitcoinWaves = document.querySelectorAll('.bitcoin-wave');
+        
+        sensorRings.forEach(ring => {
+            ring.style.animation = 'none';
+            ring.style.opacity = '0.1';
+        });
+        
+        if (energyParticles) {
+            energyParticles.style.display = 'none';
+        }
+        
+        bitcoinWaves.forEach(wave => {
+            wave.style.animation = 'none';
+            wave.style.opacity = '0.1';
+        });
+        
+        // Tắt hiệu ứng click/touch
+        if (interactiveBackground) {
+            interactiveBackground.style.pointerEvents = 'none';
+        }
+    }
     
     // Initialize wave state
     updateWaveState();
     
-    // Create sensor alert effect
-    function createSensorAlert(x, y, intensity = 1) {
-        const currentTime = Date.now();
-        
-        // Check cooldown
-        const mobileCooldown = window.innerWidth <= 768 ? 200 : 500;
-        if (currentTime - lastInteractionTime < mobileCooldown) {
-            return;
-        }
-        
-        lastInteractionTime = currentTime;
-        
-        console.log(`Sensor alert at x: ${x}, y: ${y}, intensity: ${intensity}`);
-        
-        // Create multiple rings for stronger effect
-        const ringCount = 3;
-        const colors = [
-            'rgba(255, 46, 99, 0.8)',    // Red
-            'rgba(0, 212, 255, 0.8)',    // Blue
-            'rgba(247, 147, 26, 0.8)'    // Orange
-        ];
-        
-        for (let i = 0; i < ringCount; i++) {
-            const ring = document.createElement('div');
-            ring.className = 'alert-ring';
-            
-            // Position at click/touch point
-            ring.style.left = `${x}px`;
-            ring.style.top = `${y}px`;
-            
-            // Color based on index
-            ring.style.borderColor = colors[i % colors.length];
-            
-            // Size and delay based on intensity and index
-            const delay = i * 0.2;
-            const sizeMultiplier = 1 + (i * 0.3) * intensity;
-            
-            ring.style.animation = `alertExpand ${1.5 * sizeMultiplier}s ease-out ${delay}s forwards`;
-            
-            // Add glow effect
-            ring.style.boxShadow = `0 0 30px ${colors[i % colors.length]}`;
-            
-            sensorAlert.appendChild(ring);
-            
-            // Remove element after animation completes
-            setTimeout(() => {
-                if (ring.parentNode === sensorAlert) {
-                    sensorAlert.removeChild(ring);
-                }
-            }, (1.5 * sizeMultiplier + delay) * 1000);
-        }
-        
-        // Create particle burst effect
-        createParticleBurst(x, y, intensity);
-        
-        // Intensify existing background waves
-        intensifyBackgroundWaves(x, y, intensity);
-        
-        // Update status text temporarily
-        const originalText = statusText.textContent;
-        statusText.textContent = 'SENSOR TRIGGERED!';
-        statusText.style.color = colors[0];
-        statusText.style.textShadow = `0 0 20px ${colors[0]}`;
-        
-        setTimeout(() => {
-            statusText.textContent = originalText;
-            statusText.style.color = '';
-            statusText.style.textShadow = '';
-        }, 2000);
-        
-        // Update ai-badge to show interaction
-        const originalBadgeText = aiBadge.textContent;
-        aiBadge.textContent = 'SENSOR ACTIVATED!';
-        aiBadge.style.background = 'linear-gradient(to right, var(--wave-peak), var(--wave-mid))';
-        aiBadge.style.boxShadow = '0 0 25px rgba(255, 46, 99, 0.8)';
-        
-        setTimeout(() => {
-            aiBadge.textContent = originalBadgeText;
-            aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), var(--wave-mid))';
-            aiBadge.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.4)';
-        }, 1500);
-    }
-    
-    // Create particle burst at interaction point
+    // Tạo particle burst (chỉ trên desktop)
     function createParticleBurst(x, y, intensity) {
+        if (isMobile) return; // Không chạy trên mobile
+        
         const particleCount = Math.floor(30 * intensity);
         const burstContainer = document.createElement('div');
         burstContainer.style.position = 'fixed';
@@ -161,12 +81,10 @@ document.addEventListener('DOMContentLoaded', function() {
             particle.style.backgroundColor = Math.random() > 0.5 ? 'var(--wave-peak)' : 'var(--wave-trough)';
             particle.style.opacity = '0.8';
             
-            // Random direction and speed
             const angle = Math.random() * Math.PI * 2;
             const speed = 50 + Math.random() * 100;
             const distance = speed * (1 + intensity);
             
-            // Animation
             const animation = particle.animate([
                 {
                     transform: 'translate(0, 0) scale(1)',
@@ -183,7 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             burstContainer.appendChild(particle);
             
-            // Remove after animation
             animation.onfinish = () => {
                 if (particle.parentNode === burstContainer) {
                     burstContainer.removeChild(particle);
@@ -191,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
         
-        // Remove container after all particles are gone
         setTimeout(() => {
             if (burstContainer.parentNode === document.body) {
                 document.body.removeChild(burstContainer);
@@ -199,32 +115,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2000);
     }
     
-    // Intensify existing background waves
+    // Intensify background waves (chỉ trên desktop)
     function intensifyBackgroundWaves(x, y, intensity) {
+        if (isMobile) return; // Không chạy trên mobile
+        
         const waves = document.querySelectorAll('.bitcoin-wave');
         const rings = document.querySelectorAll('.sensor-ring');
         
-        // Intensify waves
         waves.forEach((wave, index) => {
             const originalOpacity = wave.style.opacity;
             wave.style.opacity = (parseFloat(wave.style.opacity || 0.1) * (1 + intensity * 2)).toString();
             wave.style.filter = `blur(${intensity * 5}px) brightness(${1 + intensity})`;
             
-            // Reset after delay
             setTimeout(() => {
                 wave.style.opacity = originalOpacity || '0.1';
                 wave.style.filter = '';
             }, 1000 * intensity);
         });
         
-        // Intensify sensor rings
         rings.forEach((ring, index) => {
             const originalBorderColor = ring.style.borderColor;
             ring.style.borderColor = 'rgba(255, 255, 255, 0.3)';
             ring.style.borderWidth = '2px';
             ring.style.filter = `blur(${intensity}px) brightness(${1 + intensity})`;
             
-            // Reset after delay
             setTimeout(() => {
                 ring.style.borderColor = originalBorderColor;
                 ring.style.borderWidth = '';
@@ -232,7 +146,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 1500 * intensity);
         });
         
-        // Intensify logo wave effect
         const logoWave = document.querySelector('.logo-wave-effect');
         if (logoWave) {
             const originalOpacity = logoWave.style.opacity;
@@ -246,72 +159,138 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Handle interaction events
+    // Create sensor alert (chỉ trên desktop)
+    function createSensorAlert(x, y, intensity = 1) {
+        if (isMobile) return; // Không chạy trên mobile
+        
+        const currentTime = Date.now();
+        const mobileCooldown = window.innerWidth <= 768 ? 200 : 500;
+        if (currentTime - lastInteractionTime < mobileCooldown) {
+            return;
+        }
+        
+        lastInteractionTime = currentTime;
+        
+        console.log(`Sensor alert at x: ${x}, y: ${y}, intensity: ${intensity}`);
+        
+        const ringCount = 3;
+        const colors = [
+            'rgba(255, 46, 99, 0.8)',
+            'rgba(0, 212, 255, 0.8)',
+            'rgba(247, 147, 26, 0.8)'
+        ];
+        
+        for (let i = 0; i < ringCount; i++) {
+            const ring = document.createElement('div');
+            ring.className = 'alert-ring';
+            
+            ring.style.left = `${x}px`;
+            ring.style.top = `${y}px`;
+            ring.style.borderColor = colors[i % colors.length];
+            
+            const delay = i * 0.2;
+            const sizeMultiplier = 1 + (i * 0.3) * intensity;
+            
+            ring.style.animation = `alertExpand ${1.5 * sizeMultiplier}s ease-out ${delay}s forwards`;
+            ring.style.boxShadow = `0 0 30px ${colors[i % colors.length]}`;
+            
+            sensorAlert.appendChild(ring);
+            
+            setTimeout(() => {
+                if (ring.parentNode === sensorAlert) {
+                    sensorAlert.removeChild(ring);
+                }
+            }, (1.5 * sizeMultiplier + delay) * 1000);
+        }
+        
+        createParticleBurst(x, y, intensity);
+        intensifyBackgroundWaves(x, y, intensity);
+        
+        const originalText = statusText.textContent;
+        statusText.textContent = 'SENSOR TRIGGERED!';
+        statusText.style.color = colors[0];
+        statusText.style.textShadow = `0 0 20px ${colors[0]}`;
+        
+        setTimeout(() => {
+            statusText.textContent = originalText;
+            statusText.style.color = '';
+            statusText.style.textShadow = '';
+        }, 2000);
+        
+        const originalBadgeText = aiBadge.textContent;
+        aiBadge.textContent = 'SENSOR ACTIVATED!';
+        aiBadge.style.background = 'linear-gradient(to right, var(--wave-peak), var(--wave-mid))';
+        aiBadge.style.boxShadow = '0 0 25px rgba(255, 46, 99, 0.8)';
+        
+        setTimeout(() => {
+            aiBadge.textContent = originalBadgeText;
+            aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), var(--wave-mid))';
+            aiBadge.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.4)';
+        }, 1500);
+    }
+    
+    // Handle interaction events (chỉ trên desktop)
+    if (!isMobile) {
+        interactiveBackground.addEventListener('click', function(e) {
+            handleInteraction(e.clientX, e.clientY, 1);
+        });
+        
+        interactiveBackground.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            if (touch) {
+                handleInteraction(touch.clientX, touch.clientY, 0.8);
+            }
+            
+            interactiveBackground.style.setProperty('--touch-x', `${touch.clientX}px`);
+            interactiveBackground.style.setProperty('--touch-y', `${touch.clientY}px`);
+            interactiveBackground.classList.add('touch-active');
+            
+            setTimeout(() => {
+                interactiveBackground.classList.remove('touch-active');
+            }, 300);
+        }, { passive: false });
+        
+        interactiveBackground.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            if (touch) {
+                handleInteraction(touch.clientX, touch.clientY, 0.3);
+            }
+        }, { passive: false });
+        
+        let isDragging = false;
+        interactiveBackground.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            handleInteraction(e.clientX, e.clientY, 0.5);
+        });
+        
+        interactiveBackground.addEventListener('mousemove', function(e) {
+            if (isDragging) {
+                handleInteraction(e.clientX, e.clientY, 0.3);
+            }
+        });
+        
+        interactiveBackground.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+        
+        interactiveBackground.addEventListener('mouseleave', function() {
+            isDragging = false;
+        });
+    }
+    
     function handleInteraction(x, y, intensity = 1) {
         createSensorAlert(x, y, intensity);
     }
     
-    // Desktop click
-    interactiveBackground.addEventListener('click', function(e) {
-        handleInteraction(e.clientX, e.clientY, 1);
-    });
-    
-    // Mobile touch
-    interactiveBackground.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        
-        // Get the first touch point
-        const touch = e.touches[0];
-        if (touch) {
-            handleInteraction(touch.clientX, touch.clientY, 0.8);
-        }
-        
-        // Add visual feedback for mobile
-        interactiveBackground.style.setProperty('--touch-x', `${touch.clientX}px`);
-        interactiveBackground.style.setProperty('--touch-y', `${touch.clientY}px`);
-        interactiveBackground.classList.add('touch-active');
-        
-        setTimeout(() => {
-            interactiveBackground.classList.remove('touch-active');
-        }, 300);
-    }, { passive: false });
-    
-    // For mobile touch move
-    interactiveBackground.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        if (touch) {
-            handleInteraction(touch.clientX, touch.clientY, 0.3);
-        }
-    }, { passive: false });
-    
-    // For desktop mouse drag
-    let isDragging = false;
-    interactiveBackground.addEventListener('mousedown', function(e) {
-        isDragging = true;
-        handleInteraction(e.clientX, e.clientY, 0.5);
-    });
-    
-    interactiveBackground.addEventListener('mousemove', function(e) {
-        if (isDragging) {
-            handleInteraction(e.clientX, e.clientY, 0.3);
-        }
-    });
-    
-    interactiveBackground.addEventListener('mouseup', function() {
-        isDragging = false;
-    });
-    
-    interactiveBackground.addEventListener('mouseleave', function() {
-        isDragging = false;
-    });
-    
-    // Animation loop for smooth wave updates
+    // Animation loop cho wave updates (chạy cả trên mobile và desktop)
     function animate(currentTime) {
         if (!lastUpdate) lastUpdate = currentTime;
         
         const deltaTime = currentTime - lastUpdate;
         
+        // Cập nhật với tần số 0.5Hz (2000ms) trên cả mobile và desktop
         if (deltaTime >= updateInterval) {
             wavePhase += (deltaTime / 1000) * waveFrequency;
             wavePhase %= 1;
@@ -354,8 +333,10 @@ document.addEventListener('DOMContentLoaded', function() {
             aiBadge.style.color = '#ffffff';
             
             // Update logo wave sync
-            logoWaveSync.style.opacity = '0.8';
-            logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-mid), var(--wave-peak))';
+            if (logoWaveSync) {
+                logoWaveSync.style.opacity = '0.8';
+                logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-mid), var(--wave-peak))';
+            }
             
             // Add gentle background glow to logo container
             logoContainer.style.boxShadow = 
@@ -386,8 +367,10 @@ document.addEventListener('DOMContentLoaded', function() {
             aiBadge.style.color = '#ffffff';
             
             // Update logo wave sync
-            logoWaveSync.style.opacity = '0.8';
-            logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid))';
+            if (logoWaveSync) {
+                logoWaveSync.style.opacity = '0.8';
+                logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid))';
+            }
             
             // Add gentle background glow to logo container
             logoContainer.style.boxShadow = 
@@ -421,9 +404,11 @@ document.addEventListener('DOMContentLoaded', function() {
             aiBadge.style.color = '#ffffff';
             
             // Update logo wave sync
-            const syncOpacity = 0.2 + absoluteWavePosition * 0.2;
-            logoWaveSync.style.opacity = `${syncOpacity}`;
-            logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid), var(--wave-peak))';
+            if (logoWaveSync) {
+                const syncOpacity = 0.2 + absoluteWavePosition * 0.2;
+                logoWaveSync.style.opacity = `${syncOpacity}`;
+                logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid), var(--wave-peak))';
+            }
             
             // Reset logo container shadow
             logoContainer.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.5)';
@@ -438,8 +423,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Move wave sync indicator
-        const syncPosition = wavePhase * 50;
-        logoWaveSync.style.transform = `translateX(${syncPosition}%)`;
+        if (logoWaveSync) {
+            const syncPosition = wavePhase * 50;
+            logoWaveSync.style.transform = `translateX(${syncPosition}%)`;
+        }
     }
     
     // Start animation loop
@@ -453,23 +440,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Console instructions
     setTimeout(() => {
-        console.log('%c💡 TIP: Click or touch anywhere to test the Early Warning System sensors!', 'color: #00d4ff; font-size: 14px;');
-        
-        // Show mobile-specific instructions
-        if ('ontouchstart' in window || navigator.maxTouchPoints) {
-            console.log('%c📱 MOBILE: Touch and drag to simulate sensor network activity!', 'color: #f7931a; font-size: 14px;');
+        if (!isMobile) {
+            console.log('%c💡 TIP: Click or touch anywhere to test the Early Warning System sensors!', 'color: #00d4ff; font-size: 14px;');
+            
+            if ('ontouchstart' in window || navigator.maxTouchPoints) {
+                console.log('%c📱 MOBILE: Touch and drag to simulate sensor network activity!', 'color: #f7931a; font-size: 14px;');
+            }
+        } else {
+            console.log('%c📱 Mobile mode: Wave updates at 0.5Hz (every 2 seconds), touch effects disabled', 'color: #00d4ff; font-size: 14px;');
         }
     }, 3000);
-    
-    // Test mobile touch immediately
-    if ('ontouchstart' in window || navigator.maxTouchPoints) {
-        console.log('Mobile touch support detected');
-        
-        // Add a test alert after page load to confirm functionality
-        setTimeout(() => {
-            console.log('Testing sensor network...');
-            // Create a test alert at center
-            createSensorAlert(window.innerWidth / 2, window.innerHeight / 2, 0.5);
-        }, 1000);
-    }
 });

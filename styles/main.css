@@ -2438,3 +2438,25 @@ body.mobile-device .ai-badge {
 body.mobile-device .status-light {
     animation: none !important;
 }
+
+/* Tắt hiệu ứng cho badge và status */
+body.mobile-device .signals-badge,
+body.mobile-device .about-badge,
+body.mobile-device .product-badge {
+    animation: none !important;
+    box-shadow: none !important;
+}
+
+/* Đơn giản hóa status indicator */
+body.mobile-device .status-indicator {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Đảm bảo các card vẫn hiển thị đẹp */
+body.mobile-device .feature-card,
+body.mobile-device .learn-card,
+body.mobile-device .product-card {
+    transform: none !important;
+    transition: none !important;
+}
