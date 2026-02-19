@@ -2763,3 +2763,109 @@ body.mobile-device .product-card {
 .logo-container {
     transition: border-color 1.5s ease, box-shadow 1.5s ease !important;
 }
+
+/* Reading List Badge Styles */
+.reading-list-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--wave-peak), #ff6b00);
+    color: white;
+    font-size: 0.7em;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 5px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1.2;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 10px rgba(255, 107, 0, 0.5);
+    animation: pulse 2s infinite;
+}
+
+/* Mobile Badge (cho PWA icon) */
+.reading-list-badge-mobile {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: linear-gradient(135deg, var(--wave-peak), #ff6b00);
+    color: white;
+    font-size: 0.6em;
+    font-weight: bold;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid var(--bg-darker);
+    box-shadow: 0 0 15px rgba(255, 107, 0, 0.7);
+    z-index: 100;
+}
+
+/* Mobile menu item position relative để badge định vị */
+.nav-item {
+    position: relative;
+}
+
+/* Animation cho badge */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 107, 0, 0.5);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 107, 0, 0.8);
+    }
+}
+
+/* Toast notifications */
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
+    color: white;
+    padding: 12px 25px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10000;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    border: 2px solid white;
+    animation: slideUp 0.3s ease;
+    max-width: 90%;
+}
+
+.toast-success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+.toast-warning {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+.toast-error {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+}

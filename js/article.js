@@ -519,25 +519,49 @@ class ArticlePushSimple {
     }
     
     // Lưu để đọc sau
+    // Trong class ArticlePushSimple
     saveForLater(article) {
-        const readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
-        
-        // Kiểm tra đã tồn tại chưa
-        const exists = readingList.some(item => item.id === article.id);
-        
-        if (!exists) {
-            readingList.push({
+        // Sử dụng ReadingListManager đã được tạo
+        if (window.readingList) {
+            // Đảm bảo article có đủ thông tin
+            const articleData = {
                 id: article.id,
                 title: article.title,
-                url: `/learn/article.html?id=${article.slug}`,
-                savedAt: new Date().toISOString()
-            });
+                slug: article.slug,
+                url: article.url || `/learn/article.html?id=${article.slug}`,
+                date: article.date || new Date().toISOString().split('T')[0]
+            };
             
-            localStorage.setItem('reading_list', JSON.stringify(readingList));
+            // Thêm vào reading list
+            window.readingList.add(articleData);
             
-            // Hiển thị toast thông báo
-            if (typeof showToast === 'function') {
-                showToast('✅ Added to reading list', 'success');
+        } else {
+            // Fallback nếu readingList chưa được load
+            console.warn('readingList not available, using fallback');
+            
+            const readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
+            const exists = readingList.some(item => item.id === article.id);
+            
+            if (!exists) {
+                readingList.push({
+                    id: article.id,
+                    title: article.title,
+                    url: `/learn/article.html?id=${article.slug}`,
+                    savedAt: new Date().toISOString(),
+                    publishedDate: article.date || new Date().toISOString().split('T')[0]
+                });
+                
+                localStorage.setItem('reading_list', JSON.stringify(readingList));
+                
+                // Cập nhật badge thủ công
+                if (typeof updateReadingListBadge === 'function') {
+                    updateReadingListBadge();
+                }
+                
+                // Hiển thị toast
+                if (typeof showToast === 'function') {
+                    showToast('✅ Added to reading list (fallback)', 'success');
+                }
             }
         }
     }
@@ -860,3 +884,193 @@ articleStyle.textContent = `
 `;
 
 document.head.appendChild(articleStyle);
+
+// Thêm vào cuối file article.js, trước dòng cuối cùng
+
+// ========== READING LIST BADGE MANAGEMENT ==========
+class ReadingListManager {
+    constructor() {
+        this.badgeElement = null;
+        this.mobileBadgeElement = null;
+        this.init();
+    }
+    
+    init() {
+        // Tìm các phần tử badge
+        this.updateBadgeElements();
+        
+        // Cập nhật badge khi load trang
+        this.updateAllBadges();
+        
+        // Lắng nghe sự thay đổi của localStorage
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'reading_list') {
+                this.updateAllBadges();
+            }
+        });
+        
+        // Tạo mutation observer để theo dõi khi DOM thay đổi
+        const observer = new MutationObserver(() => {
+            this.updateBadgeElements();
+            this.updateAllBadges();
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+    
+    updateBadgeElements() {
+        // Badge trên menu desktop
+        this.badgeElement = document.getElementById('readingListBadge');
+        
+        // Badge trên mobile app (icon)
+        this.mobileBadgeElement = document.querySelector('.reading-list-badge-mobile');
+        if (!this.mobileBadgeElement) {
+            this.createMobileBadge();
+        }
+    }
+    
+    createMobileBadge() {
+        // Tạo badge cho mobile app (PWA)
+        const link = document.getElementById('readingListLink');
+        if (link) {
+            const mobileBadge = document.createElement('span');
+            mobileBadge.className = 'reading-list-badge-mobile';
+            mobileBadge.id = 'readingListBadgeMobile';
+            link.appendChild(mobileBadge);
+            this.mobileBadgeElement = mobileBadge;
+        }
+    }
+    
+    getReadingListCount() {
+        try {
+            const list = JSON.parse(localStorage.getItem('reading_list') || '[]');
+            return list.length;
+        } catch (e) {
+            return 0;
+        }
+    }
+    
+    updateAllBadges() {
+        const count = this.getReadingListCount();
+        
+        // Update desktop badge
+        if (this.badgeElement) {
+            this.badgeElement.textContent = count;
+            this.badgeElement.style.display = count > 0 ? 'inline' : 'none';
+        }
+        
+        // Update mobile badge
+        if (this.mobileBadgeElement) {
+            this.mobileBadgeElement.textContent = count > 9 ? '9+' : count;
+            this.mobileBadgeElement.style.display = count > 0 ? 'flex' : 'none';
+        }
+        
+        // Update PWA app badge nếu hỗ trợ
+        this.updatePWABadge(count);
+    }
+    
+    updatePWABadge(count) {
+        if (navigator.setAppBadge) {
+            navigator.setAppBadge(count).catch(e => console.log('Badge error:', e));
+        } else if (navigator.setExperimentalAppBadge) {
+            navigator.setExperimentalAppBadge(count).catch(e => console.log('Badge error:', e));
+        }
+    }
+    
+    addToReadingList(article) {
+        try {
+            const readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
+            
+            // Kiểm tra trùng lặp
+            const exists = readingList.some(item => item.id === article.id);
+            
+            if (!exists) {
+                readingList.push({
+                    id: article.id,
+                    title: article.title,
+                    url: article.url || `/learn/article.html?id=${article.slug || article.id}`,
+                    savedAt: new Date().toISOString(),
+                    publishedDate: article.date || new Date().toISOString().split('T')[0]
+                });
+                
+                localStorage.setItem('reading_list', JSON.stringify(readingList));
+                this.updateAllBadges();
+                
+                // Hiển thị toast thông báo
+                this.showToast('✅ Added to reading list', 'success');
+                
+                return true;
+            } else {
+                this.showToast('📚 Already in reading list', 'info');
+                return false;
+            }
+        } catch (e) {
+            console.error('Error adding to reading list:', e);
+            return false;
+        }
+    }
+    
+    showToast(message, type = 'info') {
+        // Kiểm tra hàm showToast đã tồn tại
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type);
+            return;
+        }
+        
+        // Tạo toast tạm thời
+        const toast = document.createElement('div');
+        toast.className = `toast-notification toast-${type}`;
+        toast.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        // Style cho toast
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, ${type === 'success' ? '#4CAF50' : '#00d4ff'}, ${type === 'success' ? '#45a049' : '#0088cc'});
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            border: 2px solid white;
+            animation: slideUp 0.3s ease;
+            max-width: 90%;
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+}
+
+// Khởi tạo ReadingListManager
+const readingListManager = new ReadingListManager();
+
+// Ghi đè hàm saveForLater trong ArticlePushSimple
+ArticlePushSimple.prototype.saveForLater = function(article) {
+    readingListManager.addToReadingList({
+        id: article.id,
+        title: article.title,
+        slug: article.slug,
+        date: article.date
+    });
+};
+
+// Thêm hàm global để sử dụng từ service worker
+window.addToReadingListFromNotification = function(articleData) {
+    readingListManager.addToReadingList(articleData);
+};

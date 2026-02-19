@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
 // Version: 1.4.0
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.8.2';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.8.2';
+const CACHE_NAME = 'bitcoin-peakdip-v1.8.3';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.8.3';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -259,28 +259,93 @@ self.addEventListener('push', event => {
 });
 
 // Notification click handler
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  
-  if (event.action === 'dismiss') return;
-  
-  const urlToOpen = event.notification.data?.url || '/';
-  
-  event.waitUntil(
-    clients.matchAll({ type: 'window' })
-      .then(windowClients => {
-        // Check if there's already a window open
-        for (const client of windowClients) {
-          if (client.url === urlToOpen && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        // Open new window
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
-  );
+// Xử lý notification click khi app đang đóng
+self.addEventListener('notificationclick', function(event) {
+    console.log('🔔 Notification clicked:', event.action, event.notification.data);
+    
+    event.notification.close();
+    
+    // Xử lý action buttons
+    if (event.action === 'later') {
+        // Lưu vào reading list
+        const articleData = {
+            id: event.notification.data.articleId,
+            title: event.notification.data.title || 'Bitcoin Article',
+            slug: event.notification.data.slug,
+            date: event.notification.data.date || new Date().toISOString().split('T')[0],
+            url: event.notification.data.url
+        };
+        
+        console.log('💾 Saving for later:', articleData);
+        
+        event.waitUntil(
+            (async () => {
+                // Lưu trực tiếp vào localStorage thông qua clients
+                const clients = await self.clients.matchAll({ type: 'window' });
+                
+                if (clients.length > 0) {
+                    // Gửi message đến client đang mở
+                    clients[0].postMessage({
+                        type: 'SAVE_FOR_LATER',
+                        article: articleData
+                    });
+                    
+                    // Focus vào client
+                    return clients[0].focus();
+                } else {
+                    // Không có client nào mở, lưu tạm vào cache và mở trang reading list
+                    const cache = await caches.open('reading-list-queue');
+                    await cache.put(
+                        'pending-save',
+                        new Response(JSON.stringify(articleData))
+                    );
+                    
+                    // Mở trang reading list
+                    return clients.openWindow('/reading-list.html?pending=true');
+                }
+            })()
+        );
+        return;
+    }
+    
+    // Mở URL (mặc định)
+    const urlToOpen = event.notification.data?.url || '/';
+    
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true })
+            .then(function(windowClients) {
+                // Kiểm tra xem đã có window nào mở chưa
+                for (let i = 0; i < windowClients.length; i++) {
+                    const client = windowClients[i];
+                    if (client.url.includes(urlToOpen) && 'focus' in client) {
+                        return client.focus();
+                    }
+                }
+                // Mở tab mới
+                return clients.openWindow(urlToOpen);
+            })
+    );
+});
+
+// Thêm message handler để nhận message từ client
+self.addEventListener('message', event => {
+    if (event.data.type === 'SAVE_FOR_LATER') {
+        // Xử lý khi nhận được message từ client
+        console.log('📨 Received message from client:', event.data);
+        
+        // Có thể broadcast đến các clients khác nếu cần
+        event.waitUntil(
+            clients.matchAll().then(allClients => {
+                allClients.forEach(client => {
+                    if (client.id !== event.source.id) {
+                        client.postMessage({
+                            type: 'READING_LIST_UPDATED'
+                        });
+                    }
+                });
+            })
+        );
+    }
 });
 
 // Sync function for CSV data

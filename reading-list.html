@@ -97,6 +97,17 @@
     </style>
 </head>
 <body>
+    <!-- Thêm dòng này cùng với các script khác -->
+    <script src="js/reading-list.js"></script>
+
+    <!-- Sau đó có thể sử dụng -->
+    <script>
+        // Ví dụ: xóa tất cả
+        document.getElementById('clearAllBtn').onclick = function() {
+            readingList.clearAll();
+            loadReadingList(); // Hàm hiện có
+        };
+    </script>    
     <script>
         // PHÁT HIỆN MOBILE VÀ VÔ HIỆU HÓA HIỆU ỨNG
         (function() {
@@ -196,8 +207,144 @@
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         };
+        // ========== XỬ LÝ PENDING ITEMS TỪ SERVICE WORKER ==========
+        function checkPendingSave() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('pending') === 'true') {
+                // Kiểm tra cache xem có item pending không
+                if ('caches' in window) {
+                    caches.open('reading-list-queue').then(cache => {
+                        cache.match('pending-save').then(response => {
+                            if (response) {
+                                response.json().then(articleData => {
+                                    // Thêm vào reading list
+                                    let readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
+                                    
+                                    const exists = readingList.some(item => item.id === articleData.id);
+                                    if (!exists) {
+                                        readingList.push({
+                                            id: articleData.id,
+                                            title: articleData.title,
+                                            url: articleData.url,
+                                            savedAt: new Date().toISOString(),
+                                            publishedDate: articleData.date
+                                        });
+                                        
+                                        localStorage.setItem('reading_list', JSON.stringify(readingList));
+                                        
+                                        // Xóa khỏi cache
+                                        cache.delete('pending-save');
+                                        
+                                        // Hiển thị thông báo
+                                        const toast = document.createElement('div');
+                                        toast.className = 'toast-notification toast-success';
+                                        toast.innerHTML = '<i class="fas fa-check"></i><span>Article saved to reading list</span>';
+                                        document.body.appendChild(toast);
+                                        setTimeout(() => toast.remove(), 3000);
+                                    }
+                                    
+                                    loadReadingList();
+                                    updateReadingListBadge();
+                                });
+                            }
+                        });
+                    });
+                }
+            }
+        }
         
-        document.addEventListener('DOMContentLoaded', loadReadingList);
+        // ========== LẮNG NGHE MESSAGE TỪ SERVICE WORKER ==========
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', event => {
+                console.log('📨 Message from service worker:', event.data);
+                
+                if (event.data.type === 'SAVE_FOR_LATER' && event.data.article) {
+                    // Thêm vào reading list
+                    let readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
+                    
+                    const exists = readingList.some(item => item.id === event.data.article.id);
+                    if (!exists) {
+                        readingList.push({
+                            id: event.data.article.id,
+                            title: event.data.article.title,
+                            url: event.data.article.url || `/learn/article.html?id=${event.data.article.slug}`,
+                            savedAt: new Date().toISOString(),
+                            publishedDate: event.data.article.date
+                        });
+                        
+                        localStorage.setItem('reading_list', JSON.stringify(readingList));
+                        
+                        // Cập nhật badge
+                        updateReadingListBadge();
+                        
+                        // Reload list nếu đang ở trang reading list
+                        if (window.location.pathname.includes('reading-list.html')) {
+                            loadReadingList();
+                            
+                            // Hiển thị thông báo
+                            const toast = document.createElement('div');
+                            toast.className = 'toast-notification toast-success';
+                            toast.innerHTML = '<i class="fas fa-check"></i><span>New article added to reading list</span>';
+                            document.body.appendChild(toast);
+                            setTimeout(() => toast.remove(), 3000);
+                        }
+                    }
+                }
+                
+                if (event.data.type === 'READING_LIST_UPDATED') {
+                    // Cập nhật badge
+                    updateReadingListBadge();
+                    
+                    // Reload nếu đang ở trang reading list
+                    if (window.location.pathname.includes('reading-list.html')) {
+                        loadReadingList();
+                    }
+                }
+            });
+        }
+        
+        // ========== HÀM CẬP NHẬT BADGE ==========
+        function updateReadingListBadge() {
+            const badge = document.getElementById('readingListBadge');
+            if (badge) {
+                const count = JSON.parse(localStorage.getItem('reading_list') || '[]').length;
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'inline' : 'none';
+            }
+            
+            // Update mobile badge nếu có
+            const mobileBadge = document.querySelector('.reading-list-badge-mobile');
+            if (mobileBadge) {
+                const count = JSON.parse(localStorage.getItem('reading_list') || '[]').length;
+                mobileBadge.textContent = count > 9 ? '9+' : count;
+                mobileBadge.style.display = count > 0 ? 'flex' : 'none';
+            }
+            
+            // Update PWA app badge
+            if (navigator.setAppBadge) {
+                const count = JSON.parse(localStorage.getItem('reading_list') || '[]').length;
+                navigator.setAppBadge(count).catch(() => {});
+            } else if (navigator.setExperimentalAppBadge) {
+                const count = JSON.parse(localStorage.getItem('reading_list') || '[]').length;
+                navigator.setExperimentalAppBadge(count).catch(() => {});
+            }
+        }
+        
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReadingList();
+            checkPendingSave();
+            updateReadingListBadge();
+            
+            // Lắng nghe sự thay đổi từ tab khác
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'reading_list') {
+                    loadReadingList();
+                    updateReadingListBadge();
+                }
+            });
+        });        
     </script>
+    
 </body>
 </html>
