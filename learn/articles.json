@@ -15,21 +15,6 @@
       "level": "Beginner",
       "featured": true,
       "filename": "ews-basics.md"
-    },
-	{
-	  "id": "btc-signal-trigger-dataset",
-	  "title": "BTC Signal Trigger Dataset: Complete History of Bitcoin Peak and Dip Signals (2022-2025)",
-	  "slug": "btc-signal-trigger-dataset",
-	  "description": "Comprehensive dataset of Bitcoin signal triggers including market events, on-chain analysis, sentiment, and funding rates from 2022 to 2025.",
-	  "author": "Bitcoin PeakDip Team",
-	  "date": "2026-02-19",        
-	  "modified": "2026-02-19",     
-	  "category": "data",
-	  "tags": ["bitcoin", "dataset", "signals", "historical", "analysis"],
-	  "reading_time": 15,
-	  "level": "Advanced",
-	  "featured": true,
-	  "filename": "btc-signal-trigger-dataset.md"
-	}	
+    }	
   ]
 }
