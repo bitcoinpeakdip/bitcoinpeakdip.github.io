@@ -1,6 +1,6 @@
 // ============================================
 // Bitcoin PeakDip Early Warning System - Signals
-// Version: 1.8.0 - CLEAN & OPTIMIZED - REMOVED DISTANCE & STRATEGY COLUMNS
+// Version: 1.8.1 - CLEAN & OPTIMIZED - REMOVED DISTANCE & STRATEGY COLUMNS
 // ============================================
 
 // ========== APP CONFIGURATION ==========

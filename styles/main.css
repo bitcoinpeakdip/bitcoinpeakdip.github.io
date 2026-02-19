@@ -2741,3 +2741,25 @@ body.mobile-device .product-card {
         text-align: center;
     }
 }
+
+/* Smooth transitions cho messages */
+.detection-message {
+    transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Status indicator transitions */
+.status-light {
+    transition: opacity 1.5s ease, background-color 1.5s ease !important;
+}
+
+.status-text {
+    transition: opacity 1.5s ease, color 1.5s ease !important;
+}
+
+.ai-badge {
+    transition: opacity 1.5s ease, background 1.5s ease !important;
+}
+
+.logo-container {
+    transition: border-color 1.5s ease, box-shadow 1.5s ease !important;
+}

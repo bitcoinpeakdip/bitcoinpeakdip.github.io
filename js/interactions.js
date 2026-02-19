@@ -303,7 +303,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Update wave visual state based on phase
+    // Update wave visual state based on phase
     function updateWaveState() {
+        // Calculate wave position (giá trị từ -1 đến 1)
         const wavePosition = Math.sin(wavePhase * Math.PI * 4);
         const absoluteWavePosition = Math.abs(wavePosition);
         
@@ -311,85 +313,84 @@ document.addEventListener('DOMContentLoaded', function() {
         peakMessage.classList.remove('active');
         dipMessage.classList.remove('active');
         
-        // Reset opacity styles
+        // Reset opacity styles để dùng animation mượt
         peakMessage.style.opacity = '';
         dipMessage.style.opacity = '';
+        peakMessage.style.transition = 'opacity 1.5s ease';
+        dipMessage.style.transition = 'opacity 1.5s ease';
         
-        // Peak phase - CHỈ HIỂN THỊ PEAK
-        if (wavePosition > 0.95) {
-            // Show peak detection
-            peakMessage.classList.add('active'); // THÊM CLASS ACTIVE
-            dipMessage.classList.remove('active'); // XÓA CLASS ACTIVE CỦA DIP
+        // TÍNH TOÁN ĐỘ SÁNG DỰA TRÊN VỊ TRÍ SÓNG
+        // wavePosition > 0: đang ở phía peak (giá trị dương)
+        // wavePosition < 0: đang ở phía dip (giá trị âm)
+        
+        // Peak phase (wavePosition từ 0.5 đến 1)
+        if (wavePosition > 0.5) {
+            // Peak sáng dần khi tiến về 1, mờ dần khi lui về 0.5
+            const peakBrightness = (wavePosition - 0.5) * 2; // 0 -> 1
+            peakMessage.style.opacity = peakBrightness.toString();
+            dipMessage.style.opacity = '0';
             
-            // Add pulse animation to peak message
+            // Animation cho peak message
             peakMessage.style.animation = 'detectionPulse 9s infinite alternate';
             dipMessage.style.animation = 'none';
             
             // Update status indicator
             statusLight.className = 'status-light status-peak';
+            statusLight.style.opacity = peakBrightness.toString();
             statusText.textContent = 'BITCOIN PEAK DETECTED';
             statusText.style.color = 'var(--wave-peak)';
+            statusText.style.opacity = peakBrightness.toString();
             
-            // Update logo container border color
-            logoContainer.style.borderColor = 'rgba(255, 46, 99, 0.4)';
-            
-            // Update badge text and color
+            // Update badge
             aiBadge.textContent = 'PEAK DETECTED - SELL SIGNAL';
             aiBadge.style.background = 'linear-gradient(to right, var(--wave-peak), #ff6b00)';
-            aiBadge.style.boxShadow = '0 0 25px rgba(255, 46, 99, 0.6)';
-            aiBadge.style.color = '#ffffff';
+            aiBadge.style.opacity = peakBrightness.toString();
             
-            // Update logo wave sync
-            if (logoWaveSync) {
-                logoWaveSync.style.opacity = '0.8';
-                logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-mid), var(--wave-peak))';
-            }
-            
-            // Add gentle background glow to logo container
-            logoContainer.style.boxShadow = 
-                '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(255, 46, 99, 0.15)';
+            // Logo border
+            logoContainer.style.borderColor = `rgba(255, 46, 99, ${0.2 + peakBrightness * 0.3})`;
         } 
-        // Dip phase - CHỈ HIỂN THỊ DIP
-        else if (wavePosition < -0.95) {
-            // Show dip detection
-            peakMessage.classList.remove('active'); // XÓA CLASS ACTIVE CỦA PEAK
-            dipMessage.classList.add('active'); // THÊM CLASS ACTIVE
+        // Dip phase (wavePosition từ -0.5 đến -1)
+        else if (wavePosition < -0.5) {
+            // Dip sáng dần khi tiến về -1, mờ dần khi lui về -0.5
+            const dipBrightness = Math.abs(wavePosition + 0.5) * 2; // 0 -> 1
+            peakMessage.style.opacity = '0';
+            dipMessage.style.opacity = dipBrightness.toString();
             
-            // Add pulse animation to dip message
+            // Animation cho dip message
             dipMessage.style.animation = 'detectionPulse 9s infinite alternate';
             peakMessage.style.animation = 'none';
             
             // Update status indicator
             statusLight.className = 'status-light status-dip';
+            statusLight.style.opacity = dipBrightness.toString();
             statusText.textContent = 'BITCOIN DIP DETECTED';
             statusText.style.color = 'var(--wave-trough)';
+            statusText.style.opacity = dipBrightness.toString();
             
-            // Update logo container border color
-            logoContainer.style.borderColor = 'rgba(0, 212, 255, 0.4)';
-            
-            // Update badge text and color
+            // Update badge
             aiBadge.textContent = 'DIP DETECTED - BUY SIGNAL';
             aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), #0088cc)';
-            aiBadge.style.boxShadow = '0 0 25px rgba(0, 212, 255, 0.6)';
-            aiBadge.style.color = '#ffffff';
+            aiBadge.style.opacity = dipBrightness.toString();
             
-            // Update logo wave sync
-            if (logoWaveSync) {
-                logoWaveSync.style.opacity = '0.8';
-                logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid))';
+            // Logo border
+            logoContainer.style.borderColor = `rgba(0, 212, 255, ${0.2 + dipBrightness * 0.3})`;
+        }
+        // Transition phase (wavePosition từ -0.5 đến 0.5)
+        else {
+            // Cả hai đều mờ, nhưng vẫn có thể thấy nhẹ
+            const transitionBrightness = Math.abs(wavePosition) * 0.5; // 0 -> 0.25
+            
+            if (wavePosition > 0) {
+                // Đang chuyển từ peak sang trung tâm
+                peakMessage.style.opacity = (0.5 - wavePosition).toString();
+                dipMessage.style.opacity = '0';
+            } else {
+                // Đang chuyển từ dip sang trung tâm
+                peakMessage.style.opacity = '0';
+                dipMessage.style.opacity = (0.5 + wavePosition).toString();
             }
             
-            // Add gentle background glow to logo container
-            logoContainer.style.boxShadow = 
-                '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 212, 255, 0.15)';
-        }
-        // Transition phase - KHÔNG HIỂN THỊ CÁI NÀO CẢ
-        else {
-            // Không hiển thị message nào trong transition phase
-            peakMessage.classList.remove('active');
-            dipMessage.classList.remove('active');
-            
-            // Vẫn giữ animation nhẹ cho cả hai nhưng không hiển thị
+            // Gentle pulse animation cho cả hai
             const pulseSpeed = 12 + absoluteWavePosition * 6;
             peakMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
             dipMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
@@ -397,27 +398,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update status indicator
             statusLight.className = 'status-light';
             statusLight.style.background = 'var(--wave-mid)';
+            statusLight.style.opacity = transitionBrightness.toString();
             statusText.textContent = 'ANALYSING BITCOIN WAVES';
             statusText.style.color = 'var(--wave-mid)';
+            statusText.style.opacity = '1';
             
-            // Update logo container border color
-            logoContainer.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-            
-            // Update badge text and color
+            // Update badge
             aiBadge.textContent = 'ANALYSING BITCOIN WAVES';
             aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), var(--wave-mid))';
-            aiBadge.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.4)';
-            aiBadge.style.color = '#ffffff';
+            aiBadge.style.opacity = '1';
             
-            // Update logo wave sync
-            if (logoWaveSync) {
-                const syncOpacity = 0.2 + absoluteWavePosition * 0.2;
-                logoWaveSync.style.opacity = `${syncOpacity}`;
-                logoWaveSync.style.background = 'linear-gradient(90deg, var(--wave-trough), var(--wave-mid), var(--wave-peak))';
-            }
-            
-            // Reset logo container shadow
-            logoContainer.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.5)';
+            // Logo border
+            logoContainer.style.borderColor = `rgba(255, 255, 255, ${0.1 + transitionBrightness * 0.2})`;
         }
         
         // Sync logo wave effect with background waves
@@ -432,9 +424,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (logoWaveSync) {
             const syncPosition = wavePhase * 50;
             logoWaveSync.style.transform = `translateX(${syncPosition}%)`;
+            logoWaveSync.style.opacity = `${0.2 + absoluteWavePosition * 0.3}`;
         }
     }
-    
+        
     // Start animation loop
     requestAnimationFrame(animate);
     
