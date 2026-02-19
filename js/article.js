@@ -189,8 +189,11 @@ class ArticleManager {
                 tag: `article-${article.id}`,
                 renotify: true,
                 data: {
-                    url: `/learn/article.html?id=${article.slug}`,
-                    articleId: article.id
+                    url: `/learn/article.html?id=${article.slug}`,  // Cái này đúng
+                    articleId: article.id,
+                    title: article.title,
+                    slug: article.slug,
+                    date: article.date
                 },
                 actions: [
                     { action: 'read', title: 'Read Now' },
@@ -314,7 +317,7 @@ function showToast(message, type = 'info', duration = 3000) {
 // ========== PUSH NOTIFICATION SIMPLE (POLLING) ==========
 class ArticlePushSimple {
     constructor() {
-        this.checkInterval = 5 * 60 * 1000; // 30 phút kiểm tra 1 lần
+        this.checkInterval = 3 * 60 * 1000; // 30 phút kiểm tra 1 lần
         this.lastCheckKey = 'article_last_check';
         this.savedArticlesKey = 'article_saved_ids';
         this.init();
@@ -635,7 +638,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Check periodically for new articles (every 30 minutes)
     setInterval(async () => {
         await articleManager.loadArticles();
-    }, 5 * 60 * 1000);
+    }, 3 * 60 * 1000);
     
     // Render article list if on learn page
     if (document.getElementById('articlesList')) {

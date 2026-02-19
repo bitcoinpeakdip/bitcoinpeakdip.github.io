@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
 // Version: 1.4.0
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.8.3';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.8.3';
+const CACHE_NAME = 'bitcoin-peakdip-v1.8.4';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.8.4';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -259,73 +259,6 @@ self.addEventListener('push', event => {
 });
 
 // Notification click handler
-// Xử lý notification click khi app đang đóng
-self.addEventListener('notificationclick', function(event) {
-    console.log('🔔 Notification clicked:', event.action, event.notification.data);
-    
-    event.notification.close();
-    
-    // Xử lý action buttons
-    if (event.action === 'later') {
-        // Lưu vào reading list
-        const articleData = {
-            id: event.notification.data.articleId,
-            title: event.notification.data.title || 'Bitcoin Article',
-            slug: event.notification.data.slug,
-            date: event.notification.data.date || new Date().toISOString().split('T')[0],
-            url: event.notification.data.url
-        };
-        
-        console.log('💾 Saving for later:', articleData);
-        
-        event.waitUntil(
-            (async () => {
-                // Lưu trực tiếp vào localStorage thông qua clients
-                const clients = await self.clients.matchAll({ type: 'window' });
-                
-                if (clients.length > 0) {
-                    // Gửi message đến client đang mở
-                    clients[0].postMessage({
-                        type: 'SAVE_FOR_LATER',
-                        article: articleData
-                    });
-                    
-                    // Focus vào client
-                    return clients[0].focus();
-                } else {
-                    // Không có client nào mở, lưu tạm vào cache và mở trang reading list
-                    const cache = await caches.open('reading-list-queue');
-                    await cache.put(
-                        'pending-save',
-                        new Response(JSON.stringify(articleData))
-                    );
-                    
-                    // Mở trang reading list
-                    return clients.openWindow('/reading-list.html?pending=true');
-                }
-            })()
-        );
-        return;
-    }
-    
-    // Mở URL (mặc định)
-    const urlToOpen = event.notification.data?.url || '/';
-    
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then(function(windowClients) {
-                // Kiểm tra xem đã có window nào mở chưa
-                for (let i = 0; i < windowClients.length; i++) {
-                    const client = windowClients[i];
-                    if (client.url.includes(urlToOpen) && 'focus' in client) {
-                        return client.focus();
-                    }
-                }
-                // Mở tab mới
-                return clients.openWindow(urlToOpen);
-            })
-    );
-});
 
 // Thêm message handler để nhận message từ client
 self.addEventListener('message', event => {
@@ -375,30 +308,58 @@ async function syncCSVData() {
 
 // Xử lý notification click khi app đang đóng
 self.addEventListener('notificationclick', function(event) {
-    console.log('🔔 Notification clicked:', event);
+    console.log('🔔 Notification clicked:', event.action, event.notification.data);
     
     event.notification.close();
     
     // Xử lý action buttons
     if (event.action === 'later') {
-        // Lưu vào reading list - cần gửi message về client
+        // Lưu vào reading list
+        const articleData = {
+            articleId: event.notification.data.articleId,
+            title: event.notification.data.title,
+            slug: event.notification.data.slug,
+            date: event.notification.data.date,
+            url: event.notification.data.url
+        };
+        
+        console.log('💾 Saving for later:', articleData);
+        
         event.waitUntil(
-            clients.matchAll({ type: 'window' }).then(function(clientList) {
-                if (clientList.length > 0) {
-                    clientList[0].postMessage({
+            (async () => {
+                const clients = await self.clients.matchAll({ type: 'window' });
+                
+                if (clients.length > 0) {
+                    // Gửi message đến client đang mở
+                    clients[0].postMessage({
                         type: 'SAVE_FOR_LATER',
-                        articleId: event.notification.data.articleId,
-                        title: event.notification.data.title,
-                        url: event.notification.data.url
+                        article: articleData
                     });
+                    
+                    return clients[0].focus();
+                } else {
+                    // Không có client nào mở, lưu tạm vào cache
+                    const cache = await caches.open('reading-list-queue');
+                    await cache.put(
+                        'pending-save',
+                        new Response(JSON.stringify(articleData))
+                    );
+                    
+                    // Mở trang reading list ĐÚNG ĐƯỜNG DẪN
+                    return clients.openWindow('/reading-list.html?pending=true');
                 }
-            })
+            })()
         );
         return;
     }
     
-    // Mở URL (mặc định)
-    const urlToOpen = event.notification.data?.url || '/';
+    // Mở URL (mặc định) - xử lý các action khác (read, view, etc.)
+    let urlToOpen = event.notification.data?.url || '/';
+    
+    // Sửa đường dẫn nếu bị sai
+    if (urlToOpen.includes('/learn/reading-list.html')) {
+        urlToOpen = '/reading-list.html';
+    }
     
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
@@ -406,7 +367,7 @@ self.addEventListener('notificationclick', function(event) {
                 // Kiểm tra xem đã có window nào mở chưa
                 for (let i = 0; i < windowClients.length; i++) {
                     const client = windowClients[i];
-                    if (client.url === urlToOpen && 'focus' in client) {
+                    if (client.url.includes(urlToOpen) && 'focus' in client) {
                         return client.focus();
                     }
                 }
