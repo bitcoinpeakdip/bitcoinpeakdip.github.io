@@ -2465,3 +2465,279 @@ body.mobile-device .product-card {
     transform: none !important;
     transition: none !important;
 }
+
+/* ===== TỐI ƯU SPACING CHO MOBILE ===== */
+@media (max-width: 768px) {
+    /* Điều chỉnh khoảng cách giữa các section */
+    .features {
+        gap: 15px;
+        margin: 30px 0;
+    }
+    
+    .feature-card {
+        padding: 20px 15px;
+        margin-bottom: 5px;
+    }
+    
+    .feature-title {
+        font-size: 1.3em;
+        margin-bottom: 10px;
+    }
+    
+    .feature-desc {
+        font-size: 0.95em;
+        line-height: 1.5;
+    }
+    
+    /* About Preview Section */
+    .about-preview {
+        margin: 30px 0;
+    }
+    
+    .about-preview .channels {
+        padding: 25px 15px;
+    }
+    
+    .about-preview .section-title {
+        font-size: 1.5em;
+        line-height: 1.4;
+        margin-bottom: 15px;
+        padding: 0 10px;
+    }
+    
+    .about-preview p {
+        font-size: 1em !important;
+        line-height: 1.5 !important;
+        margin-bottom: 20px !important;
+        padding: 0 5px;
+    }
+    
+    /* Process cards trong about preview */
+    .about-preview [style*="grid-template-columns"] {
+        gap: 12px !important;
+        margin: 25px 0 !important;
+    }
+    
+    .process-card {
+        padding: 15px 12px !important;
+    }
+    
+    .process-card h4 {
+        font-size: 1.1em !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .process-card h4 i {
+        font-size: 1em !important;
+    }
+    
+    .process-card p {
+        font-size: 0.85em !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Nút Learn More */
+    .learn-more-btn {
+        padding: 12px 20px !important;
+        font-size: 1em !important;
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    /* Product Preview Section */
+    .product-preview {
+        margin: 30px 0;
+    }
+    
+    .product-preview .channels {
+        padding: 25px 15px;
+    }
+    
+    .product-preview .section-title {
+        font-size: 1.5em;
+        line-height: 1.4;
+        margin-bottom: 15px;
+    }
+    
+    .product-preview p {
+        font-size: 1em !important;
+        line-height: 1.5 !important;
+    }
+    
+    .strategy-preview-card {
+        padding: 15px 12px !important;
+    }
+    
+    .strategy-preview-card h4 {
+        font-size: 1.1em !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .strategy-preview-card h4 i {
+        font-size: 1em !important;
+    }
+    
+    .strategy-preview-card p {
+        font-size: 0.85em !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .strategy-preview-card [style*="flex-wrap: wrap"] {
+        gap: 5px !important;
+    }
+    
+    .strategy-preview-card span {
+        font-size: 0.75em !important;
+        padding: 3px 8px !important;
+    }
+    
+    /* Explore Product Button */
+    .explore-product-btn {
+        padding: 12px 20px !important;
+        font-size: 1em !important;
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    /* Channels Section */
+    .channels {
+        padding: 25px 15px;
+        margin: 30px 0;
+    }
+    
+    .channels .section-title {
+        font-size: 1.5em;
+        line-height: 1.4;
+    }
+    
+    .channels p {
+        font-size: 1em !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .channels-grid {
+        gap: 12px !important;
+        margin: 25px 0 !important;
+    }
+    
+    .channel-btn {
+        padding: 15px !important;
+        font-size: 1em !important;
+        min-height: 55px !important;
+    }
+    
+    .channel-btn i {
+        font-size: 1.2em !important;
+    }
+    
+    /* Footer */
+    footer {
+        margin-top: 30px;
+        padding-top: 20px;
+    }
+    
+    .footer-contact {
+        gap: 12px;
+        padding: 10px 0;
+    }
+    
+    .footer-contact-item {
+        padding: 6px 12px;
+        font-size: 0.9em;
+    }
+    
+    .footer-contact-item i {
+        font-size: 1em;
+    }
+    
+    .footer-links {
+        gap: 12px;
+        padding: 15px 0 10px;
+    }
+    
+    .footer-link {
+        font-size: 0.8em;
+        padding: 3px 0;
+    }
+    
+    .disclaimer {
+        padding: 15px;
+        font-size: 0.85em;
+        margin: 20px 0;
+    }
+}
+
+/* ===== TỐI ƯU CHO MÀN HÌNH RẤT NHỎ (dưới 480px) ===== */
+@media (max-width: 480px) {
+    .feature-card {
+        padding: 15px 12px;
+    }
+    
+    .feature-icon {
+        font-size: 2.2em;
+        margin-bottom: 12px;
+    }
+    
+    .feature-title {
+        font-size: 1.2em;
+    }
+    
+    .feature-desc {
+        font-size: 0.9em;
+    }
+    
+    .about-preview .section-title,
+    .product-preview .section-title,
+    .channels .section-title {
+        font-size: 1.3em;
+    }
+    
+    .about-preview p,
+    .product-preview p,
+    .channels p {
+        font-size: 0.95em !important;
+    }
+    
+    .process-card h4,
+    .strategy-preview-card h4 {
+        font-size: 1em !important;
+    }
+    
+    .process-card p,
+    .strategy-preview-card p {
+        font-size: 0.8em !important;
+    }
+    
+    .strategy-preview-card span {
+        font-size: 0.7em !important;
+        padding: 2px 6px !important;
+    }
+    
+    .channel-btn {
+        padding: 12px !important;
+        font-size: 0.95em !important;
+        min-height: 50px !important;
+    }
+    
+    .footer-contact {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .footer-contact-item {
+        width: 100%;
+        max-width: 200px;
+        justify-content: center;
+    }
+    
+    .footer-links {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    
+    .footer-link {
+        font-size: 0.75em;
+        text-align: center;
+    }
+}
