@@ -1,6 +1,35 @@
 // Interactive JavaScript - For home page interactions only
 
 document.addEventListener('DOMContentLoaded', function() {
+    if (window.IS_MOBILE) {
+        console.log('📱 Running on mobile: All effects disabled.');
+        
+        // Set trạng thái tĩnh cho các phần tử
+        const peakMessage = document.getElementById('peakMessage');
+        const dipMessage = document.getElementById('dipMessage');
+        const statusLight = document.getElementById('statusLight');
+        const statusText = document.getElementById('statusText');
+        const aiBadge = document.getElementById('aiBadge');
+        
+        if (peakMessage) peakMessage.style.opacity = '0.2';
+        if (dipMessage) dipMessage.style.opacity = '0.2';
+        if (statusLight) {
+            statusLight.style.background = 'var(--wave-mid)';
+            statusLight.style.animation = 'none'; // Tắt pulse animation
+        }
+        if (statusText) {
+            statusText.textContent = 'MOBILE MODE ACTIVE';
+            statusText.style.color = 'var(--wave-mid)';
+        }
+        if (aiBadge) {
+            aiBadge.textContent = 'MOBILE OPTIMIZED';
+            aiBadge.style.background = 'linear-gradient(to right, var(--wave-trough), var(--wave-mid))';
+        }
+        return; // Thoát, không chạy code bên dưới
+    }
+    
+    // Chỉ chạy trên desktop
+    console.log('🖥️ Desktop detected: Interactive System Active');    
     // Only run on home page
     if (!document.getElementById('peakMessage')) return;
     

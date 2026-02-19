@@ -2407,3 +2407,34 @@ footer {
     font-size: 14px;
     opacity: 0.9;
 }
+/* ===== TỐI ƯU CHO MOBILE: TẮT HIỆU ỨNG NẶNG ===== */
+body.mobile-device .sensor-ring,
+body.mobile-device .bitcoin-waves .bitcoin-wave,
+body.mobile-device .energy-particles .particle,
+body.mobile-device .bitcoin-visualization .bitcoin-wave {
+    animation: none !important; /* Tắt tất cả animations */
+    opacity: 0.1 !important;    /* Làm mờ chúng đi */
+    display: none; /* Hoặc ẩn hẳn nếu muốn */
+}
+
+/* Nếu muốn ẩn hẳn các hiệu ứng nền, bạn có thể dùng display: none */
+body.mobile-device .sensor-network {
+    background: var(--bg-darker); /* Giữ màu nền tối */
+}
+
+/* Tắt hiệu ứng cho logo wave */
+body.mobile-device .logo-wave-effect {
+    animation: none !important;
+    opacity: 0.05 !important;
+}
+
+/* Làm cho badge đơn giản hơn */
+body.mobile-device .ai-badge {
+    animation: none !important;
+    box-shadow: none !important;
+}
+
+/* Điều chỉnh status indicator */
+body.mobile-device .status-light {
+    animation: none !important;
+}
