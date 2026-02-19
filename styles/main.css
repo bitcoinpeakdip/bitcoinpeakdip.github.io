@@ -372,14 +372,14 @@ body {
     font-weight: 900;
     text-align: center;
     text-shadow: 0 0 15px currentColor;
-    opacity: 0;
     transition: opacity 1.5s ease;
-    position: absolute;
+    position: absolute; /* Giữ nguyên absolute */
     width: 100%;
     padding: 10px;
     border-radius: 10px;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(5px);
+    opacity: 0; /* Mặc định ẩn */
 }
 
 .peak-detection {
@@ -390,6 +390,11 @@ body {
 .dip-detection {
     color: var(--wave-trough);
     border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+/* Thêm class active để hiển thị */
+.detection-message.active {
+    opacity: 1;
 }
 
 /* Status Indicator */

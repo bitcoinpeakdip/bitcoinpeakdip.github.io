@@ -304,15 +304,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update wave visual state based on phase
     function updateWaveState() {
-        // Calculate wave position
         const wavePosition = Math.sin(wavePhase * Math.PI * 4);
         const absoluteWavePosition = Math.abs(wavePosition);
         
-        // Peak phase
+        // Xóa hết các class active trước khi set
+        peakMessage.classList.remove('active');
+        dipMessage.classList.remove('active');
+        
+        // Reset opacity styles
+        peakMessage.style.opacity = '';
+        dipMessage.style.opacity = '';
+        
+        // Peak phase - CHỈ HIỂN THỊ PEAK
         if (wavePosition > 0.95) {
             // Show peak detection
-            peakMessage.style.opacity = '1';
-            dipMessage.style.opacity = '0';
+            peakMessage.classList.add('active'); // THÊM CLASS ACTIVE
+            dipMessage.classList.remove('active'); // XÓA CLASS ACTIVE CỦA DIP
             
             // Add pulse animation to peak message
             peakMessage.style.animation = 'detectionPulse 9s infinite alternate';
@@ -342,11 +349,11 @@ document.addEventListener('DOMContentLoaded', function() {
             logoContainer.style.boxShadow = 
                 '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(255, 46, 99, 0.15)';
         } 
-        // Dip phase
+        // Dip phase - CHỈ HIỂN THỊ DIP
         else if (wavePosition < -0.95) {
             // Show dip detection
-            peakMessage.style.opacity = '0';
-            dipMessage.style.opacity = '1';
+            peakMessage.classList.remove('active'); // XÓA CLASS ACTIVE CỦA PEAK
+            dipMessage.classList.add('active'); // THÊM CLASS ACTIVE
             
             // Add pulse animation to dip message
             dipMessage.style.animation = 'detectionPulse 9s infinite alternate';
@@ -376,14 +383,13 @@ document.addEventListener('DOMContentLoaded', function() {
             logoContainer.style.boxShadow = 
                 '0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 212, 255, 0.15)';
         }
-        // Transition phase
+        // Transition phase - KHÔNG HIỂN THỊ CÁI NÀO CẢ
         else {
-            // Fade out both messages based on wave position
-            const fadeAmount = absoluteWavePosition * 0.5;
-            peakMessage.style.opacity = `${fadeAmount}`;
-            dipMessage.style.opacity = `${fadeAmount}`;
+            // Không hiển thị message nào trong transition phase
+            peakMessage.classList.remove('active');
+            dipMessage.classList.remove('active');
             
-            // Gentle pulse animation for both
+            // Vẫn giữ animation nhẹ cho cả hai nhưng không hiển thị
             const pulseSpeed = 12 + absoluteWavePosition * 6;
             peakMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
             dipMessage.style.animation = `detectionPulse ${pulseSpeed}s infinite alternate`;
