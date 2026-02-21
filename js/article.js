@@ -10,46 +10,263 @@ const ARTICLE_CONFIG = {
     cacheDuration: 3600000 // 1 giờ
 };
 // TẮT HOÀN TOÀN TÍNH NĂNG NOTIFICATION
-window.NOTIFICATIONS_DISABLED = true;
-// ========== MARKDOWN CONVERTER ==========
+//window.NOTIFICATIONS_DISABLED = true;
+
+// ========== MARKDOWN CONVERTER NÂNG CẤP ==========
 class MarkdownConverter {
     static convert(markdown) {
-        let html = markdown
-            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-            .replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+        if (!markdown) return '';
         
-        html = html
-            .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/gim, '<em>$1</em>');
+        let html = markdown;
         
-        html = html.replace(/```([^`]+)```/gim, function(match, p1) {
-            return '<pre><code>' + p1.trim() + '</code></pre>';
-        });
+        // Xử lý code blocks trước
+        html = this.processCodeBlocks(html);
         
-        html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+        // Xử lý headings
+        html = this.processHeadings(html);
         
-        html = html.replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>');
-        html = html.replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>');
-        html = html.replace(/^[0-9]+\. (.*$)/gim, '<ol><li>$1</li></ol>');
+        // Xử lý tables
+        html = this.processTables(html);
         
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank">$1</a>');
-        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/gim, '<img src="$2" alt="$1" loading="lazy">');
+        // Xử lý lists
+        html = this.processLists(html);
         
-        html = html.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
+        // Xử lý blockquotes
+        html = this.processBlockquotes(html);
+        
+        // Xử lý horizontal rules
         html = html.replace(/^---$/gim, '<hr>');
         
-        html = html.replace(/^(?!<[h|p|ul|ol|li|pre|blockquote|hr|img])(.*$)/gim, '<p>$1</p>');
+        // Xử lý images
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/gim, '<img src="$2" alt="$1" loading="lazy" class="article-image">');
         
-        html = html.replace(/:::info\s*([^:]+):::/gim, '<div class="info-box"><i class="fas fa-info-circle"></i><p>$1</p></div>');
-        html = html.replace(/:::tip\s*([^:]+):::/gim, '<div class="tip-box"><i class="fas fa-lightbulb"></i><p>$1</p></div>');
-        html = html.replace(/:::warning\s*([^:]+):::/gim, '<div class="warning-box"><i class="fas fa-exclamation-triangle"></i><p>$1</p></div>');
+        // Xử lý links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        
+        // Xử lý bold và italic
+        html = this.processTextFormatting(html);
+        
+        // Xử lý special boxes
+        html = this.processSpecialBoxes(html);
+        
+        // Xử lý paragraphs (cho các dòng còn lại)
+        html = this.processParagraphs(html);
         
         return html;
     }
+    
+    // Xử lý code blocks
+    static processCodeBlocks(html) {
+        // Code blocks với ```language
+        html = html.replace(/```(\w*)\n([\s\S]*?)```/gim, function(match, language, code) {
+            const lang = language || 'plaintext';
+            return `<pre><code class="language-${lang}">${this.escapeHtml(code.trim())}</code></pre>`;
+        }.bind(this));
+        
+        // Inline code
+        html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+        
+        return html;
+    }
+    
+    // Xử lý headings
+    static processHeadings(html) {
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+        html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
+        html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
+        return html;
+    }
+    
+    // Xử lý tables
+    static processTables(html) {
+        const lines = html.split('\n');
+        let inTable = false;
+        let tableHtml = [];
+        let tableRows = [];
+        let headers = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // Phát hiện bắt đầu bảng (có | và ---)
+            if (line.includes('|') && lines[i+1] && lines[i+1].includes('|---')) {
+                inTable = true;
+                
+                // Xử lý headers
+                headers = line.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+                
+                // Xử lý dòng separator
+                i++; // Bỏ qua dòng separator
+                continue;
+            }
+            
+            if (inTable && line.includes('|')) {
+                // Xử lý dòng dữ liệu
+                const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+                tableRows.push(cells);
+            } else if (inTable) {
+                // Kết thúc bảng
+                inTable = false;
+                
+                // Tạo HTML table
+                let table = '<div class="table-responsive"><table class="markdown-table">';
+                
+                // Headers
+                if (headers.length > 0) {
+                    table += '<thead><tr>';
+                    headers.forEach(header => {
+                        table += `<th>${header}</th>`;
+                    });
+                    table += '</tr></thead>';
+                }
+                
+                // Body
+                if (tableRows.length > 0) {
+                    table += '<tbody>';
+                    tableRows.forEach(row => {
+                        table += '<tr>';
+                        row.forEach(cell => {
+                            table += `<td>${cell}</td>`;
+                        });
+                        table += '</tr>';
+                    });
+                    table += '</tbody>';
+                }
+                
+                table += '</table></div>';
+                tableHtml.push(table);
+                
+                // Reset
+                headers = [];
+                tableRows = [];
+            }
+            
+            if (!inTable) {
+                tableHtml.push(line);
+            }
+        }
+        
+        return tableHtml.join('\n');
+    }
+    
+    // Xử lý lists
+    static processLists(html) {
+        // Unordered lists
+        html = html.replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>');
+        html = html.replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>');
+        html = html.replace(/^\+ (.*$)/gim, '<ul><li>$1</li></ul>');
+        
+        // Ordered lists
+        html = html.replace(/^[0-9]+\. (.*$)/gim, '<ol><li>$1</li></ol>');
+        
+        // Ghép các list items liên tiếp
+        html = html.replace(/<\/ul>\n<ul>/g, '');
+        html = html.replace(/<\/ol>\n<ol>/g, '');
+        
+        return html;
+    }
+    
+    // Xử lý blockquotes
+    static processBlockquotes(html) {
+        html = html.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
+        
+        // Ghép các blockquotes liên tiếp
+        let inBlockquote = false;
+        const lines = html.split('\n');
+        const result = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.startsWith('<blockquote>')) {
+                if (!inBlockquote) {
+                    result.push('<blockquote>');
+                    inBlockquote = true;
+                }
+                result.push(line.replace('<blockquote>', '').replace('</blockquote>', ''));
+            } else if (inBlockquote && line === '</blockquote>') {
+                // Skip
+            } else {
+                if (inBlockquote) {
+                    result.push('</blockquote>');
+                    inBlockquote = false;
+                }
+                result.push(line);
+            }
+        }
+        
+        return result.join('\n');
+    }
+    
+    // Xử lý text formatting
+    static processTextFormatting(html) {
+        // Bold
+        html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+        html = html.replace(/__(.*?)__/gim, '<strong>$1</strong>');
+        
+        // Italic
+        html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+        html = html.replace(/_(.*?)_/gim, '<em>$1</em>');
+        
+        // Strikethrough
+        html = html.replace(/~~(.*?)~~/gim, '<del>$1</del>');
+        
+        // Highlight
+        html = html.replace(/==(.*?)==/gim, '<mark>$1</mark>');
+        
+        return html;
+    }
+    
+    // Xử lý special boxes
+    static processSpecialBoxes(html) {
+        html = html.replace(/:::info\s*([^:]+):::/gim, '<div class="info-box"><i class="fas fa-info-circle"></i><div class="box-content">$1</div></div>');
+        html = html.replace(/:::tip\s*([^:]+):::/gim, '<div class="tip-box"><i class="fas fa-lightbulb"></i><div class="box-content">$1</div></div>');
+        html = html.replace(/:::warning\s*([^:]+):::/gim, '<div class="warning-box"><i class="fas fa-exclamation-triangle"></i><div class="box-content">$1</div></div>');
+        html = html.replace(/:::success\s*([^:]+):::/gim, '<div class="success-box"><i class="fas fa-check-circle"></i><div class="box-content">$1</div></div>');
+        return html;
+    }
+    
+    // Xử lý paragraphs
+    static processParagraphs(html) {
+        const lines = html.split('\n');
+        const result = [];
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // Bỏ qua dòng trống
+            if (line === '') continue;
+            
+            // Nếu không phải HTML tag, bọc trong <p>
+            if (!line.startsWith('<') && !line.endsWith('>')) {
+                result.push(`<p>${line}</p>`);
+            } else {
+                result.push(line);
+            }
+        }
+        
+        return result.join('\n');
+    }
+    
+    // Escape HTML entities
+    static escapeHtml(text) {
+        const entityMap = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            '/': '&#x2F;',
+            '`': '&#x60;',
+            '=': '&#x3D;'
+        };
+        return String(text).replace(/[&<>"'`=/]/g, function(s) {
+            return entityMap[s];
+        });
+    }
 }
-
 // ========== ARTICLE MANAGER ==========
 class ArticleManager {
     constructor() {
@@ -286,8 +503,310 @@ function addTableOfContents() {
 }
 
 // Styles (giữ nguyên)
+// Add styles
 const articleStyle = document.createElement('style');
-articleStyle.textContent = ` ... `; // Giữ nguyên styles
+articleStyle.textContent = `
+    .toast-notification {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
+        color: white;
+        padding: 12px 25px;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 10000;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        border: 2px solid white;
+        animation: slideUp 0.3s ease;
+        max-width: 90%;
+    }
+    
+    .toast-notification.fade-out {
+        animation: fadeOut 0.3s ease forwards;
+    }
+    
+    .toast-success {
+        background: linear-gradient(135deg, #4CAF50, #45a049);
+    }
+    
+    .toast-warning {
+        background: linear-gradient(135deg, #ff9800, #f57c00);
+    }
+    
+    .toast-error {
+        background: linear-gradient(135deg, #f44336, #d32f2f);
+    }
+    
+    .article-card {
+        position: relative;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 15px;
+        padding: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: block;
+        overflow: hidden;
+    }
+    
+    .article-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--wave-trough);
+        box-shadow: 0 10px 25px rgba(0, 212, 255, 0.2);
+    }
+    
+    .new-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: linear-gradient(135deg, var(--wave-peak), #ff6b00);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+    }
+    
+    .article-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        color: var(--text-glow);
+        font-size: 0.9em;
+    }
+    
+    .article-category {
+        background: rgba(0, 212, 255, 0.15);
+        padding: 4px 12px;
+        border-radius: 20px;
+        color: var(--wave-trough);
+        text-transform: uppercase;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+    
+    .article-card h3 {
+        color: white;
+        margin-bottom: 10px;
+        font-size: 1.3em;
+    }
+    
+    .article-card p {
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .article-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .reading-time {
+        color: var(--text-glow);
+        font-size: 0.9em;
+    }
+    
+    .reading-time i {
+        color: var(--wave-mid);
+        margin-right: 5px;
+    }
+    
+    .difficulty {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+    
+    .difficulty.beginner {
+        background: rgba(76, 175, 80, 0.15);
+        color: #4CAF50;
+        border: 1px solid rgba(76, 175, 80, 0.3);
+    }
+    
+    .difficulty.intermediate {
+        background: rgba(255, 193, 7, 0.15);
+        color: #FFC107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+    
+    .difficulty.advanced {
+        background: rgba(244, 67, 54, 0.15);
+        color: #F44336;
+        border: 1px solid rgba(244, 67, 54, 0.3);
+    }
+    
+    /* ===== CSS MỚI CHO BẢNG ===== */
+    .markdown-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .markdown-table th {
+        background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
+        color: white;
+        font-weight: bold;
+        padding: 12px 15px;
+        text-align: left;
+        font-size: 0.95em;
+    }
+
+    .markdown-table td {
+        padding: 10px 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-glow);
+        font-size: 0.9em;
+        line-height: 1.5;
+    }
+
+    .markdown-table tr:hover {
+        background: rgba(0, 212, 255, 0.05);
+    }
+
+    .markdown-table th:first-child {
+        border-top-left-radius: 10px;
+    }
+
+    .markdown-table th:last-child {
+        border-top-right-radius: 10px;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        margin: 20px 0;
+        border-radius: 10px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Responsive cho mobile */
+    @media (max-width: 768px) {
+        .markdown-table {
+            font-size: 0.85em;
+        }
+        
+        .markdown-table th,
+        .markdown-table td {
+            padding: 8px 10px;
+            white-space: nowrap;
+        }
+        
+        .table-responsive {
+            margin: 15px -20px;
+            width: calc(100% + 40px);
+            border-radius: 0;
+        }
+        
+        .table-responsive .markdown-table {
+            border-radius: 0;
+        }
+    }
+    
+    /* ===== BOX STYLES MỚI ===== */
+    .info-box, .tip-box, .warning-box, .success-box {
+        display: flex;
+        gap: 15px;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.3);
+        border-left: 4px solid;
+        align-items: flex-start;
+    }
+
+    .info-box {
+        border-left-color: var(--wave-trough);
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+    .tip-box {
+        border-left-color: var(--wave-mid);
+        background: rgba(247, 147, 26, 0.1);
+    }
+
+    .warning-box {
+        border-left-color: var(--wave-peak);
+        background: rgba(255, 46, 99, 0.1);
+    }
+
+    .success-box {
+        border-left-color: #4CAF50;
+        background: rgba(76, 175, 80, 0.1);
+    }
+
+    .box-content {
+        flex: 1;
+        color: var(--text-glow);
+        line-height: 1.6;
+    }
+
+    .info-box i, .tip-box i, .warning-box i, .success-box i {
+        font-size: 1.5em;
+        margin-top: 2px;
+    }
+
+    .info-box i { color: var(--wave-trough); }
+    .tip-box i { color: var(--wave-mid); }
+    .warning-box i { color: var(--wave-peak); }
+    .success-box i { color: #4CAF50; }
+    
+    .info-box p, .tip-box p, .warning-box p, .success-box p {
+        margin: 0;
+    }
+    
+    /* ===== CÁC STYLE CŨ GIỮ NGUYÊN ===== */
+    .info-box, .tip-box, .warning-box {
+        background: rgba(0, 212, 255, 0.1);
+        border-left: 4px solid var(--wave-trough);
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 0 10px 10px 0;
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .tip-box {
+        background: rgba(247, 147, 26, 0.1);
+        border-left-color: var(--wave-mid);
+    }
+    
+    .warning-box {
+        background: rgba(255, 46, 99, 0.1);
+        border-left-color: var(--wave-peak);
+    }
+    
+    .info-box i, .tip-box i, .warning-box i {
+        font-size: 1.5em;
+        color: inherit;
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 10px currentColor;
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px currentColor;
+        }
+    }
+`;
+
 document.head.appendChild(articleStyle);
 
 // ========== READING LIST MANAGER ==========
