@@ -1,16 +1,16 @@
 // notifications.js - Hệ thống thông báo bài viết mới tập trung
-// Version: 2.1.0
+// Version: 2.1.1 - Fixed double notifications
 
 const NOTIFICATION_CONFIG = {
-    version: '2.1.0',
+    version: '2.1.1',
     checkInterval: 3 * 60 * 1000, // 30 phút
     articleMetadataPath: '/learn/articles.json',
     notifiedKey: 'peakdip_notified_articles_v2',
     enabledKey: 'peakdip_notifications_enabled',
     cacheKey: 'peakdip_articles_cache',
     cacheTimeKey: 'peakdip_articles_cache_time',
-    cacheDuration: 3 * 60 * 1000, // 24 giờ
-    newArticleDays: 7 // Bài viết trong 7 ngày qua được coi là mới
+    cacheDuration: 24 * 60 * 60 * 1000, // 24 giờ (sửa lại từ 3 phút)
+    newArticleDays: 7
 };
 
 class ArticleNotificationSystem {
@@ -21,6 +21,9 @@ class ArticleNotificationSystem {
         this.isEnabled = this.getNotificationStatus();
         this.lastCheckTime = null;
         this.pendingArticles = [];
+        
+        // 👇 Flag để tránh double notification
+        this.isFirstTimeEnable = true;
         
         this.init();
     }
@@ -38,6 +41,7 @@ class ArticleNotificationSystem {
         if (this.isEnabled && Notification.permission === 'granted') {
             this.startPolling();
             this.addNotificationButton('enabled');
+            this.isFirstTimeEnable = false;
         } else {
             this.addNotificationButton();
         }
@@ -98,7 +102,7 @@ class ArticleNotificationSystem {
     }
 
     // ===== TẢI DỮ LIỆU BÀI VIẾT =====
-    async loadArticles(force = false) {
+    async loadArticles(force = false, skipNotification = false) {
         try {
             // Kiểm tra cache nếu không force
             if (!force) {
@@ -108,13 +112,13 @@ class ArticleNotificationSystem {
                     
                     // Kiểm tra bài viết mới từ cache
                     if (this.isEnabled && Notification.permission === 'granted') {
-                        this.checkNewArticles();
+                        await this.checkNewArticles(skipNotification);
                     }
                     return cached;
                 }
             }
 
-            // Fetch từ server với timeout và retry
+            // Fetch từ server với timeout
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
             
@@ -132,7 +136,7 @@ class ArticleNotificationSystem {
             const data = await response.json();
             this.articles = data.articles || [];
             
-            // Lọc bỏ duplicate articles (nếu có)
+            // Lọc bỏ duplicate articles
             this.articles = this.removeDuplicateArticles(this.articles);
             
             // Lưu cache
@@ -140,7 +144,7 @@ class ArticleNotificationSystem {
             
             // Kiểm tra bài viết mới
             if (this.isEnabled && Notification.permission === 'granted') {
-                this.checkNewArticles();
+                await this.checkNewArticles(skipNotification);
             }
             
             return this.articles;
@@ -177,7 +181,6 @@ class ArticleNotificationSystem {
             if (!cached) return null;
             
             const parsed = JSON.parse(cached);
-            // Validate structure
             if (!Array.isArray(parsed)) return null;
             
             return parsed;
@@ -206,131 +209,120 @@ class ArticleNotificationSystem {
     }
 
     // ===== KIỂM TRA BÀI VIẾT MỚI =====
-    checkNewArticles() {
+    async checkNewArticles(skipNotification = false) {
         console.log('🔄 Đang kiểm tra bài viết mới...');
         
-        // FIX: Kiểm tra service worker trước
-        if (!('serviceWorker' in navigator)) {
-            console.log('❌ Service Worker không được hỗ trợ');
+        // Tìm bài viết mới
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - NOTIFICATION_CONFIG.newArticleDays);
+        
+        const newArticles = this.articles.filter(article => {
+            if (this.notifiedIds.includes(article.id)) return false;
+            try {
+                const articleDate = new Date(article.date);
+                return articleDate >= cutoffDate;
+            } catch (e) {
+                return false;
+            }
+        });
+        
+        if (newArticles.length === 0) {
+            console.log('📭 Không có bài viết mới');
             return;
         }
         
-        // FIX: Dùng Promise để xử lý bất đồng bộ
-        navigator.serviceWorker.ready
-            .then(registration => {
-                // FIX: Kiểm tra active trước khi gửi message
-                if (!registration.active) {
-                    console.log('⏳ Service Worker chưa active, thử lại sau...');
-                    setTimeout(() => this.checkNewArticles(), 2000);
-                    return;
-                }
-                
-                // FIX: Kiểm tra controller
-                if (!navigator.serviceWorker.controller) {
-                    console.log('⏳ Chưa có controller, thử lại sau...');
-                    setTimeout(() => this.checkNewArticles(), 2000);
-                    return;
-                }
-                
-                // Gửi message an toàn
-                try {
-                    registration.active.postMessage({
-                        type: 'CHECK_NEW_ARTICLES',
-                        timestamp: Date.now()
-                    });
-                    console.log('✅ Đã gửi yêu cầu kiểm tra bài viết');
-                } catch (error) {
-                    console.log('⚠️ Lỗi gửi message:', error.message);
-                    setTimeout(() => this.checkNewArticles(), 5000);
-                }
-            })
-            .catch(error => {
-                console.log('⚠️ Lỗi service worker:', error.message);
-                setTimeout(() => this.checkNewArticles(), 5000);
-            });
+        console.log(`📢 Phát hiện ${newArticles.length} bài viết mới`);
+        
+        // Nếu skipNotification = true, chỉ đánh dấu đã đọc, không gửi notification
+        if (skipNotification) {
+            console.log('⏭️ Skip gửi notification (lần đầu bật)');
+            const newIds = newArticles.map(a => a.id);
+            this.saveNotifiedIds([...this.notifiedIds, ...newIds]);
+            return;
+        }
+        
+        // Gửi notification qua service worker
+        await this.sendNotificationsViaSW(newArticles);
+        
+        // Đánh dấu đã gửi notification
+        const newIds = newArticles.map(a => a.id);
+        this.saveNotifiedIds([...this.notifiedIds, ...newIds]);
     }
+    
     // ===== GỬI NOTIFICATION QUA SERVICE WORKER =====
     async sendNotificationsViaSW(articles) {
         if (Notification.permission !== 'granted') return;
 
-        // Kiểm tra xem có service worker active không
-        const registration = await navigator.serviceWorker.ready;
-        
-        if (!registration) {
-            // Fallback: gửi notification thường không có actions
-            this.sendBasicNotifications(articles);
-            return;
-        }
-
-        if (articles.length === 1) {
-            // 1 bài viết
-            const article = articles[0];
+        try {
+            const registration = await navigator.serviceWorker.ready;
             
-            await registration.showNotification('📚 Bài viết mới từ Bitcoin PeakDip', {
-                body: `${article.title}\n⏱️ ${article.reading_time} phút đọc • ${article.level}`,
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
-                vibrate: [200, 100, 200],
-                tag: `article-${article.id}`,
-                renotify: true,
-                requireInteraction: true,
-                silent: false,
-                data: {
-                    url: `/learn/article.html?id=${article.slug}`,
-                    articleId: article.id,
-                    title: article.title,
-                    slug: article.slug,
-                    date: article.date,
-                    readingTime: article.reading_time,
-                    level: article.level,
-                    type: 'single'
-                },
-                actions: [
-                    {
-                        action: 'read',
-                        title: '📖 Đọc ngay'
+            if (!registration || !registration.active) {
+                this.sendBasicNotifications(articles);
+                return;
+            }
+
+            if (articles.length === 1) {
+                const article = articles[0];
+                
+                await registration.showNotification('📚 Bài viết mới từ Bitcoin PeakDip', {
+                    body: `${article.title}\n⏱️ ${article.reading_time} phút đọc • ${article.level}`,
+                    icon: '/icons/icon-192x192.png',
+                    badge: '/icons/icon-72x72.png',
+                    vibrate: [200, 100, 200],
+                    tag: `article-${article.id}`,
+                    renotify: true,
+                    requireInteraction: true,
+                    silent: false,
+                    data: {
+                        url: `/learn/article.html?id=${article.slug}`,
+                        articleId: article.id,
+                        title: article.title,
+                        slug: article.slug,
+                        date: article.date,
+                        readingTime: article.reading_time,
+                        level: article.level,
+                        type: 'single'
                     },
-                    {
-                        action: 'later',
-                        title: '⏰ Đọc sau'
-                    }
-                ]
-            });
+                    actions: [
+                        { action: 'read', title: '📖 Đọc ngay' },
+                        { action: 'later', title: '⏰ Đọc sau' }
+                    ]
+                });
 
-        } else {
-            // Nhiều bài viết
-            const titles = articles.map(a => `• ${a.title}`).join('\n').substring(0, 150);
-            
-            await registration.showNotification(`📚 ${articles.length} bài viết mới từ Bitcoin PeakDip`, {
-                body: titles + (titles.length >= 150 ? '...' : ''),
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
-                vibrate: [200, 100, 200],
-                tag: 'multiple-articles',
-                requireInteraction: true,
-                silent: false,
-                data: {
-                    url: '/learn/',
-                    articles: articles.map(a => ({ 
-                        id: a.id, 
-                        slug: a.slug, 
-                        title: a.title 
-                    })),
-                    type: 'multiple'
-                },
-                actions: [
-                    {
-                        action: 'view',
-                        title: '👀 Xem tất cả'
-                    }
-                ]
-            });
+            } else {
+                const titles = articles.map(a => `• ${a.title}`).join('\n').substring(0, 150);
+                
+                await registration.showNotification(`📚 ${articles.length} bài viết mới từ Bitcoin PeakDip`, {
+                    body: titles + (titles.length >= 150 ? '...' : ''),
+                    icon: '/icons/icon-192x192.png',
+                    badge: '/icons/icon-72x72.png',
+                    vibrate: [200, 100, 200],
+                    tag: 'multiple-articles',
+                    requireInteraction: true,
+                    silent: false,
+                    data: {
+                        url: '/learn/',
+                        articles: articles.map(a => ({ 
+                            id: a.id, 
+                            slug: a.slug, 
+                            title: a.title 
+                        })),
+                        type: 'multiple'
+                    },
+                    actions: [
+                        { action: 'view', title: '👀 Xem tất cả' }
+                    ]
+                });
+            }
+
+            console.log(`✅ Đã gửi ${articles.length} thông báo qua Service Worker`);
+        } catch (error) {
+            console.error('❌ Lỗi gửi notification qua SW:', error);
+            this.sendBasicNotifications(articles);
         }
-
-        console.log(`✅ Đã gửi ${articles.length} thông báo qua Service Worker`);
     }
 
-    // ===== FALLBACK: GỬI NOTIFICATION CƠ BẢN (KHÔNG ACTIONS) =====
+    // ===== FALLBACK: GỬI NOTIFICATION CƠ BẢN =====
     sendBasicNotifications(articles) {
         if (Notification.permission !== 'granted') return;
 
@@ -345,7 +337,6 @@ class ArticleNotificationSystem {
                 renotify: true,
                 requireInteraction: true,
                 silent: false
-                // ❌ KHÔNG CÓ actions và data
             });
 
             notification.onclick = (event) => {
@@ -364,7 +355,6 @@ class ArticleNotificationSystem {
                 tag: 'multiple-articles',
                 requireInteraction: true,
                 silent: false
-                // ❌ KHÔNG CÓ actions và data
             });
 
             notification.onclick = (event) => {
@@ -379,7 +369,6 @@ class ArticleNotificationSystem {
 
     // ===== THÊM VÀO READING LIST =====
     addToReadingList(articleData) {
-        // Sử dụng readingList toàn cục nếu có
         if (window.readingList && typeof window.readingList.add === 'function') {
             window.readingList.add({
                 id: articleData.articleId || articleData.id,
@@ -391,7 +380,6 @@ class ArticleNotificationSystem {
             return;
         }
 
-        // Fallback nếu chưa có readingList
         try {
             const readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
             const exists = readingList.some(item => item.id === (articleData.articleId || articleData.id));
@@ -407,8 +395,6 @@ class ArticleNotificationSystem {
 
                 localStorage.setItem('reading_list', JSON.stringify(readingList));
                 this.showToast('✅ Đã thêm vào danh sách đọc sau', 'success');
-                
-                // Cập nhật badge
                 this.updateReadingListBadge();
             } else {
                 this.showToast('📚 Bài viết đã có trong danh sách đọc', 'info');
@@ -430,17 +416,15 @@ class ArticleNotificationSystem {
 
     // ===== NÚT BẬT/TẮT THÔNG BÁO =====
     addNotificationButton(status = 'prompt') {
-        // Chờ DOM load xong
         if (!document.getElementById('statusIndicator')) {
             setTimeout(() => this.addNotificationButton(status), 500);
             return;
         }
 
-        // Xóa nút cũ nếu có
-        const oldBtn = document.querySelector('.notification-toggle-btn');
-        if (oldBtn) oldBtn.remove();
+        // Xóa tất cả nút cũ
+        const oldBtns = document.querySelectorAll('.notification-toggle-btn, .push-simple-btn');
+        oldBtns.forEach(btn => btn.remove());
 
-        // Tạo nút mới
         const btn = document.createElement('button');
         btn.className = `notification-toggle-btn ${status}`;
         
@@ -452,7 +436,6 @@ class ArticleNotificationSystem {
             btn.onclick = () => this.requestPermission();
         }
 
-        // Thêm vào status indicator
         const statusIndicator = document.getElementById('statusIndicator');
         if (statusIndicator) {
             statusIndicator.appendChild(btn);
@@ -467,11 +450,15 @@ class ArticleNotificationSystem {
                 this.setNotificationStatus(true);
                 this.addNotificationButton('enabled');
                 this.startPolling();
+                
+                // Gửi test notification
                 this.showTestNotification();
                 this.showToast('✅ Đã bật thông báo bài viết mới', 'success');
                 
-                // Kiểm tra bài viết mới ngay lập tức
-                await this.loadArticles(true);
+                // 👈 SỬA: Thêm tham số skipNotification = true
+                await this.loadArticles(true, true);
+                
+                this.isFirstTimeEnable = false;
             } else {
                 this.showToast('❌ Cần bật thông báo để nhận bài viết mới', 'warning');
             }
@@ -496,7 +483,7 @@ class ArticleNotificationSystem {
         console.log('🔄 Bắt đầu kiểm tra bài viết mới mỗi 30 phút');
         this.checkInterval = setInterval(() => {
             console.log('🔄 Đang kiểm tra bài viết mới...');
-            this.loadArticles(true);
+            this.loadArticles(true, false);
         }, NOTIFICATION_CONFIG.checkInterval);
     }
 
@@ -514,7 +501,7 @@ class ArticleNotificationSystem {
 
         try {
             const registration = await navigator.serviceWorker.ready;
-            if (registration) {
+            if (registration && registration.active) {
                 await registration.showNotification('✅ Đã bật thông báo thành công', {
                     body: 'Bạn sẽ nhận được thông báo khi có bài viết mới',
                     icon: '/icons/icon-192x192.png',
@@ -528,7 +515,6 @@ class ArticleNotificationSystem {
                 });
             }
         } catch (e) {
-            // Fallback
             new Notification('✅ Đã bật thông báo thành công', {
                 body: 'Bạn sẽ nhận được thông báo khi có bài viết mới',
                 icon: '/icons/icon-192x192.png'
@@ -538,7 +524,6 @@ class ArticleNotificationSystem {
 
     // ===== TOAST NOTIFICATION =====
     showToast(message, type = 'info', duration = 3000) {
-        // Xóa toast cũ nếu có
         const oldToast = document.querySelector('.notification-toast');
         if (oldToast) oldToast.remove();
 
@@ -558,11 +543,7 @@ class ArticleNotificationSystem {
         `;
 
         document.body.appendChild(toast);
-
-        // Animation hiện
         setTimeout(() => toast.classList.add('show'), 10);
-
-        // Tự động ẩn
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
@@ -598,7 +579,6 @@ class ArticleNotificationSystem {
     const style = document.createElement('style');
     style.id = 'notification-styles';
     style.textContent = `
-        /* Nút bật/tắt thông báo */
         .notification-toggle-btn {
             position: fixed;
             bottom: 30px;
@@ -650,7 +630,6 @@ class ArticleNotificationSystem {
             }
         }
 
-        /* Toast notification */
         .notification-toast {
             position: fixed;
             bottom: 30px;
@@ -706,16 +685,24 @@ class ArticleNotificationSystem {
 // ===== KHỞI TẠO =====
 let notificationSystem = null;
 
-// Khởi tạo khi DOM sẵn sàng
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        notificationSystem = new ArticleNotificationSystem();
-        window.articleNotifications = notificationSystem;
-    });
+// Chỉ khởi tạo một lần
+if (!window.articleNotifications) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.articleNotifications) {
+                notificationSystem = new ArticleNotificationSystem();
+                window.articleNotifications = notificationSystem;
+            }
+        });
+    } else {
+        if (!window.articleNotifications) {
+            notificationSystem = new ArticleNotificationSystem();
+            window.articleNotifications = notificationSystem;
+        }
+    }
 } else {
-    notificationSystem = new ArticleNotificationSystem();
-    window.articleNotifications = notificationSystem;
+    console.log('ℹ️ Notification system already initialized');
+    notificationSystem = window.articleNotifications;
 }
 
-// Export
 window.ArticleNotificationSystem = ArticleNotificationSystem;
