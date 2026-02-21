@@ -1,6 +1,6 @@
 // ============================================
 // Bitcoin PeakDip Early Warning System - Signals
-// Version: 1.9.5 - UPDATED - Signal Details Floating & Layout
+// Version: 1.9.6 - UPDATED - Signal Details Floating & Layout
 // ============================================
 
 // ========== APP CONFIGURATION ==========

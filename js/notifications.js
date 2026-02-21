@@ -627,7 +627,7 @@ class ArticleNotificationSystem {
         .notification-toggle-btn {
             position: fixed;
             bottom: 30px;
-            right: 30px;
+            right: 30px; /* Cố định bên phải */
             background: linear-gradient(135deg, #00d4ff, #f7931a);
             color: white;
             border: none;
@@ -644,6 +644,9 @@ class ArticleNotificationSystem {
             border: 2px solid rgba(255,255,255,0.3);
             transition: all 0.3s ease;
             animation: slideInRight 0.5s ease;
+            /* Đảm bảo không bị lệch */
+            transform: none;
+            left: auto;
         }
 
         .notification-toggle-btn:hover {
@@ -661,15 +664,60 @@ class ArticleNotificationSystem {
             font-size: 16px;
         }
 
+        /* Mobile: đưa sát mép phải hơn */
         @media (max-width: 768px) {
             .notification-toggle-btn {
                 bottom: 20px;
-                right: 20px;
+                right: 15px; /* Sát mép phải hơn */
                 padding: 10px 18px;
+                box-shadow: 0 4px 15px rgba(0,212,255,0.5);
             }
+            
+            /* Khi chỉ hiện icon trên mobile */
             .notification-toggle-btn span {
                 display: none;
             }
+            
+            .notification-toggle-btn i {
+                font-size: 22px; /* Icon to hơn cho dễ bấm */
+                margin: 0;
+            }
+            
+            /* Tăng kích thước vùng bấm */
+            .notification-toggle-btn {
+                width: 50px;
+                height: 50px;
+                padding: 0;
+                justify-content: center;
+                border-radius: 50%; /* Bo tròn hoàn toàn */
+                right: 15px;
+                bottom: 20px;
+            }
+            
+            /* Hiệu ứng pulse nhẹ cho mobile */
+            .notification-toggle-btn {
+                animation: slideInRight 0.5s ease, mobilePulse 2s infinite;
+            }
+            
+            @keyframes mobilePulse {
+                0%, 100% {
+                    box-shadow: 0 4px 15px rgba(0,212,255,0.5);
+                }
+                50% {
+                    box-shadow: 0 4px 25px rgba(0,212,255,0.8);
+                }
+            }
+        }
+
+        /* Màn hình rất nhỏ (dưới 380px) */
+        @media (max-width: 380px) {
+            .notification-toggle-btn {
+                right: 10px;
+                bottom: 15px;
+                width: 45px;
+                height: 45px;
+            }
+            
             .notification-toggle-btn i {
                 font-size: 20px;
             }
