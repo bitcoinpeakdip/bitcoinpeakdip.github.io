@@ -45,6 +45,36 @@
 	  "level": "Advanced",
 	  "featured": true,
 	  "filename": "btc-signal-trigger-dataset-1.md"
+	},	
+	{
+	  "id": "BTC_Market_Cycles",
+	  "title": "BTC_Market_Cycles",
+	  "slug": "BTC_Market_Cycles",
+	  "description": "Comprehensive dataset of Bitcoin signal triggers including market events, on-chain analysis, sentiment, and funding rates from 2022 to 2025.",
+	  "author": "Bitcoin PeakDip Team",
+	  "date": "2026-02-19",        
+	  "modified": "2026-02-19",     
+	  "category": "data",
+	  "tags": ["bitcoin", "dataset", "signals", "historical", "analysis"],
+	  "reading_time": 15,
+	  "level": "Advanced",
+	  "featured": true,
+	  "filename": "BTC_Market_Cycles.md"
+	},	
+	{
+	  "id": "BTC_Market_Cycles-1",
+	  "title": "BTC_Market_Cycles",
+	  "slug": "BTC_Market_Cycles-1",
+	  "description": "Comprehensive dataset of Bitcoin signal triggers including market events, on-chain analysis, sentiment, and funding rates from 2022 to 2025.",
+	  "author": "Bitcoin PeakDip Team",
+	  "date": "2026-02-19",        
+	  "modified": "2026-02-19",     
+	  "category": "data",
+	  "tags": ["bitcoin", "dataset", "signals", "historical", "analysis"],
+	  "reading_time": 15,
+	  "level": "Advanced",
+	  "featured": true,
+	  "filename": "BTC_Market_Cycles-1.md"
 	}	
   ]
 }
