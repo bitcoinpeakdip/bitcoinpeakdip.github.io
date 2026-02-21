@@ -207,36 +207,48 @@ class ArticleNotificationSystem {
 
     // ===== KIỂM TRA BÀI VIẾT MỚI =====
     checkNewArticles() {
-        if (!this.articles || this.articles.length === 0) return;
-
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - NOTIFICATION_CONFIG.newArticleDays);
-
-        const newArticles = this.articles.filter(article => {
-            // Đã thông báo rồi thì bỏ qua
-            if (this.notifiedIds.includes(article.id)) return false;
-
-            // Kiểm tra ngày tháng
-            try {
-                const articleDate = new Date(article.date);
-                return articleDate >= cutoffDate;
-            } catch (e) {
-                return false;
-            }
-        });
-
-        if (newArticles.length > 0) {
-            // Gửi notification qua Service Worker (có hỗ trợ actions)
-            this.sendNotificationsViaSW(newArticles);
-            
-            // Cập nhật danh sách đã thông báo
-            const allIds = this.articles.map(a => a.id);
-            this.saveNotifiedIds(allIds);
+        console.log('🔄 Đang kiểm tra bài viết mới...');
+        
+        // FIX: Kiểm tra service worker trước
+        if (!('serviceWorker' in navigator)) {
+            console.log('❌ Service Worker không được hỗ trợ');
+            return;
         }
-
-        this.lastCheckTime = Date.now();
+        
+        // FIX: Dùng Promise để xử lý bất đồng bộ
+        navigator.serviceWorker.ready
+            .then(registration => {
+                // FIX: Kiểm tra active trước khi gửi message
+                if (!registration.active) {
+                    console.log('⏳ Service Worker chưa active, thử lại sau...');
+                    setTimeout(() => this.checkNewArticles(), 2000);
+                    return;
+                }
+                
+                // FIX: Kiểm tra controller
+                if (!navigator.serviceWorker.controller) {
+                    console.log('⏳ Chưa có controller, thử lại sau...');
+                    setTimeout(() => this.checkNewArticles(), 2000);
+                    return;
+                }
+                
+                // Gửi message an toàn
+                try {
+                    registration.active.postMessage({
+                        type: 'CHECK_NEW_ARTICLES',
+                        timestamp: Date.now()
+                    });
+                    console.log('✅ Đã gửi yêu cầu kiểm tra bài viết');
+                } catch (error) {
+                    console.log('⚠️ Lỗi gửi message:', error.message);
+                    setTimeout(() => this.checkNewArticles(), 5000);
+                }
+            })
+            .catch(error => {
+                console.log('⚠️ Lỗi service worker:', error.message);
+                setTimeout(() => this.checkNewArticles(), 5000);
+            });
     }
-
     // ===== GỬI NOTIFICATION QUA SERVICE WORKER =====
     async sendNotificationsViaSW(articles) {
         if (Notification.permission !== 'granted') return;

@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
-// Version: 1.9.0
+// Version: 2.0.0 - Có thông báo cập nhật phiên bản mới
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.8.7';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.8.7';
+const CACHE_NAME = 'bitcoin-peakdip-v1.8.8';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.8.8';
 
 // Local assets - có thể cache
 const LOCAL_ASSETS = [
@@ -15,6 +15,7 @@ const LOCAL_ASSETS = [
   '/reading-list.html',
   '/offline.html',
   '/manifest.json',
+  '/version.json',
   '/styles/main.css',
   '/styles/about.css',
   '/styles/product.css',
@@ -29,6 +30,7 @@ const LOCAL_ASSETS = [
   '/js/reading-list.js',
   '/js/notifications.js',
   '/js/article.js',
+  '/js/update-notifier.js',
   '/learn/article-template.html',
   '/learn/articles.json',
   '/icons/icon-72x72.png',
@@ -49,9 +51,12 @@ const CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns'
 ];
 
-// Install event - chỉ cache local assets
+// ========== INSTALL EVENT ==========
 self.addEventListener('install', event => {
   console.log('📦 Service Worker installing...');
+  
+  // Skip waiting để active ngay lập tức
+  self.skipWaiting();
   
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -62,7 +67,6 @@ self.addEventListener('install', event => {
           LOCAL_ASSETS.map(url => {
             return cache.add(url).catch(err => {
               console.warn(`⚠️ Failed to cache ${url}:`, err.message);
-              // Return resolved promise để không block các file khác
               return Promise.resolve();
             });
           })
@@ -80,13 +84,14 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate event - clean up old caches
+// ========== ACTIVATE EVENT ==========
 self.addEventListener('activate', event => {
   console.log('🚀 Service Worker activating...');
   
   event.waitUntil(
     caches.keys()
       .then(cacheNames => {
+        // Xóa cache cũ
         return Promise.all(
           cacheNames
             .filter(name => name !== CACHE_NAME && name !== DYNAMIC_CACHE)
@@ -98,10 +103,260 @@ self.addEventListener('activate', event => {
       })
       .then(() => {
         console.log('✅ Service Worker activated, taking control');
+        
+        // THÊM: Thông báo cho tất cả clients về version mới
+        return clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'NEW_VERSION_AVAILABLE',
+              version: getVersionFromCacheName(CACHE_NAME)
+            });
+          });
+        });
+      })
+      .then(() => {
         return self.clients.claim();
       })
   );
 });
+
+// Helper: Lấy version từ cache name
+function getVersionFromCacheName(cacheName) {
+  const match = cacheName.match(/v([\d\.]+)/);
+  return match ? match[1] : '1.8.7';
+}
+
+// ========== MESSAGE HANDLER ==========
+self.addEventListener('message', event => {
+  console.log('📨 Service Worker received message:', event.data);
+  
+  // Xử lý message từ client
+  if (event.data) {
+    switch (event.data.type) {
+      
+      // Kiểm tra version hiện tại
+      case 'CHECK_VERSION':
+        event.waitUntil(
+          clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({
+                type: 'VERSION_RESPONSE',
+                version: getVersionFromCacheName(CACHE_NAME)
+              });
+            });
+          })
+        );
+        break;
+      
+      // Force update
+      case 'FORCE_UPDATE':
+        console.log('🔄 Force update requested');
+        event.waitUntil(
+          caches.keys().then(cacheNames => {
+            return Promise.all(
+              cacheNames.map(name => caches.delete(name))
+            );
+          }).then(() => {
+            return clients.matchAll().then(clients => {
+              clients.forEach(client => {
+                client.postMessage({
+                  type: 'UPDATE_COMPLETED',
+                  message: 'Cache cleared, ready to reload'
+                });
+              });
+            });
+          })
+        );
+        break;
+      
+      // SHOW_NOTIFICATION từ app
+      case 'SHOW_NOTIFICATION':
+        const article = event.data.article;
+        event.waitUntil(
+          self.registration.showNotification('📚 Bài viết mới từ Bitcoin PeakDip', {
+            body: article.body,
+            icon: '/icons/icon-192x192.png',
+            badge: '/icons/icon-72x72.png',
+            vibrate: [200, 100, 200],
+            data: {
+              url: article.url,
+              articleId: article.id,
+              slug: article.slug,
+              title: article.title,
+              date: article.date
+            },
+            actions: [
+              {
+                action: 'read',
+                title: '📖 Đọc ngay'
+              },
+              {
+                action: 'later',
+                title: '⏰ Đọc sau'
+              }
+            ],
+            tag: `article-${article.id}`,
+            renotify: true,
+            requireInteraction: true
+          })
+        );
+        break;
+      
+      // Kiểm tra bài viết mới
+      case 'CHECK_NEW_ARTICLES':
+        console.log('🔍 Checking for new articles...');
+        // Có thể fetch articles.json ở đây nếu cần
+        break;
+      
+      default:
+        console.log('Unknown message type:', event.data.type);
+    }
+  }
+});
+
+// ========== NOTIFICATION CLICK HANDLER ==========
+self.addEventListener('notificationclick', event => {
+  console.log('🔔 Notification clicked:', event.action);
+  event.notification.close();
+  
+  const action = event.action;
+  const data = event.notification.data;
+  
+  if (action === 'later') {
+    // Lưu vào reading list
+    event.waitUntil(handleSaveForLater(data));
+    return;
+  }
+  
+  if (action === 'read' || action === 'view' || !action) {
+    // Mặc định: đọc ngay
+    const url = data?.url || '/learn/';
+    
+    event.waitUntil(
+      clients.matchAll({ type: 'window' })
+        .then(clientList => {
+          for (const client of clientList) {
+            if (client.url === url && 'focus' in client) {
+              return client.focus();
+            }
+          }
+          return clients.openWindow(url);
+        })
+    );
+  }
+});
+
+// ========== HANDLE SAVE FOR LATER ==========
+async function handleSaveForLater(data) {
+  console.log('💾 Saving for later:', data);
+  
+  // Lưu vào cache
+  const cache = await caches.open('reading-list-queue');
+  await cache.put(
+    'pending-save',
+    new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json' }
+    })
+  );
+  
+  // Thông báo cho tất cả clients
+  const clients = await self.clients.matchAll();
+  clients.forEach(client => {
+    client.postMessage({
+      type: 'SAVE_FOR_LATER',
+      article: {
+        id: data.articleId || data.id,
+        title: data.title,
+        slug: data.slug,
+        date: data.date,
+        url: data.url
+      }
+    });
+  });
+}
+
+// ========== FETCH HANDLER ==========
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+  
+  // Skip chrome-extension requests
+  if (url.protocol === 'chrome-extension:') return;
+  
+  // Skip chrome:// and about://
+  if (url.protocol === 'chrome:' || url.protocol === 'about:') return;
+  
+  // CDN assets - network only, không cache
+  if (CDN_ASSETS.includes(event.request.url)) {
+    event.respondWith(
+      fetch(event.request)
+        .catch(error => {
+          console.warn(`⚠️ CDN fetch failed: ${url.pathname}`, error.message);
+          // Trả về response rỗng hoặc fallback
+          if (url.pathname.includes('font-awesome')) {
+            return new Response('', { 
+              status: 200,
+              headers: { 'Content-Type': 'text/css' }
+            });
+          }
+          if (url.pathname.includes('chart.js')) {
+            return new Response('', { 
+              status: 200,
+              headers: { 'Content-Type': 'application/javascript' }
+            });
+          }
+          return new Response('', { status: 408 });
+        })
+    );
+    return;
+  }
+  
+  // version.json - network first (luôn lấy mới)
+  if (url.pathname.includes('version.json')) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+  
+  // Cache markdown articles với stale-while-revalidate
+  if (url.pathname.includes('/learn/articles/') && url.pathname.endsWith('.md')) {
+    event.respondWith(staleWhileRevalidate(event.request));
+    return;
+  }
+
+  // Cache articles.json với network-first
+  if (url.pathname.includes('/learn/articles.json')) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }  
+  
+  // API/CSV requests - network first
+  if (url.pathname.includes('/data/') || url.pathname.includes('.csv')) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+
+  // HTML pages - stale while revalidate
+  if (url.pathname.endsWith('.html') || url.pathname === '/') {
+    event.respondWith(staleWhileRevalidate(event.request));
+    return;
+  }
+
+  // CSS/JS/Images/Fonts - cache first
+  if (url.pathname.match(/\.(css|js|png|jpg|jpeg|svg|ico|woff2?|ttf)$/)) {
+    event.respondWith(cacheFirst(event.request));
+    return;
+  }
+
+  // Default - network first with cache fallback
+  event.respondWith(
+    fetch(event.request)
+      .catch(() => caches.match(event.request))
+  );
+});
+
+// ========== CACHING STRATEGIES ==========
 
 // Helper: Network first strategy
 function networkFirst(request) {
@@ -194,172 +449,7 @@ function staleWhileRevalidate(request) {
   });
 }
 
-// Fetch event - handle requests
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-  
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-  
-  // Skip chrome-extension requests
-  if (url.protocol === 'chrome-extension:') return;
-  
-  // CDN assets - network only, không cache
-  if (CDN_ASSETS.includes(event.request.url)) {
-    event.respondWith(
-      fetch(event.request)
-        .catch(error => {
-          console.warn(`⚠️ CDN fetch failed: ${url.pathname}`, error.message);
-          // Trả về response rỗng hoặc fallback
-          if (url.pathname.includes('font-awesome')) {
-            return new Response('', { 
-              status: 200,
-              headers: { 'Content-Type': 'text/css' }
-            });
-          }
-          return new Response('', { status: 408 });
-        })
-    );
-    return;
-  }
-  
-  // Cache markdown articles với stale-while-revalidate
-  if (url.pathname.includes('/learn/articles/') && url.pathname.endsWith('.md')) {
-    event.respondWith(staleWhileRevalidate(event.request));
-    return;
-  }
-
-  // Cache articles.json với network-first
-  if (url.pathname.includes('/learn/articles.json')) {
-    event.respondWith(networkFirst(event.request));
-    return;
-  }  
-  
-  // API/CSV requests - network first
-  if (url.pathname.includes('/data/') || url.pathname.includes('.csv')) {
-    event.respondWith(networkFirst(event.request));
-    return;
-  }
-
-  // HTML pages - stale while revalidate
-  if (url.pathname.endsWith('.html') || url.pathname === '/') {
-    event.respondWith(staleWhileRevalidate(event.request));
-    return;
-  }
-
-  // CSS/JS/Images/Fonts - cache first
-  if (url.pathname.match(/\.(css|js|png|jpg|jpeg|svg|ico|woff2?|ttf)$/)) {
-    event.respondWith(cacheFirst(event.request));
-    return;
-  }
-
-  // Default - network first with cache fallback
-  event.respondWith(
-    fetch(event.request)
-      .catch(() => caches.match(event.request))
-  );
-});
-
-// ===== MESSAGE HANDLER CHO NOTIFICATIONS =====
-self.addEventListener('message', event => {
-  console.log('📨 Service Worker received message:', event.data);
-  
-  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
-    const article = event.data.article;
-    
-    event.waitUntil(
-      self.registration.showNotification('📚 Bài viết mới từ Bitcoin PeakDip', {
-        body: article.body,
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
-        vibrate: [200, 100, 200],
-        data: {
-          url: article.url,
-          articleId: article.id,
-          slug: article.slug,
-          title: article.title,
-          date: article.date
-        },
-        actions: [
-          {
-            action: 'read',
-            title: '📖 Đọc ngay'
-          },
-          {
-            action: 'later',
-            title: '⏰ Đọc sau'
-          }
-        ],
-        tag: `article-${article.id}`,
-        renotify: true,
-        requireInteraction: true
-      })
-    );
-  }
-});
-
-// ===== NOTIFICATION CLICK HANDLER =====
-self.addEventListener('notificationclick', event => {
-  console.log('🔔 Notification clicked:', event.action);
-  event.notification.close();
-  
-  const action = event.action;
-  const data = event.notification.data;
-  
-  if (action === 'later') {
-    // Lưu vào reading list
-    event.waitUntil(handleSaveForLater(data));
-    return;
-  }
-  
-  if (action === 'read' || action === 'view' || !action) {
-    // Mặc định: đọc ngay
-    const url = data?.url || '/learn/';
-    
-    event.waitUntil(
-      clients.matchAll({ type: 'window' })
-        .then(clientList => {
-          for (const client of clientList) {
-            if (client.url === url && 'focus' in client) {
-              return client.focus();
-            }
-          }
-          return clients.openWindow(url);
-        })
-    );
-  }
-});
-
-// ===== HANDLE SAVE FOR LATER =====
-async function handleSaveForLater(data) {
-  console.log('💾 Saving for later:', data);
-  
-  // Lưu vào cache
-  const cache = await caches.open('reading-list-queue');
-  await cache.put(
-    'pending-save',
-    new Response(JSON.stringify(data), {
-      headers: { 'Content-Type': 'application/json' }
-    })
-  );
-  
-  // Thông báo cho tất cả clients
-  const clients = await self.clients.matchAll();
-  clients.forEach(client => {
-    client.postMessage({
-      type: 'SAVE_FOR_LATER',
-      article: {
-        id: data.articleId || data.id,
-        title: data.title,
-        slug: data.slug,
-        date: data.date,
-        url: data.url
-      }
-    });
-  });
-}
-
-// Background sync for offline data
+// ========== BACKGROUND SYNC ==========
 self.addEventListener('sync', event => {
   if (event.tag === 'sync-csv-data') {
     console.log('🔄 Background sync triggered');
@@ -367,7 +457,26 @@ self.addEventListener('sync', event => {
   }
 });
 
-// Push notification handling (cho future use)
+// Sync function for CSV data
+async function syncCSVData() {
+  try {
+    const cache = await caches.open(DYNAMIC_CACHE);
+    const keys = await cache.keys();
+    
+    for (const request of keys) {
+      if (request.url.includes('offline-upload')) {
+        const response = await cache.match(request);
+        const data = await response.text();
+        console.log('Syncing offline data:', data);
+        await cache.delete(request);
+      }
+    }
+  } catch (error) {
+    console.error('Background sync failed:', error);
+  }
+}
+
+// ========== PUSH NOTIFICATION HANDLER ==========
 self.addEventListener('push', event => {
   console.log('📨 Push notification received', event);
   
@@ -404,21 +513,31 @@ self.addEventListener('push', event => {
   );
 });
 
-// Sync function for CSV data
-async function syncCSVData() {
+// ========== PERIODIC SYNC (nếu browser hỗ trợ) ==========
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'update-check') {
+    event.waitUntil(checkForUpdates());
+  }
+});
+
+async function checkForUpdates() {
   try {
-    const cache = await caches.open(DYNAMIC_CACHE);
-    const keys = await cache.keys();
+    const response = await fetch('/version.json?t=' + Date.now());
+    const data = await response.json();
+    const currentVersion = getVersionFromCacheName(CACHE_NAME);
     
-    for (const request of keys) {
-      if (request.url.includes('offline-upload')) {
-        const response = await cache.match(request);
-        const data = await response.text();
-        console.log('Syncing offline data:', data);
-        await cache.delete(request);
-      }
+    if (data.version !== currentVersion) {
+      const clients = await self.clients.matchAll();
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'NEW_VERSION_AVAILABLE',
+          version: data.version
+        });
+      });
     }
   } catch (error) {
-    console.error('Background sync failed:', error);
+    console.log('Periodic sync check failed:', error);
   }
 }
+
+console.log('✅ Service Worker v2.0.0 loaded successfully');
