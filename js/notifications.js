@@ -1,15 +1,15 @@
 // notifications.js - Hệ thống thông báo bài viết mới tập trung
-// Version: 2.1.1 - Fixed double notifications
+// Version: 2.1.2 - Fixed double toast messages
 
 const NOTIFICATION_CONFIG = {
-    version: '2.1.1',
-    checkInterval: 3 * 60 * 1000, // 30 phút
+    version: '2.1.2',
+    checkInterval: 30 * 60 * 1000, // 30 phút
     articleMetadataPath: '/learn/articles.json',
     notifiedKey: 'peakdip_notified_articles_v2',
     enabledKey: 'peakdip_notifications_enabled',
     cacheKey: 'peakdip_articles_cache',
     cacheTimeKey: 'peakdip_articles_cache_time',
-    cacheDuration: 24 * 60 * 60 * 1000, // 24 giờ (sửa lại từ 3 phút)
+    cacheDuration: 24 * 60 * 60 * 1000, // 24 giờ
     newArticleDays: 7
 };
 
@@ -22,8 +22,10 @@ class ArticleNotificationSystem {
         this.lastCheckTime = null;
         this.pendingArticles = [];
         
-        // 👇 Flag để tránh double notification
+        // Flag để tránh double notification
         this.isFirstTimeEnable = true;
+        // Debounce cho click events
+        this.clickTimeout = null;
         
         this.init();
     }
@@ -414,7 +416,7 @@ class ArticleNotificationSystem {
         }
     }
 
-    // ===== NÚT BẬT/TẮT THÔNG BÁO =====
+    // ===== NÚT BẬT/TẮT THÔNG BÁO (ĐÃ FIX DOUBLE CLICK) =====
     addNotificationButton(status = 'prompt') {
         if (!document.getElementById('statusIndicator')) {
             setTimeout(() => this.addNotificationButton(status), 500);
@@ -430,10 +432,10 @@ class ArticleNotificationSystem {
         
         if (status === 'enabled') {
             btn.innerHTML = '<i class="fas fa-bell"></i><span>Thông báo BẬT</span>';
-            btn.onclick = () => this.disableNotifications();
+            btn.onclick = (e) => this.handleButtonClick(e, 'disable');
         } else {
             btn.innerHTML = '<i class="fas fa-bell-slash"></i><span>Bật thông báo bài viết mới</span>';
-            btn.onclick = () => this.requestPermission();
+            btn.onclick = (e) => this.handleButtonClick(e, 'enable');
         }
 
         const statusIndicator = document.getElementById('statusIndicator');
@@ -442,8 +444,35 @@ class ArticleNotificationSystem {
         }
     }
 
+    // ===== XỬ LÝ CLICK VỚI DEBOUNCE =====
+    handleButtonClick(e, action) {
+        e.preventDefault();
+        
+        // Debounce: nếu đang có timeout thì không làm gì
+        if (this.clickTimeout) {
+            console.log('⏳ Debounce: bỏ qua click trùng');
+            return;
+        }
+        
+        this.clickTimeout = setTimeout(async () => {
+            if (action === 'enable') {
+                await this.requestPermission();
+            } else if (action === 'disable') {
+                this.disableNotifications();
+            }
+            this.clickTimeout = null;
+        }, 300);
+    }
+
+    // ===== YÊU CẦU QUYỀN (ĐÃ FIX DOUBLE TOAST) =====
     async requestPermission() {
         try {
+            // Kiểm tra nếu đã enabled rồi
+            if (this.isEnabled && Notification.permission === 'granted') {
+                console.log('ℹ️ Notifications already enabled');
+                return;
+            }
+            
             const permission = await Notification.requestPermission();
             
             if (permission === 'granted') {
@@ -453,9 +482,10 @@ class ArticleNotificationSystem {
                 
                 // Gửi test notification
                 this.showTestNotification();
+                
+                // CHỈ hiển thị toast 1 lần
                 this.showToast('✅ Đã bật thông báo bài viết mới', 'success');
                 
-                // 👈 SỬA: Thêm tham số skipNotification = true
                 await this.loadArticles(true, true);
                 
                 this.isFirstTimeEnable = false;
@@ -467,7 +497,14 @@ class ArticleNotificationSystem {
         }
     }
 
+    // ===== TẮT THÔNG BÁO (ĐÃ FIX DOUBLE TOAST) =====
     disableNotifications() {
+        // Kiểm tra nếu đã disabled rồi
+        if (!this.isEnabled) {
+            console.log('ℹ️ Notifications already disabled');
+            return;
+        }
+        
         this.setNotificationStatus(false);
         this.stopPolling();
         this.addNotificationButton('prompt');
@@ -522,8 +559,17 @@ class ArticleNotificationSystem {
         }
     }
 
-    // ===== TOAST NOTIFICATION =====
+    // ===== TOAST NOTIFICATION (ĐÃ FIX DOUBLE TOAST) =====
     showToast(message, type = 'info', duration = 3000) {
+        // Kiểm tra toast trùng nội dung
+        const existingToasts = document.querySelectorAll('.notification-toast');
+        for (let toast of existingToasts) {
+            if (toast.querySelector('span')?.textContent === message) {
+                console.log('⏭️ Toast already showing:', message);
+                return;
+            }
+        }
+
         const oldToast = document.querySelector('.notification-toast');
         if (oldToast) oldToast.remove();
 
