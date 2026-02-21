@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
 // Version: 1.4.0
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.8.4';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.8.4';
+const CACHE_NAME = 'bitcoin-peakdip-v1.8.5';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.8.5';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -306,74 +306,83 @@ async function syncCSVData() {
   }
 }
 
-// Xử lý notification click khi app đang đóng
+// ========== XỬ LÝ NOTIFICATION CLICK ==========
 self.addEventListener('notificationclick', function(event) {
-    console.log('🔔 Notification clicked:', event.action, event.notification.data);
+    console.log('🔔 SW: Notification clicked', event.action);
     
     event.notification.close();
     
-    // Xử lý action buttons
+    // Xử lý action 'later' (đọc sau)
     if (event.action === 'later') {
-        // Lưu vào reading list
-        const articleData = {
-            articleId: event.notification.data.articleId,
-            title: event.notification.data.title,
-            slug: event.notification.data.slug,
-            date: event.notification.data.date,
-            url: event.notification.data.url
-        };
-        
-        console.log('💾 Saving for later:', articleData);
-        
-        event.waitUntil(
-            (async () => {
-                const clients = await self.clients.matchAll({ type: 'window' });
-                
-                if (clients.length > 0) {
-                    // Gửi message đến client đang mở
-                    clients[0].postMessage({
-                        type: 'SAVE_FOR_LATER',
-                        article: articleData
-                    });
-                    
-                    return clients[0].focus();
-                } else {
-                    // Không có client nào mở, lưu tạm vào cache
-                    const cache = await caches.open('reading-list-queue');
-                    await cache.put(
-                        'pending-save',
-                        new Response(JSON.stringify(articleData))
-                    );
-                    
-                    // Mở trang reading list ĐÚNG ĐƯỜNG DẪN
-                    return clients.openWindow('/reading-list.html?pending=true');
-                }
-            })()
-        );
+        event.waitUntil(handleLaterAction(event.notification.data));
         return;
     }
     
-    // Mở URL (mặc định) - xử lý các action khác (read, view, etc.)
-    let urlToOpen = event.notification.data?.url || '/';
+    // Xử lý action 'read' hoặc 'view'
+    let url = event.notification.data?.url;
     
-    // Sửa đường dẫn nếu bị sai
-    if (urlToOpen.includes('/learn/reading-list.html')) {
-        urlToOpen = '/reading-list.html';
+    // Nếu không có URL, thử tạo từ data
+    if (!url && event.notification.data?.slug) {
+        url = `/learn/article.html?id=${event.notification.data.slug}`;
+    } else if (!url && event.notification.data?.articleId) {
+        url = `/learn/article.html?id=${event.notification.data.articleId}`;
+    } else if (!url) {
+        url = '/';
     }
     
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then(function(windowClients) {
-                // Kiểm tra xem đã có window nào mở chưa
-                for (let i = 0; i < windowClients.length; i++) {
-                    const client = windowClients[i];
-                    if (client.url.includes(urlToOpen) && 'focus' in client) {
-                        return client.focus();
-                    }
-                }
-                // Mở tab mới
-                return clients.openWindow(urlToOpen);
-            })
-    );
+    // Sửa đường dẫn reading list nếu sai
+    if (url.includes('/learn/reading-list.html')) {
+        url = url.replace('/learn/reading-list.html', '/reading-list.html');
+    }
+    
+    event.waitUntil(openOrFocusUrl(url));
 });
+
+// Hàm xử lý action 'later'
+async function handleLaterAction(data) {
+    if (!data) return;
+    
+    const articleData = {
+        id: data.articleId || data.id,
+        title: data.title,
+        slug: data.slug,
+        date: data.date,
+        url: data.url
+    };
+    
+    // Kiểm tra clients đang mở
+    const clients = await self.clients.matchAll({ type: 'window' });
+    
+    if (clients.length > 0) {
+        // Gửi message đến client đầu tiên
+        clients[0].postMessage({
+            type: 'SAVE_FOR_LATER',
+            article: articleData
+        });
+        return clients[0].focus();
+    } else {
+        // Không có client, lưu vào cache và mở trang reading list
+        const cache = await caches.open('reading-list-queue');
+        await cache.put(
+            'pending-save',
+            new Response(JSON.stringify(articleData), {
+                headers: { 'Content-Type': 'application/json' }
+            })
+        );
+        return self.clients.openWindow('/reading-list.html?pending=true');
+    }
+}
+
+// Hàm mở hoặc focus URL
+async function openOrFocusUrl(url) {
+    const clients = await self.clients.matchAll({ type: 'window' });
+    
+    for (const client of clients) {
+        if (client.url.includes(url) && 'focus' in client) {
+            return client.focus();
+        }
+    }
+    
+    return self.clients.openWindow(url);
+}
 // <--- HẾT FILE
