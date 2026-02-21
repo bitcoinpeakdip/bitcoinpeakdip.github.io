@@ -627,7 +627,9 @@ class ArticleNotificationSystem {
         .notification-toggle-btn {
             position: fixed;
             bottom: 30px;
-            right: 30px; /* Cố định bên phải */
+            right: 30px; /* Cách mép phải 30px */
+            left: auto !important; /* Ép không bị căn giữa */
+            transform: none !important; /* Bỏ mọi transform */
             background: linear-gradient(135deg, #00d4ff, #f7931a);
             color: white;
             border: none;
@@ -644,13 +646,13 @@ class ArticleNotificationSystem {
             border: 2px solid rgba(255,255,255,0.3);
             transition: all 0.3s ease;
             animation: slideInRight 0.5s ease;
-            /* Đảm bảo không bị lệch */
-            transform: none;
-            left: auto;
+            /* Đảm bảo không bị ảnh hưởng bởi các style khác */
+            margin: 0;
+            top: auto;
         }
 
         .notification-toggle-btn:hover {
-            transform: translateY(-3px);
+            transform: translateY(-3px) !important; /* Chỉ dịch lên khi hover */
             box-shadow: 0 8px 25px rgba(0,212,255,0.6);
             border-color: white;
         }
@@ -664,65 +666,72 @@ class ArticleNotificationSystem {
             font-size: 16px;
         }
 
-        /* Mobile: đưa sát mép phải hơn */
+        /* MOBILE: Sát mép phải hơn nữa */
         @media (max-width: 768px) {
             .notification-toggle-btn {
                 bottom: 20px;
-                right: 15px; /* Sát mép phải hơn */
-                padding: 10px 18px;
+                right: 15px !important; /* Sát mép phải */
+                padding: 0;
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                justify-content: center;
                 box-shadow: 0 4px 15px rgba(0,212,255,0.5);
+                /* Animation đặc biệt cho mobile */
+                animation: slideInRight 0.5s ease, mobileGlow 2s infinite;
             }
             
-            /* Khi chỉ hiện icon trên mobile */
+            /* Ẩn text, chỉ giữ icon */
             .notification-toggle-btn span {
                 display: none;
             }
             
             .notification-toggle-btn i {
-                font-size: 22px; /* Icon to hơn cho dễ bấm */
+                font-size: 24px;
                 margin: 0;
             }
             
-            /* Tăng kích thước vùng bấm */
-            .notification-toggle-btn {
-                width: 50px;
-                height: 50px;
-                padding: 0;
-                justify-content: center;
-                border-radius: 50%; /* Bo tròn hoàn toàn */
-                right: 15px;
-                bottom: 20px;
+            /* Tăng vùng bấm cho dễ dùng */
+            .notification-toggle-btn::after {
+                content: '';
+                position: absolute;
+                top: -10px;
+                right: -10px;
+                bottom: -10px;
+                left: -10px;
+                background: transparent;
             }
             
-            /* Hiệu ứng pulse nhẹ cho mobile */
-            .notification-toggle-btn {
-                animation: slideInRight 0.5s ease, mobilePulse 2s infinite;
-            }
-            
-            @keyframes mobilePulse {
+            @keyframes mobileGlow {
                 0%, 100% {
                     box-shadow: 0 4px 15px rgba(0,212,255,0.5);
                 }
                 50% {
-                    box-shadow: 0 4px 25px rgba(0,212,255,0.8);
+                    box-shadow: 0 4px 25px rgba(0,212,255,0.9);
                 }
             }
         }
 
-        /* Màn hình rất nhỏ (dưới 380px) */
-        @media (max-width: 380px) {
+        /* Màn hình rất nhỏ */
+        @media (max-width: 480px) {
             .notification-toggle-btn {
-                right: 10px;
+                right: 12px !important;
                 bottom: 15px;
-                width: 45px;
-                height: 45px;
+                width: 48px;
+                height: 48px;
             }
             
             .notification-toggle-btn i {
-                font-size: 20px;
+                font-size: 22px;
             }
         }
 
+        /* Đảm bảo không xung đột với status indicator */
+        .status-indicator {
+            z-index: 9998; /* Thấp hơn nút notification */
+        }
+
+        /* Toast message vẫn giữ nguyên giữa */
         .notification-toast {
             position: fixed;
             bottom: 30px;
