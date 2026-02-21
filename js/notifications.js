@@ -3,13 +3,13 @@
 
 const NOTIFICATION_CONFIG = {
     version: '2.1.3',
-    checkInterval: 30 * 60 * 1000, // 30 phút
+    checkInterval: 3 * 60 * 1000, // 30 phút
     articleMetadataPath: '/learn/articles.json',
     notifiedKey: 'peakdip_notified_articles_v2',
     enabledKey: 'peakdip_notifications_enabled',
     cacheKey: 'peakdip_articles_cache',
     cacheTimeKey: 'peakdip_articles_cache_time',
-    cacheDuration: 24 * 60 * 60 * 1000, // 24 giờ
+    cacheDuration: 1 * 60 * 60 * 1000, // 24 giờ
     newArticleDays: 7
 };
 
