@@ -624,12 +624,17 @@ class ArticleNotificationSystem {
     const style = document.createElement('style');
     style.id = 'notification-styles';
     style.textContent = `
+        /* ===== NÚT BẬT/TẮT THÔNG BÁO ===== */
         .notification-toggle-btn {
+            /* Vị trí - GÓC PHẢI DƯỚI CÙNG */
             position: fixed;
             bottom: 30px;
-            right: 30px; /* Cách mép phải 30px */
-            left: auto !important; /* Ép không bị căn giữa */
-            transform: none !important; /* Bỏ mọi transform */
+            right: 30px;
+            left: auto !important;
+            top: auto !important;
+            transform: none !important;
+            
+            /* Style */
             background: linear-gradient(135deg, #00d4ff, #f7931a);
             color: white;
             border: none;
@@ -646,27 +651,38 @@ class ArticleNotificationSystem {
             border: 2px solid rgba(255,255,255,0.3);
             transition: all 0.3s ease;
             animation: slideInRight 0.5s ease;
-            /* Đảm bảo không bị ảnh hưởng bởi các style khác */
+            
+            /* Đảm bảo không bị ảnh hưởng bởi style khác */
             margin: 0;
-            top: auto;
+            width: auto;
+            height: auto;
+            pointer-events: auto;
         }
 
+        /* Hover effect */
         .notification-toggle-btn:hover {
-            transform: translateY(-3px) !important; /* Chỉ dịch lên khi hover */
+            transform: translateY(-3px) !important;
             box-shadow: 0 8px 25px rgba(0,212,255,0.6);
             border-color: white;
         }
 
+        /* Khi đã bật */
         .notification-toggle-btn.enabled {
             background: linear-gradient(135deg, #4CAF50, #45a049);
             box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
         }
 
+        .notification-toggle-btn.enabled:hover {
+            background: linear-gradient(135deg, #45a049, #3d8b40);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        /* Icon */
         .notification-toggle-btn i {
             font-size: 16px;
         }
 
-        /* MOBILE: Sát mép phải hơn nữa */
+        /* ===== MOBILE: SÁT MÉP PHẢI HƠN ===== */
         @media (max-width: 768px) {
             .notification-toggle-btn {
                 bottom: 20px;
@@ -677,21 +693,21 @@ class ArticleNotificationSystem {
                 border-radius: 50%;
                 justify-content: center;
                 box-shadow: 0 4px 15px rgba(0,212,255,0.5);
-                /* Animation đặc biệt cho mobile */
-                animation: slideInRight 0.5s ease, mobileGlow 2s infinite;
+                animation: slideInRight 0.5s ease, mobilePulse 2s infinite;
             }
             
-            /* Ẩn text, chỉ giữ icon */
+            /* Ẩn text trên mobile */
             .notification-toggle-btn span {
                 display: none;
             }
             
+            /* Icon to hơn dễ bấm */
             .notification-toggle-btn i {
                 font-size: 24px;
                 margin: 0;
             }
             
-            /* Tăng vùng bấm cho dễ dùng */
+            /* Mở rộng vùng bấm cho dễ dùng */
             .notification-toggle-btn::after {
                 content: '';
                 position: absolute;
@@ -700,9 +716,11 @@ class ArticleNotificationSystem {
                 bottom: -10px;
                 left: -10px;
                 background: transparent;
+                border-radius: 50%;
             }
             
-            @keyframes mobileGlow {
+            /* Animation pulse cho mobile */
+            @keyframes mobilePulse {
                 0%, 100% {
                     box-shadow: 0 4px 15px rgba(0,212,255,0.5);
                 }
@@ -712,7 +730,7 @@ class ArticleNotificationSystem {
             }
         }
 
-        /* Màn hình rất nhỏ */
+        /* Màn hình rất nhỏ (dưới 380px) */
         @media (max-width: 480px) {
             .notification-toggle-btn {
                 right: 12px !important;
@@ -724,17 +742,99 @@ class ArticleNotificationSystem {
             .notification-toggle-btn i {
                 font-size: 22px;
             }
+            
+            .notification-toggle-btn::after {
+                top: -8px;
+                right: -8px;
+                bottom: -8px;
+                left: -8px;
+            }
         }
 
-        /* Đảm bảo không xung đột với status indicator */
+        /* ===== STATUS INDICATOR - GIỮ NGUYÊN Ở GIỮA ===== */
         .status-indicator {
-            z-index: 9998; /* Thấp hơn nút notification */
-        }
-
-        /* Toast message vẫn giữ nguyên giữa */
-        .notification-toast {
             position: fixed;
             bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 9998; /* Thấp hơn nút notification */
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 50px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            pointer-events: none; /* Không bắt sự kiện click */
+        }
+
+        .status-indicator.hidden {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-50%) translateY(20px);
+        }
+
+        .status-light {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            animation: statusPulse 4s infinite alternate;
+        }
+
+        .status-peak {
+            background: var(--wave-peak, #ff2e63);
+        }
+
+        .status-dip {
+            background: var(--wave-trough, #00d4ff);
+        }
+
+        .status-text {
+            font-size: 1.2em;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transition: all 1s ease;
+            color: white;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% {
+                box-shadow: 0 0 10px currentColor;
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 20px currentColor;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Responsive cho status indicator */
+        @media (max-width: 768px) {
+            .status-indicator {
+                padding: 12px 20px;
+                bottom: 20px;
+                max-width: 90%;
+            }
+            
+            .status-text {
+                font-size: 1em;
+                letter-spacing: 1px;
+            }
+            
+            .status-light {
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        /* ===== TOAST MESSAGE - GIỮA DƯỚI ===== */
+        .notification-toast {
+            position: fixed;
+            bottom: 100px; /* Trên nút notification */
             left: 50%;
             transform: translateX(-50%) translateY(100%);
             background: linear-gradient(135deg, #00d4ff, #0088cc);
@@ -751,6 +851,7 @@ class ArticleNotificationSystem {
             max-width: 90%;
             font-weight: 500;
             pointer-events: none;
+            text-align: center;
         }
 
         .notification-toast.show {
@@ -769,6 +870,28 @@ class ArticleNotificationSystem {
             background: linear-gradient(135deg, #f44336, #d32f2f);
         }
 
+        .toast-info {
+            background: linear-gradient(135deg, #00d4ff, #0088cc);
+        }
+
+        /* Responsive cho toast */
+        @media (max-width: 768px) {
+            .notification-toast {
+                bottom: 90px;
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .notification-toast {
+                bottom: 80px;
+                padding: 8px 16px;
+                font-size: 0.85em;
+            }
+        }
+
+        /* ===== ANIMATIONS ===== */
         @keyframes slideInRight {
             from {
                 transform: translateX(100%);
@@ -778,6 +901,32 @@ class ArticleNotificationSystem {
                 transform: translateX(0);
                 opacity: 1;
             }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translate(-50%, 100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+        }
+
+        /* Đảm bảo không xung đột */
+        .status-indicator,
+        .notification-toggle-btn,
+        .notification-toast {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
     `;
 
