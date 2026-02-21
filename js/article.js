@@ -1,8 +1,8 @@
 // article.js - Xử lý markdown và hiển thị bài viết
-// Version: 1.5.0
+// Version: 1.5.1 - Loại bỏ push notifications trùng lặp
 
 const ARTICLE_CONFIG = {
-    version: '1.5.0',
+    version: '1.5.1',
     articlesPath: '/learn/articles/',
     metadataPath: '/learn/articles.json',
     cacheKey: 'peakdip_articles',
@@ -13,6 +13,7 @@ const ARTICLE_CONFIG = {
 
 // ========== MARKDOWN CONVERTER ==========
 class MarkdownConverter {
+    // ... giữ nguyên code converter ...
     static convert(markdown) {
         // Xử lý headings
         let html = markdown
@@ -65,6 +66,7 @@ class MarkdownConverter {
 
 // ========== ARTICLE MANAGER ==========
 class ArticleManager {
+    // ... giữ nguyên code ArticleManager ...
     constructor() {
         this.articles = [];
         this.currentArticle = null;
@@ -169,64 +171,15 @@ class ArticleManager {
         });
         
         if (newArticles.length > 0) {
-            this.notifyNewArticles(newArticles);
-        }
-    }
-    
-    // Thông báo bài viết mới
-    notifyNewArticles(newArticles) {
-        if (!('Notification' in window) || Notification.permission !== 'granted') return;
-        
-        newArticles.forEach(article => {
-            // Đánh dấu đã thông báo
-            this.notifiedArticles.push(article.id);
+            // ❌ KHÔNG gửi notification ở đây nữa - để notifications.js xử lý
+            console.log('📢 New articles detected (handled by notifications.js):', newArticles);
             
-            // Tạo notification
-            const notification = new Notification('📚 New Article from Bitcoin PeakDip', {
-                body: `${article.title}\n${article.reading_time} min read • ${article.level}`,
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
-                tag: `article-${article.id}`,
-                renotify: true,
-                data: {
-                    url: `/learn/article.html?id=${article.slug}`,  // Cái này đúng
-                    articleId: article.id,
-                    title: article.title,
-                    slug: article.slug,
-                    date: article.date
-                },
-                actions: [
-                    { action: 'read', title: 'Read Now' },
-                    { action: 'later', title: 'Read Later' }
-                ]
+            // Chỉ đánh dấu đã thông báo
+            newArticles.forEach(article => {
+                this.notifiedArticles.push(article.id);
             });
-            
-            notification.onclick = function(event) {
-                event.preventDefault();
-                window.focus();
-                
-                if (event.action === 'read') {
-                    window.location.href = event.target.data.url;
-                } else if (event.action === 'later') {
-                    // Lưu vào danh sách đọc sau
-                    const readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
-                    readingList.push({
-                        id: article.id,
-                        title: article.title,
-                        url: event.target.data.url,
-                        added: new Date().toISOString()
-                    });
-                    localStorage.setItem('reading_list', JSON.stringify(readingList));
-                    
-                    // Hiển thị thông báo nhỏ
-                    showToast('Added to reading list', 'info');
-                } else {
-                    window.location.href = event.target.data.url;
-                }
-            };
-        });
-        
-        this.saveNotifiedArticles();
+            this.saveNotifiedArticles();
+        }
     }
     
     // Tải nội dung bài viết
@@ -314,300 +267,11 @@ function showToast(message, type = 'info', duration = 3000) {
     }, duration);
 }
 
-// ========== PUSH NOTIFICATION SIMPLE (POLLING) ==========
-class ArticlePushSimple {
-    constructor() {
-        this.checkInterval = 3 * 60 * 1000; // 30 phút kiểm tra 1 lần
-        this.lastCheckKey = 'article_last_check';
-        this.savedArticlesKey = 'article_saved_ids';
-        this.init();
-    }
-    
-    init() {
-        // Kiểm tra browser có hỗ trợ notification không
-        if (!('Notification' in window)) {
-            console.log('❌ Browser không hỗ trợ notifications');
-            return;
-        }
-        
-        console.log('📢 Article Push System (Simple) initialized');
-        
-        // Nếu đã cấp quyền thì bắt đầu polling
-        if (Notification.permission === 'granted') {
-            this.startPolling();
-            this.addNotificationButton('enabled');
-        } 
-        // Nếu chưa hỏi thì thêm nút
-        else if (Notification.permission !== 'denied') {
-            this.addNotificationButton();
-        }
-    }
-    
-    // Thêm nút bật/tắt notification
-    addNotificationButton(status = 'prompt') {
-        // Chờ DOM load xong
-        if (!document.getElementById('statusIndicator')) {
-            setTimeout(() => this.addNotificationButton(status), 500);
-            return;
-        }
-        
-        // Xóa nút cũ nếu có
-        const oldBtn = document.querySelector('.push-simple-btn');
-        if (oldBtn) oldBtn.remove();
-        
-        // Tạo nút mới
-        const btn = document.createElement('button');
-        btn.className = `push-simple-btn ${status}`;
-        
-        if (status === 'enabled') {
-            btn.innerHTML = '<i class="fas fa-bell"></i><span>Notifications ON</span>';
-            btn.onclick = () => this.disableNotifications();
-        } else {
-            btn.innerHTML = '<i class="fas fa-bell-slash"></i><span>Enable Notifications</span>';
-            btn.onclick = () => this.requestPermission();
-        }
-        
-        // Thêm vào status indicator
-        const statusIndicator = document.getElementById('statusIndicator');
-        statusIndicator.appendChild(btn);
-    }
-    
-    // Xin quyền thông báo
-    async requestPermission() {
-        try {
-            const permission = await Notification.requestPermission();
-            
-            if (permission === 'granted') {
-                console.log('✅ Notification permission granted');
-                this.startPolling();
-                this.addNotificationButton('enabled');
-                this.showTestNotification();
-                
-                // Lưu trạng thái
-                localStorage.setItem('notifications_enabled', 'true');
-            } else {
-                console.log('❌ Notification permission denied');
-                showToast('Please enable notifications to get article updates', 'warning');
-            }
-        } catch (error) {
-            console.error('Error requesting permission:', error);
-        }
-    }
-    
-    // Tắt notifications
-    disableNotifications() {
-        localStorage.setItem('notifications_enabled', 'false');
-        this.addNotificationButton('prompt');
-        showToast('Notifications disabled', 'info');
-    }
-    
-    // Bắt đầu kiểm tra định kỳ
-    startPolling() {
-        console.log('🔄 Starting article polling (every 30 minutes)');
-        
-        // Kiểm tra ngay lập tức
-        this.checkForNewArticles();
-        
-        // Lặp lại mỗi 30 phút
-        setInterval(() => {
-            console.log('🔄 Polling: Checking for new articles...');
-            this.checkForNewArticles();
-        }, this.checkInterval);
-    }
-    
-    // Kiểm tra bài viết mới
-    async checkForNewArticles() {
-        try {
-            // Fetch articles.json mới nhất (thêm timestamp để tránh cache)
-            const response = await fetch(`/learn/articles.json?t=${Date.now()}`);
-            if (!response.ok) throw new Error('Failed to fetch articles');
-            
-            const data = await response.json();
-            
-            // Lấy danh sách bài viết đã lưu
-            const savedArticles = this.getSavedArticles();
-            
-            // Lấy thời gian kiểm tra lần cuối
-            const lastCheck = this.getLastCheckTime();
-            
-            console.log(`📊 Last check: ${new Date(lastCheck).toLocaleString()}`);
-            console.log(`📚 Total articles: ${data.articles.length}`);
-            
-            // Tìm bài viết mới (trong 7 ngày qua)
-            const newArticles = data.articles.filter(article => {
-                // Nếu đã lưu rồi thì bỏ qua
-                if (savedArticles.includes(article.id)) return false;
-                
-                const articleDate = new Date(article.date).getTime();
-                const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-                
-                // Bài viết phải mới hơn 7 ngày
-                return articleDate > sevenDaysAgo;
-            });
-            
-            if (newArticles.length > 0) {
-                console.log(`🎉 Found ${newArticles.length} new articles!`);
-                this.showNotifications(newArticles);
-                this.saveArticles(data.articles.map(a => a.id));
-            } else {
-                console.log('📭 No new articles found');
-            }
-            
-            // Cập nhật thời gian kiểm tra
-            this.updateLastCheckTime();
-            
-        } catch (error) {
-            console.error('❌ Error checking articles:', error);
-        }
-    }
-    
-    // Hiển thị notifications
-    showNotifications(articles) {
-        if (Notification.permission !== 'granted') return;
-        
-        if (articles.length === 1) {
-            // 1 bài viết mới
-            const article = articles[0];
-            const notification = new Notification('📚 Bitcoin PeakDip: New Article', {
-                body: `${article.title}\n⏱️ ${article.reading_time} min read • ${article.level}`,
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
-                tag: `article-${article.id}`,
-                renotify: true,
-                requireInteraction: true,
-                data: {
-                    url: `/learn/article.html?id=${article.slug}`,
-                    articleId: article.id
-                },
-                actions: [
-                    { action: 'read', title: '📖 Read Now' },
-                    { action: 'later', title: '⏰ Read Later' }
-                ]
-            });
-            
-            notification.onclick = (event) => {
-                event.preventDefault();
-                window.focus();
-                
-                if (event.action === 'read') {
-                    window.location.href = event.target.data.url;
-                } else if (event.action === 'later') {
-                    this.saveForLater(article);
-                } else {
-                    window.location.href = event.target.data.url;
-                }
-            };
-            
-        } else {
-            // Nhiều bài viết mới
-            const notification = new Notification(`📚 Bitcoin PeakDip: ${articles.length} New Articles`, {
-                body: articles.map(a => `• ${a.title}`).join('\n').substring(0, 150) + '...',
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
-                tag: 'multiple-articles',
-                data: {
-                    url: '/learn/'
-                },
-                actions: [
-                    { action: 'view', title: '👀 View All' }
-                ]
-            });
-            
-            notification.onclick = (event) => {
-                event.preventDefault();
-                window.focus();
-                window.location.href = '/learn/';
-            };
-        }
-    }
-    
-    // Lưu để đọc sau
-    // Trong class ArticlePushSimple
-    saveForLater(article) {
-        // Sử dụng ReadingListManager đã được tạo
-        if (window.readingList) {
-            // Đảm bảo article có đủ thông tin
-            const articleData = {
-                id: article.id,
-                title: article.title,
-                slug: article.slug,
-                url: article.url || `/learn/article.html?id=${article.slug}`,
-                date: article.date || new Date().toISOString().split('T')[0]
-            };
-            
-            // Thêm vào reading list
-            window.readingList.add(articleData);
-            
-        } else {
-            // Fallback nếu readingList chưa được load
-            console.warn('readingList not available, using fallback');
-            
-            const readingList = JSON.parse(localStorage.getItem('reading_list') || '[]');
-            const exists = readingList.some(item => item.id === article.id);
-            
-            if (!exists) {
-                readingList.push({
-                    id: article.id,
-                    title: article.title,
-                    url: `/learn/article.html?id=${article.slug}`,
-                    savedAt: new Date().toISOString(),
-                    publishedDate: article.date || new Date().toISOString().split('T')[0]
-                });
-                
-                localStorage.setItem('reading_list', JSON.stringify(readingList));
-                
-                // Cập nhật badge thủ công
-                if (typeof updateReadingListBadge === 'function') {
-                    updateReadingListBadge();
-                }
-                
-                // Hiển thị toast
-                if (typeof showToast === 'function') {
-                    showToast('✅ Added to reading list (fallback)', 'success');
-                }
-            }
-        }
-    }
-    
-    // Lấy danh sách bài viết đã lưu
-    getSavedArticles() {
-        try {
-            return JSON.parse(localStorage.getItem(this.savedArticlesKey) || '[]');
-        } catch {
-            return [];
-        }
-    }
-    
-    // Lưu danh sách bài viết
-    saveArticles(articleIds) {
-        localStorage.setItem(this.savedArticlesKey, JSON.stringify(articleIds));
-    }
-    
-    // Lấy thời gian kiểm tra lần cuối
-    getLastCheckTime() {
-        return parseInt(localStorage.getItem(this.lastCheckKey) || '0');
-    }
-    
-    // Cập nhật thời gian kiểm tra
-    updateLastCheckTime() {
-        localStorage.setItem(this.lastCheckKey, Date.now().toString());
-    }
-    
-    // Gửi notification test
-    showTestNotification() {
-        new Notification('✅ Notifications Enabled', {
-            body: 'You will be notified when new articles are published',
-            icon: '/icons/icon-192x192.png',
-            silent: false,
-            tag: 'test-notification'
-        });
-    }
-}
-
 // ========== INITIALIZATION ==========
 const articleManager = new ArticleManager();
-// THÊM DÒNG NÀY
-const articlePush = new ArticlePushSimple(); // Khởi tạo push notifications
+
+// ❌ ĐÃ XÓA: const articlePush = new ArticlePushSimple();
+
 // Request notification permission
 async function requestNotificationPermission() {
     if (!('Notification' in window)) {
@@ -892,6 +556,7 @@ document.head.appendChild(articleStyle);
 
 // ========== READING LIST BADGE MANAGEMENT ==========
 class ReadingListManager {
+    // ... giữ nguyên code ReadingListManager ...
     constructor() {
         this.badgeElement = null;
         this.mobileBadgeElement = null;
@@ -1063,15 +728,17 @@ class ReadingListManager {
 // Khởi tạo ReadingListManager
 const readingListManager = new ReadingListManager();
 
-// Ghi đè hàm saveForLater trong ArticlePushSimple
-ArticlePushSimple.prototype.saveForLater = function(article) {
-    readingListManager.addToReadingList({
-        id: article.id,
-        title: article.title,
-        slug: article.slug,
-        date: article.date
-    });
-};
+// Ghi đè hàm saveForLater trong ArticlePushSimple (nếu có)
+if (typeof ArticlePushSimple !== 'undefined') {
+    ArticlePushSimple.prototype.saveForLater = function(article) {
+        readingListManager.addToReadingList({
+            id: article.id,
+            title: article.title,
+            slug: article.slug,
+            date: article.date
+        });
+    };
+}
 
 // Thêm hàm global để sử dụng từ service worker
 window.addToReadingListFromNotification = function(articleData) {
