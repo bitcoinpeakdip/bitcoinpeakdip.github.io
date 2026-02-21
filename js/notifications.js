@@ -416,7 +416,7 @@ class ArticleNotificationSystem {
         }
     }
 
-    // ===== NÚT BẬT/TẮT THÔNG BÁO (ĐÃ SỬA LỖI CHÍNH TẢ) =====
+    // ===== NÚT BẬT/TẮT THÔNG BÁO (ĐÃ SỬA VỊ TRÍ SANG GÓC PHẢI) =====
     addNotificationButton(status = 'prompt') {
         if (!document.getElementById('statusIndicator')) {
             setTimeout(() => this.addNotificationButton(status), 500);
@@ -439,10 +439,8 @@ class ArticleNotificationSystem {
             btn.onclick = (e) => this.handleButtonClick(e, 'enable');
         }
 
-        const statusIndicator = document.getElementById('statusIndicator');
-        if (statusIndicator) {
-            statusIndicator.appendChild(btn);
-        }
+        // THAY ĐỔI: Append trực tiếp vào body thay vì statusIndicator
+        document.body.appendChild(btn);
     }
 
     // ===== XỬ LÝ CLICK VỚI DEBOUNCE =====
@@ -617,14 +615,14 @@ class ArticleNotificationSystem {
     }
 }
 
-// ===== CSS CHO NOTIFICATION =====
+// ===== CSS CHO NOTIFICATION - ĐÃ SỬA VỊ TRÍ SANG GÓC PHẢI =====
 (function addNotificationStyles() {
     if (document.getElementById('notification-styles')) return;
 
     const style = document.createElement('style');
     style.id = 'notification-styles';
     style.textContent = `
-        /* ===== NÚT BẬT/TẮT THÔNG BÁO ===== */
+        /* ===== NÚT BẬT/TẮT THÔNG BÁO - GÓC PHẢI ===== */
         .notification-toggle-btn {
             /* Vị trí - GÓC PHẢI DƯỚI CÙNG */
             position: fixed;
@@ -686,7 +684,7 @@ class ArticleNotificationSystem {
         @media (max-width: 768px) {
             .notification-toggle-btn {
                 bottom: 20px;
-                right: 15px !important; /* Sát mép phải */
+                right: 15px !important;
                 padding: 0;
                 width: 52px;
                 height: 52px;
@@ -730,7 +728,7 @@ class ArticleNotificationSystem {
             }
         }
 
-        /* Màn hình rất nhỏ (dưới 380px) */
+        /* Màn hình rất nhỏ (dưới 480px) */
         @media (max-width: 480px) {
             .notification-toggle-btn {
                 right: 12px !important;
@@ -760,7 +758,7 @@ class ArticleNotificationSystem {
             display: flex;
             align-items: center;
             gap: 20px;
-            z-index: 9998; /* Thấp hơn nút notification */
+            z-index: 9998;
             background: rgba(0, 0, 0, 0.7);
             padding: 15px 30px;
             border-radius: 50px;
@@ -768,7 +766,7 @@ class ArticleNotificationSystem {
             border: 1px solid rgba(255, 255, 255, 0.2);
             transition: all 0.5s ease;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            pointer-events: none; /* Không bắt sự kiện click */
+            pointer-events: none;
         }
 
         .status-indicator.hidden {
@@ -834,7 +832,7 @@ class ArticleNotificationSystem {
         /* ===== TOAST MESSAGE - GIỮA DƯỚI ===== */
         .notification-toast {
             position: fixed;
-            bottom: 100px; /* Trên nút notification */
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%) translateY(100%);
             background: linear-gradient(135deg, #00d4ff, #0088cc);
@@ -911,13 +909,6 @@ class ArticleNotificationSystem {
             to {
                 transform: translate(-50%, 0);
                 opacity: 1;
-            }
-        }
-
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                transform: translate(-50%, 20px);
             }
         }
 

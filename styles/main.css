@@ -2236,64 +2236,10 @@ footer {
 
 /* Push Notification Simple Button */
 .push-simple-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 50px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 9999;
-    box-shadow: 0 4px 15px rgba(0,212,255,0.3);
-    border: 2px solid rgba(255,255,255,0.2);
-    transition: all 0.3s ease;
-    animation: slideInRight 0.5s ease;
+    display: none; 
 }
 
-.push-simple-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,212,255,0.5);
-    border-color: white;
-}
 
-.push-simple-btn.enabled {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
-}
-
-.push-simple-btn i {
-    font-size: 16px;
-}
-
-.push-simple-btn span {
-    font-size: 14px;
-}
-
-/* Mobile responsive */
-@media (max-width: 768px) {
-    .push-simple-btn {
-        bottom: 10px;
-        right: 10px;
-        padding: 10px 15px;
-        border-radius: 40px;
-    }
-    
-    .push-simple-btn span {
-        display: none;
-    }
-    
-    .push-simple-btn i {
-        font-size: 20px;
-        margin: 0;
-    }
-}
 
 @keyframes slideInRight {
     from {

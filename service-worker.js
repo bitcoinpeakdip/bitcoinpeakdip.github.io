@@ -1,8 +1,8 @@
 // Bitcoin PeakDip Service Worker
 // Version: 2.0.0 - Có thông báo cập nhật phiên bản mới
 
-const CACHE_NAME = 'bitcoin-peakdip-v1.9.8';
-const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.9.8';
+const CACHE_NAME = 'bitcoin-peakdip-v1.9.9';
+const DYNAMIC_CACHE = 'bitcoin-peakdip-dynamic-v1.9.9';
 
 // Local assets - có thể cache
 const LOCAL_ASSETS = [
