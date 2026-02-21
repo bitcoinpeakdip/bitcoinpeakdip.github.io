@@ -1,19 +1,18 @@
 // article.js - Xử lý markdown và hiển thị bài viết
-// Version: 1.5.1 - Loại bỏ push notifications trùng lặp
+// Version: 1.5.3 - Cleaned up, removed all notification code
 
 const ARTICLE_CONFIG = {
-    version: '1.5.1',
+    version: '1.5.3',
     articlesPath: '/learn/articles/',
     metadataPath: '/learn/articles.json',
     cacheKey: 'peakdip_articles',
     cacheTimeKey: 'peakdip_articles_time',
-    cacheDuration: 3600000, // 1 giờ
-    notificationKey: 'peakdip_notified_articles'
+    cacheDuration: 3600000 // 1 giờ
+    // ✅ Đã xóa notificationKey
 };
 
 // ========== MARKDOWN CONVERTER ==========
 class MarkdownConverter {
-    // ... giữ nguyên code converter ...
     static convert(markdown) {
         // Xử lý headings
         let html = markdown
@@ -66,28 +65,11 @@ class MarkdownConverter {
 
 // ========== ARTICLE MANAGER ==========
 class ArticleManager {
-    // ... giữ nguyên code ArticleManager ...
     constructor() {
         this.articles = [];
         this.currentArticle = null;
         this.lastCheck = null;
-        this.notifiedArticles = this.getNotifiedArticles();
-    }
-    
-    // Lấy danh sách bài viết đã thông báo
-    getNotifiedArticles() {
-        try {
-            const stored = localStorage.getItem(ARTICLE_CONFIG.notificationKey);
-            return stored ? JSON.parse(stored) : [];
-        } catch (e) {
-            return [];
-        }
-    }
-    
-    // Lưu bài viết đã thông báo
-    saveNotifiedArticles() {
-        localStorage.setItem(ARTICLE_CONFIG.notificationKey, 
-            JSON.stringify(this.notifiedArticles));
+        // ✅ Đã xóa notifiedArticles
     }
     
     // Tải metadata articles
@@ -112,8 +94,7 @@ class ArticleManager {
             // Lưu cache
             this.saveToCache();
             
-            // Kiểm tra bài viết mới
-            this.checkNewArticles();
+            // ✅ Đã xóa checkNewArticles() - để notifications.js xử lý
             
             return this.articles;
         } catch (error) {
@@ -152,34 +133,6 @@ class ArticleManager {
         
         const age = Date.now() - parseInt(cacheTime);
         return age > ARTICLE_CONFIG.cacheDuration;
-    }
-    
-    // Kiểm tra bài viết mới
-    checkNewArticles() {
-        if (!this.articles || this.articles.length === 0) return;
-        
-        const newArticles = this.articles.filter(article => {
-            // Chưa được thông báo
-            if (this.notifiedArticles.includes(article.id)) return false;
-            
-            // Bài viết trong 7 ngày qua
-            const articleDate = new Date(article.date);
-            const weekAgo = new Date();
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            
-            return articleDate >= weekAgo;
-        });
-        
-        if (newArticles.length > 0) {
-            // ❌ KHÔNG gửi notification ở đây nữa - để notifications.js xử lý
-            console.log('📢 New articles detected (handled by notifications.js):', newArticles);
-            
-            // Chỉ đánh dấu đã thông báo
-            newArticles.forEach(article => {
-                this.notifiedArticles.push(article.id);
-            });
-            this.saveNotifiedArticles();
-        }
     }
     
     // Tải nội dung bài viết
@@ -239,7 +192,7 @@ class ArticleManager {
         container.innerHTML = html;
     }
     
-    // Kiểm tra bài viết mới (dưới 3 ngày)
+    // Kiểm tra bài viết mới (dưới 3 ngày) - chỉ để hiển thị badge NEW
     isNewArticle(article) {
         const articleDate = new Date(article.date);
         const threeDaysAgo = new Date();
@@ -248,8 +201,14 @@ class ArticleManager {
     }
 }
 
-// ========== TOAST NOTIFICATION ==========
+// ========== TOAST NOTIFICATION (CHỈ DÙNG KHI CẦN, ƯU TIÊN TỪ NOTIFICATIONS.JS) ==========
 function showToast(message, type = 'info', duration = 3000) {
+    // Kiểm tra xem notifications.js đã có toast chưa
+    if (document.querySelector('.notification-toast')) {
+        // Nếu đã có, không tạo thêm
+        return;
+    }
+    
     const toast = document.createElement('div');
     toast.className = `toast-notification toast-${type}`;
     toast.innerHTML = `
@@ -267,39 +226,24 @@ function showToast(message, type = 'info', duration = 3000) {
     }, duration);
 }
 
+// Export hàm toast ra global (nếu notifications.js chưa có)
+if (typeof window.showToast !== 'function') {
+    window.showToast = showToast;
+}
+
 // ========== INITIALIZATION ==========
 const articleManager = new ArticleManager();
 
-// ❌ ĐÃ XÓA: const articlePush = new ArticlePushSimple();
-
-// Request notification permission
-async function requestNotificationPermission() {
-    if (!('Notification' in window)) {
-        console.log('This browser does not support notifications');
-        return;
-    }
-    
-    if (Notification.permission === 'granted') {
-        return;
-    }
-    
-    if (Notification.permission !== 'denied') {
-        const permission = await Notification.requestPermission();
-        console.log('Notification permission:', permission);
-    }
-}
+// ✅ Đã xóa requestNotificationPermission và ArticlePushSimple
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('📚 Article System v' + ARTICLE_CONFIG.version);
     
-    // Request notification permission
-    requestNotificationPermission();
-    
     // Load articles
     await articleManager.loadArticles();
     
-    // Check periodically for new articles (every 30 minutes)
+    // Check periodically for new articles (every 30 minutes) - chỉ để cập nhật cache
     setInterval(async () => {
         await articleManager.loadArticles();
     }, 3 * 60 * 1000);
@@ -366,6 +310,53 @@ async function loadArticlePage() {
     
     // Add table of contents
     addTableOfContents();
+}
+
+// Add reading progress bar
+function addReadingProgress() {
+    const progressBar = document.createElement('div');
+    progressBar.className = 'reading-progress';
+    progressBar.innerHTML = '<div class="progress-bar" id="readingProgress"></div>';
+    document.body.appendChild(progressBar);
+    
+    window.addEventListener('scroll', function() {
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        
+        const progress = document.getElementById('readingProgress');
+        if (progress) {
+            progress.style.width = scrolled + '%';
+        }
+    });
+}
+
+// Add table of contents
+function addTableOfContents() {
+    if (!document.querySelector('.learn-article')) return;
+    
+    const headings = document.querySelectorAll('.article-content h2, .article-content h3');
+    if (headings.length < 3) return;
+    
+    const toc = document.createElement('div');
+    toc.className = 'table-of-contents';
+    toc.innerHTML = '<h3><i class="fas fa-list"></i> Contents</h3><ul></ul>';
+    
+    const tocList = toc.querySelector('ul');
+    
+    headings.forEach((heading, index) => {
+        if (!heading.id) {
+            heading.id = `section-${index}`;
+        }
+        
+        const li = document.createElement('li');
+        li.className = heading.tagName === 'H2' ? 'toc-h2' : 'toc-h3';
+        li.innerHTML = `<a href="#${heading.id}">${heading.textContent}</a>`;
+        tocList.appendChild(li);
+    });
+    
+    const article = document.querySelector('.learn-article');
+    article.insertBefore(toc, article.querySelector('.article-content'));
 }
 
 // Add styles
@@ -538,6 +529,61 @@ articleStyle.textContent = `
         color: inherit;
     }
     
+    .reading-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 1001;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(to right, var(--wave-trough), var(--wave-peak));
+        width: 0%;
+        transition: width 0.1s ease;
+    }
+    
+    .table-of-contents {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .table-of-contents h3 {
+        color: var(--wave-trough);
+        margin-bottom: 15px;
+    }
+    
+    .table-of-contents ul {
+        list-style: none;
+        padding-left: 0;
+    }
+    
+    .table-of-contents li {
+        margin-bottom: 8px;
+    }
+    
+    .table-of-contents a {
+        color: var(--text-glow);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .table-of-contents a:hover {
+        color: var(--wave-trough);
+        padding-left: 5px;
+    }
+    
+    .toc-h3 {
+        padding-left: 20px;
+        font-size: 0.95em;
+    }
+    
     @keyframes pulse {
         0%, 100% {
             transform: scale(1);
@@ -548,15 +594,30 @@ articleStyle.textContent = `
             box-shadow: 0 0 20px currentColor;
         }
     }
+    
+    @keyframes slideUp {
+        from {
+            transform: translate(-50%, 100%);
+            opacity: 0;
+        }
+        to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes fadeOut {
+        to {
+            opacity: 0;
+            transform: translate(-50%, 20px);
+        }
+    }
 `;
 
 document.head.appendChild(articleStyle);
 
-// Thêm vào cuối file article.js, trước dòng cuối cùng
-
 // ========== READING LIST BADGE MANAGEMENT ==========
 class ReadingListManager {
-    // ... giữ nguyên code ReadingListManager ...
     constructor() {
         this.badgeElement = null;
         this.mobileBadgeElement = null;
@@ -682,63 +743,17 @@ class ReadingListManager {
     }
     
     showToast(message, type = 'info') {
-        // Kiểm tra hàm showToast đã tồn tại
+        // Sử dụng hàm showToast chung
         if (typeof window.showToast === 'function') {
             window.showToast(message, type);
-            return;
         }
-        
-        // Tạo toast tạm thời
-        const toast = document.createElement('div');
-        toast.className = `toast-notification toast-${type}`;
-        toast.innerHTML = `
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-        `;
-        
-        // Style cho toast
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, ${type === 'success' ? '#4CAF50' : '#00d4ff'}, ${type === 'success' ? '#45a049' : '#0088cc'});
-            color: white;
-            padding: 12px 25px;
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 10000;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            border: 2px solid white;
-            animation: slideUp 0.3s ease;
-            max-width: 90%;
-        `;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.animation = 'fadeOut 0.3s ease forwards';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
     }
 }
 
 // Khởi tạo ReadingListManager
 const readingListManager = new ReadingListManager();
 
-// Ghi đè hàm saveForLater trong ArticlePushSimple (nếu có)
-if (typeof ArticlePushSimple !== 'undefined') {
-    ArticlePushSimple.prototype.saveForLater = function(article) {
-        readingListManager.addToReadingList({
-            id: article.id,
-            title: article.title,
-            slug: article.slug,
-            date: article.date
-        });
-    };
-}
+// ✅ Đã xóa ghi đè ArticlePushSimple (vì class không còn tồn tại)
 
 // Thêm hàm global để sử dụng từ service worker
 window.addToReadingListFromNotification = function(articleData) {
