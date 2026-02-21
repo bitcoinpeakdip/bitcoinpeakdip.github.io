@@ -1,10 +1,10 @@
-// reading-list.js - Version 1.0.0
+// reading-list.js - Version 1.0.1
 // Quản lý reading list tập trung cho Bitcoin PeakDip
-// Tạo ngày: 2026-02-19
+// Đã đồng bộ toast với notifications.js
 
 const READING_LIST = {
     KEY: 'reading_list',
-    VERSION: '1.0.0',
+    VERSION: '1.0.1',
     
     /**
      * Lấy tất cả bài viết trong reading list
@@ -389,19 +389,26 @@ const READING_LIST = {
     },
     
     /**
-     * Hiển thị toast notification
+     * Hiển thị toast notification - ĐÃ ĐỒNG BỘ VỚI NOTIFICATIONS.JS
      * @param {string} message - Nội dung
      * @param {string} type - Loại: success, info, warning, error
      */
     showToast(message, type = 'info') {
-        // Kiểm tra xem đã có toast container chưa
-        let toast = document.querySelector('.toast-notification');
-        if (toast) toast.remove();
+        // Ưu tiên dùng toast từ notifications.js nếu có
+        if (window.articleNotifications && typeof window.articleNotifications.showToast === 'function') {
+            window.articleNotifications.showToast(message, type);
+            return;
+        }
         
-        toast = document.createElement('div');
-        toast.className = `toast-notification toast-${type}`;
+        // Fallback nếu không có notifications.js
+        // Xóa toast cũ
+        const oldToast = document.querySelector('.notification-toast, .toast-notification');
+        if (oldToast) oldToast.remove();
         
-        // Icon tương ứng
+        const toast = document.createElement('div');
+        // Dùng class .notification-toast để đồng bộ với notifications.js
+        toast.className = `notification-toast toast-${type}`;
+        
         const icons = {
             success: 'fa-check-circle',
             info: 'fa-info-circle',
@@ -414,40 +421,21 @@ const READING_LIST = {
             <span>${message}</span>
         `;
         
-        // Style cho toast
-        const colors = {
-            success: ['#4CAF50', '#45a049'],
-            info: ['#00d4ff', '#0088cc'],
-            warning: ['#ff9800', '#f57c00'],
-            error: ['#f44336', '#d32f2f']
-        };
+        document.body.appendChild(toast);
         
-        const [color1, color2] = colors[type] || colors.info;
+        // Animation hiện
+        setTimeout(() => toast.classList.add('show'), 10);
         
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, ${color1}, ${color2});
-            color: white;
-            padding: 12px 25px;
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 10000;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            border: 2px solid white;
-            animation: slideUp 0.3s ease;
-            max-width: 90%;
-            font-weight: 500;
-        `;
+        // Tự động ẩn sau 3 giây
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
         
-        // Thêm animation keyframes nếu chưa có
-        if (!document.querySelector('#toast-keyframes')) {
+        // Thêm keyframes nếu chưa có
+        if (!document.querySelector('#toast-keyframes-fallback')) {
             const keyframes = document.createElement('style');
-            keyframes.id = 'toast-keyframes';
+            keyframes.id = 'toast-keyframes-fallback';
             keyframes.textContent = `
                 @keyframes slideUp {
                     from {
@@ -465,20 +453,44 @@ const READING_LIST = {
                         transform: translate(-50%, 20px);
                     }
                 }
-                .toast-notification.fade-out {
+                .notification-toast {
+                    position: fixed;
+                    bottom: 30px;
+                    left: 50%;
+                    transform: translateX(-50%) translateY(100%);
+                    background: linear-gradient(135deg, #00d4ff, #0088cc);
+                    color: white;
+                    padding: 12px 25px;
+                    border-radius: 50px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    z-index: 10000;
+                    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+                    border: 2px solid white;
+                    transition: transform 0.3s ease;
+                    max-width: 90%;
+                    font-weight: 500;
+                    pointer-events: none;
+                }
+                .notification-toast.show {
+                    transform: translateX(-50%) translateY(0);
+                }
+                .notification-toast.toast-success {
+                    background: linear-gradient(135deg, #4CAF50, #45a049);
+                }
+                .notification-toast.toast-warning {
+                    background: linear-gradient(135deg, #ff9800, #f57c00);
+                }
+                .notification-toast.toast-error {
+                    background: linear-gradient(135deg, #f44336, #d32f2f);
+                }
+                .notification-toast.fade-out {
                     animation: fadeOut 0.3s ease forwards;
                 }
             `;
             document.head.appendChild(keyframes);
         }
-        
-        document.body.appendChild(toast);
-        
-        // Tự động ẩn sau 3 giây
-        setTimeout(() => {
-            toast.classList.add('fade-out');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
     }
 };
 

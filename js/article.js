@@ -9,7 +9,8 @@ const ARTICLE_CONFIG = {
     cacheTimeKey: 'peakdip_articles_time',
     cacheDuration: 3600000 // 1 giờ
 };
-
+// TẮT HOÀN TOÀN TÍNH NĂNG NOTIFICATION
+window.NOTIFICATIONS_DISABLED = true;
 // ========== MARKDOWN CONVERTER ==========
 class MarkdownConverter {
     static convert(markdown) {

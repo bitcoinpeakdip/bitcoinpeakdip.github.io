@@ -1,8 +1,8 @@
 // notifications.js - Hệ thống thông báo bài viết mới tập trung
-// Version: 2.1.2 - Fixed double toast messages
+// Version: 2.1.3 - Tối ưu: Chỉ toast khi lỗi, nút thay đổi text
 
 const NOTIFICATION_CONFIG = {
-    version: '2.1.2',
+    version: '2.1.3',
     checkInterval: 30 * 60 * 1000, // 30 phút
     articleMetadataPath: '/learn/articles.json',
     notifiedKey: 'peakdip_notified_articles_v2',
@@ -416,7 +416,7 @@ class ArticleNotificationSystem {
         }
     }
 
-    // ===== NÚT BẬT/TẮT THÔNG BÁO (ĐÃ FIX DOUBLE CLICK) =====
+    // ===== NÚT BẬT/TẮT THÔNG BÁO (ĐÃ SỬA LỖI CHÍNH TẢ) =====
     addNotificationButton(status = 'prompt') {
         if (!document.getElementById('statusIndicator')) {
             setTimeout(() => this.addNotificationButton(status), 500);
@@ -431,6 +431,7 @@ class ArticleNotificationSystem {
         btn.className = `notification-toggle-btn ${status}`;
         
         if (status === 'enabled') {
+            // ĐÃ SỬA: "BẠT" → "BẬT"
             btn.innerHTML = '<i class="fas fa-bell"></i><span>Thông báo BẬT</span>';
             btn.onclick = (e) => this.handleButtonClick(e, 'disable');
         } else {
@@ -448,7 +449,6 @@ class ArticleNotificationSystem {
     handleButtonClick(e, action) {
         e.preventDefault();
         
-        // Debounce: nếu đang có timeout thì không làm gì
         if (this.clickTimeout) {
             console.log('⏳ Debounce: bỏ qua click trùng');
             return;
@@ -464,10 +464,9 @@ class ArticleNotificationSystem {
         }, 300);
     }
 
-    // ===== YÊU CẦU QUYỀN (ĐÃ FIX DOUBLE TOAST) =====
+    // ===== YÊU CẦU QUYỀN (ĐÃ TỐI ƯU: CHỈ TOAST KHI LỖI) =====
     async requestPermission() {
         try {
-            // Kiểm tra nếu đã enabled rồi
             if (this.isEnabled && Notification.permission === 'granted') {
                 console.log('ℹ️ Notifications already enabled');
                 return;
@@ -480,16 +479,15 @@ class ArticleNotificationSystem {
                 this.addNotificationButton('enabled');
                 this.startPolling();
                 
-                // Gửi test notification
                 this.showTestNotification();
                 
-                // CHỈ hiển thị toast 1 lần
-                this.showToast('✅ Đã bật thông báo bài viết mới', 'success');
+                // ✅ BỎ TOAST - chỉ log console
+                console.log('✅ Đã bật thông báo bài viết mới');
                 
                 await this.loadArticles(true, true);
-                
                 this.isFirstTimeEnable = false;
             } else {
+                // ✅ CHỈ TOAST KHI TỪ CHỐI QUYỀN
                 this.showToast('❌ Cần bật thông báo để nhận bài viết mới', 'warning');
             }
         } catch (error) {
@@ -497,9 +495,8 @@ class ArticleNotificationSystem {
         }
     }
 
-    // ===== TẮT THÔNG BÁO (ĐÃ FIX DOUBLE TOAST) =====
+    // ===== TẮT THÔNG BÁO (ĐÃ TỐI ƯU: CHỈ TOAST KHI LỖI) =====
     disableNotifications() {
-        // Kiểm tra nếu đã disabled rồi
         if (!this.isEnabled) {
             console.log('ℹ️ Notifications already disabled');
             return;
@@ -508,7 +505,9 @@ class ArticleNotificationSystem {
         this.setNotificationStatus(false);
         this.stopPolling();
         this.addNotificationButton('prompt');
-        this.showToast('🔕 Đã tắt thông báo bài viết mới', 'info');
+        
+        // ✅ BỎ TOAST - chỉ log console
+        console.log('🔕 Đã tắt thông báo bài viết mới');
     }
 
     // ===== POLLING =====
@@ -559,7 +558,7 @@ class ArticleNotificationSystem {
         }
     }
 
-    // ===== TOAST NOTIFICATION (ĐÃ FIX DOUBLE TOAST) =====
+    // ===== TOAST NOTIFICATION (CHỈ DÙNG KHI CÓ LỖI) =====
     showToast(message, type = 'info', duration = 3000) {
         // Kiểm tra toast trùng nội dung
         const existingToasts = document.querySelectorAll('.notification-toast');
