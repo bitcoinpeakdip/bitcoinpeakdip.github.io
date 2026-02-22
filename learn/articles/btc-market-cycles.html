@@ -2,619 +2,718 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Hành Trình Các ATH Của Bitcoin Qua Các Chu Kỳ - Bitcoin PeakDip</title>
     <meta name="description" content="Tổng quan chi tiết về hành trình các ATH của Bitcoin qua 4 chu kỳ: 2013, 2017, 2021, 2024 và dự báo 2025. Phân tích thời gian sau halving và đặc điểm nổi bật.">
     
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
-        /* Reset và biến màu */
-        :root {
-            --wave-peak: #ff2e63;
-            --wave-trough: #00d4ff;
-            --wave-mid: #f7931a;
-            --text-glow: rgba(255, 255, 255, 0.9);
-            --bg-dark: #050811;
-        }
-
+        /* RESET & biến màu nhất quán */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        :root {
+            --wave-peak: #ff2e63;
+            --wave-trough: #00d4ff;
+            --wave-mid: #f7931a;
+            --text-light: rgba(255, 255, 255, 0.92);
+            --text-glow: rgba(255, 255, 255, 0.85);
+            --bg-dark: #050811;
+            --card-bg: rgba(10, 15, 25, 0.7);
+            --border-glow: rgba(0, 212, 255, 0.25);
+            --sidebar-width: 280px;
+            --header-font: clamp(1.8rem, 5vw, 2.5rem);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             background: var(--bg-dark);
             color: #fff;
-            line-height: 1.6;
-            padding: 20px;
+            line-height: 1.5;
             min-height: 100vh;
-            background-image: 
-                radial-gradient(circle at 20% 30%, rgba(0, 212, 255, 0.05) 0%, transparent 30%),
-                radial-gradient(circle at 80% 70%, rgba(255, 46, 99, 0.05) 0%, transparent 30%);
+            background-image: radial-gradient(circle at 10% 20%, rgba(0,212,255,0.06) 0%, transparent 35%),
+                              radial-gradient(circle at 90% 80%, rgba(255,46,99,0.06) 0%, transparent 40%);
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Container chính */
-        .article-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Header */
-        .article-header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 30px;
-            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
-        }
-
-        .article-header h1 {
-            font-size: 2.5em;
-            background: linear-gradient(135deg, var(--wave-trough), var(--wave-peak));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 15px;
-            line-height: 1.3;
-        }
-
-        .article-meta {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            color: var(--text-glow);
-            font-size: 1.1em;
-            flex-wrap: wrap;
-        }
-
-        .article-meta span {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .article-meta i {
-            color: var(--wave-trough);
-        }
-
-        /* Nội dung chính */
-        .article-content {
-            color: var(--text-glow);
-        }
-
-        /* Headings */
-        .article-content h2 {
-            color: white;
-            font-size: 2em;
-            margin: 50px 0 25px;
-            border-left: 4px solid var(--wave-trough);
-            padding-left: 20px;
-        }
-
-        .article-content h3 {
-            color: var(--wave-trough);
-            font-size: 1.5em;
-            margin: 30px 0 20px;
-        }
-
-        /* Paragraphs */
-        .article-content p {
-            margin-bottom: 20px;
-            font-size: 1.1em;
-        }
-
-        /* Table styles */
-        .table-responsive {
-            overflow-x: auto;
-            margin: 30px 0;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .ath-table {
+        /* progress bar cố định */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            border-collapse: collapse;
-            background: rgba(0, 0, 0, 0.3);
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            z-index: 1000;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--wave-trough), var(--wave-peak));
+            width: 0%;
+            transition: width 0.1s linear;
         }
 
-        .ath-table th {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(247, 147, 26, 0.2));
-            color: white;
-            font-weight: bold;
-            padding: 15px;
-            text-align: left;
-            font-size: 1em;
-            border-bottom: 2px solid var(--wave-trough);
-        }
-
-        .ath-table td {
-            padding: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-glow);
-        }
-
-        .ath-table tr:hover {
-            background: rgba(0, 212, 255, 0.05);
-        }
-
-        .ath-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .ath-table td:first-child {
-            font-weight: bold;
-            color: var(--wave-trough);
-        }
-
-        /* Chart container cho mermaid */
-        .chart-container {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 30px;
-            margin: 40px 0;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Info boxes */
-        .insight-box {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(247, 147, 26, 0.1));
-            border-left: 4px solid var(--wave-trough);
-            padding: 25px;
-            border-radius: 0 15px 15px 0;
-            margin: 30px 0;
-        }
-
-        .insight-box h4 {
-            color: white;
-            margin-bottom: 15px;
+        /* layout chính: flex chuyển xuống dưới mobile */
+        .article-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 16px;
             display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .insight-box h4 i {
-            color: var(--wave-trough);
-        }
-
-        .insight-box ul {
-            list-style: none;
-        }
-
-        .insight-box li {
-            margin-bottom: 10px;
-            padding-left: 25px;
+            gap: 24px;
+            align-items: flex-start;
             position: relative;
         }
 
-        .insight-box li:before {
-            content: "📈";
-            position: absolute;
-            left: 0;
+        .main-content {
+            flex: 1;
+            min-width: 0; /* tràn tránh flex overflow */
+        }
+
+        /* sidebar sticky + mục lục */
+        .article-sidebar {
+            width: var(--sidebar-width);
+            flex-shrink: 0;
+            position: sticky;
+            top: 90px;
+            align-self: flex-start;
+        }
+
+        /* container bài viết */
+        .article-container {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 32px;
+            padding: clamp(24px, 5vw, 40px);
+            box-shadow: 0 25px 45px -10px rgba(0,0,0,0.6);
+        }
+
+        /* khung toc */
+        .toc-container {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 24px 18px;
+            box-shadow: 0 15px 30px -8px rgba(0,0,0,0.5);
+        }
+
+        .toc-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-glow);
+        }
+        .toc-header i {
+            font-size: 1.6rem;
+            color: var(--wave-trough);
+        }
+        .toc-header h3 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .toc-list {
+            list-style: none;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--wave-trough) rgba(255,255,255,0.05);
+        }
+        .toc-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .toc-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+        .toc-list::-webkit-scrollbar-thumb {
+            background: var(--wave-trough);
+            border-radius: 8px;
+        }
+
+        .toc-item {
+            margin-bottom: 6px;
+        }
+        .toc-link {
+            display: block;
+            padding: 8px 14px 8px 16px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.95rem;
+            border-radius: 12px;
+            border-left: 3px solid transparent;
+            transition: all 0.25s ease;
+        }
+        .toc-link:hover {
+            background: rgba(0,212,255,0.15);
+            color: white;
+            border-left-color: var(--wave-trough);
+            padding-left: 22px;
+        }
+        .toc-link.active {
+            background: rgba(0,212,255,0.2);
+            color: white;
+            border-left-color: var(--wave-trough);
+            font-weight: 500;
+        }
+        .toc-h2 { font-weight: 600; }
+        .toc-h3 { padding-left: 32px; font-size: 0.88rem; opacity: 0.9; }
+
+        .toc-progress {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-glow);
+            margin-bottom: 8px;
+        }
+        .progress-bar-container {
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--wave-trough), var(--wave-peak));
+            width: 0%;
+        }
+
+        /* action buttons */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            background: rgba(0,212,255,0.1);
+            border: 1px solid var(--wave-trough);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.3rem;
+            transition: 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        .action-btn:hover {
+            background: var(--wave-trough);
+            color: #000;
+            transform: scale(1.08);
+        }
+
+        /* header */
+        .article-header {
+            text-align: center;
+            margin-bottom: 36px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid var(--border-glow);
+        }
+        .article-header h1 {
+            font-size: var(--header-font);
+            background: linear-gradient(130deg, var(--wave-trough), var(--wave-peak));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 16px;
+            line-height: 1.3;
+            font-weight: 700;
+        }
+        .article-meta {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            flex-wrap: wrap;
+        }
+        .article-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .article-meta i {
+            color: var(--wave-trough);
+            width: 18px;
+        }
+
+        /* nội dung bài viết */
+        .article-content {
+            color: var(--text-light);
+        }
+        .article-content h2 {
+            font-size: clamp(1.6rem, 4vw, 2rem);
+            color: white;
+            margin: 48px 0 24px;
+            border-left: 5px solid var(--wave-trough);
+            padding-left: 20px;
+            scroll-margin-top: 90px;
+            font-weight: 600;
+        }
+        .article-content h3 {
+            font-size: clamp(1.3rem, 3.5vw, 1.6rem);
+            color: var(--wave-trough);
+            margin: 32px 0 20px;
+            scroll-margin-top: 90px;
+            font-weight: 500;
+        }
+        .article-content p {
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+
+        /* bảng */
+        .table-responsive {
+            overflow-x: auto;
+            margin: 30px 0;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.25);
+        }
+        .ath-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+        .ath-table th {
+            background: rgba(0,212,255,0.2);
+            color: white;
+            font-weight: 600;
+            padding: 16px 12px;
+            border-bottom: 2px solid var(--wave-trough);
+        }
+        .ath-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .ath-table tr:hover td {
+            background: rgba(0,212,255,0.05);
+        }
+        .ath-table td:first-child {
+            font-weight: 600;
             color: var(--wave-trough);
         }
 
-        /* Stats cards */
+        /* chart bars */
+        .chart-container {
+            background: rgba(0,0,0,0.3);
+            border-radius: 24px;
+            padding: 24px;
+            margin: 36px 0;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .bar-chart {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 20px 10px;
+            min-height: 220px;
+            margin: 30px 0 20px;
+        }
+        .bar-item {
+            text-align: center;
+            width: 80px;
+            max-width: 90px;
+            flex: 0 0 auto;
+        }
+        .bar {
+            width: 48px;
+            margin: 0 auto;
+            background: linear-gradient(0deg, var(--wave-trough), var(--wave-peak));
+            border-radius: 16px 16px 4px 4px;
+            position: relative;
+            transition: 0.2s;
+            min-height: 4px; /* đảm bảo luôn thấy */
+        }
+        .bar-value {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            color: white;
+        }
+        .bar-label {
+            margin-top: 12px;
+            font-weight: 500;
+            color: white;
+        }
+
+        /* stats cards */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
             margin: 40px 0;
         }
-
         .stat-card {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 20px;
+            background: var(--card-bg);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 20px 12px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: 0.2s;
         }
-
         .stat-card:hover {
-            transform: translateY(-5px);
             border-color: var(--wave-trough);
-            box-shadow: 0 10px 20px rgba(0, 212, 255, 0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -10px rgba(0,212,255,0.3);
         }
-
         .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            background: linear-gradient(135deg, var(--wave-trough), var(--wave-peak));
+            font-size: clamp(1.6rem, 4vw, 2.2rem);
+            font-weight: 700;
+            background: linear-gradient(130deg, var(--wave-trough), var(--wave-peak));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             line-height: 1.2;
         }
-
         .stat-label {
             color: var(--text-glow);
-            font-size: 1em;
-            margin-top: 10px;
-        }
-
-        .stat-label i {
-            color: var(--wave-mid);
-            margin-right: 5px;
-        }
-
-        /* Footer */
-        .article-footer {
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            margin-top: 8px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .insight-box {
+            background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(247,147,26,0.08));
+            border-left: 5px solid var(--wave-trough);
+            padding: 24px;
+            border-radius: 0 20px 20px 0;
+            margin: 30px 0;
+        }
+        .insight-box h4 {
+            color: white;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+            font-size: 1.2rem;
+        }
+        .insight-box ul {
+            list-style: none;
+        }
+        .insight-box li {
+            margin-bottom: 10px;
+            padding-left: 26px;
+            position: relative;
+        }
+        .insight-box li::before {
+            content: "📈";
+            position: absolute;
+            left: 0;
+            top: 0;
         }
 
         .tags {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
+            margin: 40px 0 30px;
         }
-
         .tag {
-            background: rgba(0, 212, 255, 0.1);
+            background: rgba(0,212,255,0.1);
             border: 1px solid var(--wave-trough);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            transition: 0.2s;
         }
-
+        .tag:hover {
+            background: var(--wave-trough);
+            color: black;
+            cursor: default;
+        }
         .back-link {
-            color: white;
-            text-decoration: none;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 25px;
-            transition: all 0.3s ease;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.15);
+            margin-top: 16px;
         }
-
         .back-link:hover {
             background: var(--wave-trough);
             color: black;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .article-container {
-                padding: 25px;
-            }
-
-            .article-header h1 {
-                font-size: 1.8em;
-            }
-
-            .article-meta {
-                gap: 15px;
-                font-size: 0.9em;
-            }
-
-            .ath-table th, .ath-table td {
-                padding: 10px;
-                font-size: 0.9em;
-            }
-
+        /* ===== RESPONSIVE BREAKPOINTS ===== */
+        @media screen and (max-width: 1100px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
 
-        @media (max-width: 480px) {
-            .article-container {
-                padding: 15px;
+        @media screen and (max-width: 900px) {
+            .article-wrapper {
+                flex-direction: column;
+                padding: 16px 12px;
             }
+            .article-sidebar {
+                width: 100%;
+                position: static;
+                margin-bottom: 24px;
+            }
+            .toc-list {
+                max-height: 50vh;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 5px;
+            }
+            .toc-item {
+                margin-bottom: 0;
+            }
+            .toc-h3 {
+                padding-left: 25px;
+            }
+        }
 
+        @media screen and (max-width: 600px) {
+            .article-container {
+                padding: 20px 16px;
+                border-radius: 24px;
+            }
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-
-            .article-header h1 {
-                font-size: 1.5em;
+            .bar-chart {
+                gap: 8px;
+            }
+            .bar-item {
+                width: 65px;
+            }
+            .bar {
+                width: 38px;
+            }
+            .bar-value {
+                font-size: 0.75rem;
+                top: -20px;
+                padding: 2px 4px;
+            }
+            .article-meta {
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            .toc-list {
+                grid-template-columns: 1fr;
             }
         }
 
-        /* Loading indicator cho mermaid */
-        .mermaid-loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-glow);
+        @media screen and (max-width: 380px) {
+            .bar-item {
+                width: 55px;
+            }
+            .bar {
+                width: 30px;
+            }
         }
 
-        .mermaid-loading i {
-            color: var(--wave-trough);
-            margin-right: 10px;
+        /* hỗ trợ màn hình nhỏ */
+        .back-link i {
+            font-size: 1rem;
         }
     </style>
 </head>
 <body>
-    <div class="article-container">
-        <!-- Header -->
-        <header class="article-header">
-            <h1>📊 Hành Trình Các ATH Của Bitcoin Qua Các Chu Kỳ</h1>
-            <div class="article-meta">
-                <span><i class="fas fa-calendar-alt"></i> 22/02/2026</span>
-                <span><i class="fas fa-clock"></i> 8 phút đọc</span>
-                <span><i class="fas fa-signal"></i> Trung cấp</span>
-                <span><i class="fas fa-user"></i> Bitcoin PeakDip</span>
-            </div>
-        </header>
+    <div class="reading-progress"><div class="progress-bar" id="readingProgress"></div></div>
 
-        <!-- Content -->
-        <div class="article-content">
-            <!-- Tổng quan -->
-            <section>
-                <h2>📌 Tổng Quan</h2>
-                <p>Bitcoin đã trải qua <strong>4 chu kỳ tăng giá chính</strong>, mỗi chu kỳ đều thiết lập những mốc ATH (All-Time High) mới, phản ánh sự trưởng thành và thay đổi cấu trúc của thị trường tiền điện tử. Từ mức đỉnh khiêm tốn $1,127 năm 2013 đến cột mốc lịch sử 6 con số $124,128 năm 2025, hành trình của Bitcoin là minh chứng cho sự chấp nhận ngày càng rộng rãi của tài sản kỹ thuật số.</p>
-            </section>
-
-            <!-- Bảng các mốc ATH -->
-            <section>
-                <h2>🏆 Các Mốc ATH Quan Trọng</h2>
-                <div class="table-responsive">
-                    <table class="ath-table">
-                        <thead>
-                            <tr>
-                                <th>Chu Kỳ</th>
-                                <th>Ngày</th>
-                                <th>Giá ATH</th>
-                                <th>Thời Gian Sau Halving</th>
-                                <th>Đặc Điểm Nổi Bật</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>2013</strong></td>
-                                <td>30/11/2013</td>
-                                <td><span style="color: var(--wave-peak);">~$1,127</span></td>
-                                <td>368 ngày</td>
-                                <td>Chu kỳ đầu tiên, thu hút giới truyền thông và nhà đầu tư mạo hiểm</td>
-                            </tr>
-                            <tr>
-                                <td><strong>2017</strong></td>
-                                <td>16/12/2017</td>
-                                <td><span style="color: var(--wave-peak);">~$19,665</span></td>
-                                <td>525 ngày</td>
-                                <td>Cơn sốt ICO, nhà đầu tư bán lẻ tham gia ồ ạt</td>
-                            </tr>
-                            <tr>
-                                <td><strong>2021</strong></td>
-                                <td>10/11/2021</td>
-                                <td><span style="color: var(--wave-peak);">~$69,000</span></td>
-                                <td>549 ngày</td>
-                                <td>Sự tham gia của các định chế tài chính (Tesla, MicroStrategy)</td>
-                            </tr>
-                            <tr>
-                                <td><strong>2024</strong></td>
-                                <td>14/03/2024</td>
-                                <td><span style="color: var(--wave-peak);">~$73,581</span></td>
-                                <td><span style="color: var(--wave-trough);">*Trước halving</span></td>
-                                <td><strong>ATH đầu tiên trước halving</strong> nhờ làn sóng ETF</td>
-                            </tr>
-                            <tr>
-                                <td><strong>2025</strong></td>
-                                <td>14/08/2025</td>
-                                <td><span style="color: var(--wave-peak); font-weight: bold;">~$124,128</span></td>
-                                <td>481 ngày</td>
-                                <td>Kỷ nguyên ETF, dòng vốn tổ chức, mốc 6 con số</td>
-                            </tr>
-                        </tbody>
-                    </table>
+    <div class="article-wrapper">
+        <!-- Main content -->
+        <main class="main-content">
+            <div class="article-container">
+                <!-- Action buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn" onclick="saveToReadingList()" title="Lưu vào danh sách"><i class="fas fa-bookmark"></i></button>
+                    <button class="action-btn" onclick="shareArticle()" title="Chia sẻ"><i class="fas fa-share-alt"></i></button>
                 </div>
-            </section>
 
-            <!-- Xu hướng qua các chu kỳ -->
-            <section>
-                <h2>📈 Xu Hướng Qua Các Chu Kỳ</h2>
-                
-                <div class="chart-container">
-                    <h3 style="margin-top: 0;">Thời Gian Từ Halving Đến ATH</h3>
-                    
-                    <!-- Sử dụng div để hiển thị biểu đồ dạng text thay vì mermaid (do không phải lúc nào cũng render được) -->
-                    <div style="background: rgba(0,0,0,0.5); padding: 30px; border-radius: 15px; margin-top: 20px;">
-                        <div style="display: flex; justify-content: space-around; align-items: flex-end; height: 250px;">
-                            <!-- 2013: 368 ngày -->
-                            <div style="text-align: center; width: 80px;">
-                                <div style="height: 147px; width: 50px; background: linear-gradient(to top, var(--wave-trough), var(--wave-mid)); margin: 0 auto; border-radius: 10px 10px 0 0; position: relative;">
-                                    <span style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); color: white; font-weight: bold;">368</span>
-                                </div>
-                                <span style="color: white; margin-top: 10px; display: block;">2013</span>
-                            </div>
-                            
-                            <!-- 2017: 525 ngày -->
-                            <div style="text-align: center; width: 80px;">
-                                <div style="height: 210px; width: 50px; background: linear-gradient(to top, var(--wave-trough), var(--wave-mid)); margin: 0 auto; border-radius: 10px 10px 0 0; position: relative;">
-                                    <span style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); color: white; font-weight: bold;">525</span>
-                                </div>
-                                <span style="color: white; margin-top: 10px; display: block;">2017</span>
-                            </div>
-                            
-                            <!-- 2021: 549 ngày -->
-                            <div style="text-align: center; width: 80px;">
-                                <div style="height: 220px; width: 50px; background: linear-gradient(to top, var(--wave-trough), var(--wave-peak)); margin: 0 auto; border-radius: 10px 10px 0 0; position: relative;">
-                                    <span style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); color: white; font-weight: bold;">549</span>
-                                </div>
-                                <span style="color: white; margin-top: 10px; display: block;">2021</span>
-                            </div>
-                            
-                            <!-- 2025: 481 ngày -->
-                            <div style="text-align: center; width: 80px;">
-                                <div style="height: 192px; width: 50px; background: linear-gradient(to top, var(--wave-peak), #ff6b00); margin: 0 auto; border-radius: 10px 10px 0 0; position: relative;">
-                                    <span style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); color: white; font-weight: bold;">481</span>
-                                </div>
-                                <span style="color: white; margin-top: 10px; display: block;">2025</span>
-                            </div>
+                <!-- Header -->
+                <header class="article-header">
+                    <h1>📊 Hành Trình Các ATH Của Bitcoin Qua Các Chu Kỳ</h1>
+                    <div class="article-meta">
+                        <span><i class="fas fa-calendar-alt"></i> 22/02/2026</span>
+                        <span><i class="fas fa-clock"></i> 8 phút đọc</span>
+                        <span><i class="fas fa-signal"></i> Trung cấp</span>
+                        <span><i class="fas fa-user"></i> Bitcoin PeakDip</span>
+                    </div>
+                </header>
+
+                <!-- Nội dung bài viết -->
+                <div class="article-content">
+                    <section id="tong-quan">
+                        <h2>📌 Tổng Quan</h2>
+                        <p>Bitcoin đã trải qua <strong>4 chu kỳ tăng giá chính</strong>, mỗi chu kỳ đều thiết lập những mốc ATH (All-Time High) mới, phản ánh sự trưởng thành và thay đổi cấu trúc của thị trường tiền điện tử. Từ mức đỉnh khiêm tốn $1,127 năm 2013 đến cột mốc lịch sử 6 con số $124,128 năm 2025, hành trình của Bitcoin là minh chứng cho sự chấp nhận ngày càng rộng rãi của tài sản kỹ thuật số.</p>
+                    </section>
+
+                    <section id="cac-moc-ath">
+                        <h2>🏆 Các Mốc ATH Quan Trọng</h2>
+                        <div class="table-responsive">
+                            <table class="ath-table">
+                                <thead><tr><th>Chu Kỳ</th><th>Ngày</th><th>Giá ATH</th><th>Thời Gian Sau Halving</th><th>Đặc Điểm Nổi Bật</th></tr></thead>
+                                <tbody>
+                                    <tr><td>2013</td><td>30/11/2013</td><td><span style="color:var(--wave-peak);">~$1,127</span></td><td>368 ngày</td><td>Chu kỳ đầu tiên, thu hút giới truyền thông</td></tr>
+                                    <tr><td>2017</td><td>16/12/2017</td><td><span style="color:var(--wave-peak);">~$19,665</span></td><td>525 ngày</td><td>Cơn sốt ICO, nhà đầu tư bán lẻ</td></tr>
+                                    <tr><td>2021</td><td>10/11/2021</td><td><span style="color:var(--wave-peak);">~$69,000</span></td><td>549 ngày</td><td>Định chế tài chính (Tesla, MicroStrategy)</td></tr>
+                                    <tr><td>2024</td><td>14/03/2024</td><td><span style="color:var(--wave-peak);">~$73,581</span></td><td><span style="color:var(--wave-trough);">*Trước halving</span></td><td><strong>ATH trước halving</strong> nhờ ETF</td></tr>
+                                    <tr><td>2025</td><td>14/08/2025</td><td><span style="color:var(--wave-peak); font-weight:bold;">~$124,128</span></td><td>481 ngày</td><td>Kỷ nguyên ETF, dòng vốn tổ chức</td></tr>
+                                </tbody>
+                            </table>
                         </div>
-                        
-                        <p style="text-align: center; color: var(--text-glow); margin-top: 40px; font-style: italic;">
-                            <i class="fas fa-chart-line" style="color: var(--wave-trough); margin-right: 8px;"></i>
-                            Xu hướng thời gian lập đỉnh sau halving (số ngày)
-                        </p>
+                    </section>
+
+                    <section id="xu-huong">
+                        <h2>📈 Xu Hướng Qua Các Chu Kỳ</h2>
+                        <div class="chart-container" id="thoi-gian-halving">
+                            <h3 style="margin-top:0;">⏱️ Thời Gian Từ Halving Đến ATH</h3>
+                            <div class="bar-chart">
+                                <div class="bar-item"><div class="bar" style="height:147px;"><span class="bar-value">368</span></div><span class="bar-label">2013</span></div>
+                                <div class="bar-item"><div class="bar" style="height:210px;"><span class="bar-value">525</span></div><span class="bar-label">2017</span></div>
+                                <div class="bar-item"><div class="bar" style="height:220px;"><span class="bar-value">549</span></div><span class="bar-label">2021</span></div>
+                                <div class="bar-item"><div class="bar" style="height:192px; background:linear-gradient(0deg, var(--wave-peak), #ff8c42);"><span class="bar-value">481</span></div><span class="bar-label">2025</span></div>
+                            </div>
+                            <p style="text-align:center; color:var(--text-glow);"><i class="fas fa-chart-line" style="color:var(--wave-trough);"></i> Xu hướng thời gian lập đỉnh sau halving (số ngày)</p>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card"><div class="stat-value">12.5x</div><div class="stat-label"><i class="fas fa-rocket"></i> Tăng 2013-2017</div></div>
+                            <div class="stat-card"><div class="stat-value">3.5x</div><div class="stat-label"><i class="fas fa-chart-line"></i> Tăng 2017-2021</div></div>
+                            <div class="stat-card"><div class="stat-value">1.8x</div><div class="stat-label"><i class="fas fa-wave-square"></i> Tăng 2021-2025</div></div>
+                            <div class="stat-card"><div class="stat-value">481</div><div class="stat-label"><i class="fas fa-clock"></i> Ngày TB</div></div>
+                        </div>
+                    </section>
+
+                    <section id="phan-tich-chi-tiet">
+                        <h2>🔍 Phân Tích Chi Tiết</h2>
+                        <div class="insight-box"><h4><i class="fas fa-calendar-check"></i> Chu kỳ 2024 - Bước ngoặt lịch sử</h4><ul><li><strong>ATH trước halving lần đầu tiên:</strong> Tháng 3/2024 Bitcoin đạt $73,581 trước halving</li><li><strong>Nguyên nhân:</strong> Làn sóng ETF Bitcoin spot được phê duyệt tháng 1/2024</li><li><strong>Khác biệt:</strong> Thị trường "pump" trước sự kiện thay vì sau</li></ul></div>
+                        <div class="insight-box" style="border-left-color:var(--wave-peak);"><h4><i class="fas fa-crown"></i> Chu kỳ 2025 - Kỷ nguyên 6 con số</h4><ul><li><strong>ATH đỉnh cao:</strong> $124,128 ngày 14/08/2025</li><li><strong>Thời gian sau halving:</strong> 481 ngày</li><li><strong>Động lực:</strong> ETF hút vốn, quỹ hưu trí tham gia</li></ul></div>
+
+                        <h3 id="so-sanh-toc-do">📊 So sánh tốc độ tăng trưởng</h3>
+                        <ul><li><strong>2013 → 2017:</strong> Từ $1,127 lên $19,665 (tăng 1.745%)</li><li><strong>2017 → 2021:</strong> Từ $19,665 lên $69,000 (tăng 351%)</li><li><strong>2021 → 2025:</strong> Từ $69,000 lên $124,128 (tăng 180%)</li></ul>
+                    </section>
+
+                    <section id="ket-luan">
+                        <h2>🔮 Kết Luận & Dự Báo</h2>
+                        <div style="background:rgba(0,0,0,0.5);padding:24px;border-radius:20px;margin:30px 0;">
+                            <h4 style="color:var(--wave-trough);">📊 Quy luật rút ra:</h4>
+                            <ul><li>Thời gian từ halving đến ATH: 368-549 ngày, TB ~480 ngày</li><li>Chu kỳ 2024 phá vỡ quy luật do ETF</li><li>Biên độ tăng giảm dần, giá trị tuyệt đối vẫn tăng</li></ul>
+                            <h4 style="color:var(--wave-peak);margin-top:20px;">🔮 Dự báo 2028-2029:</h4>
+                            <ul><li>ATH: <strong>$180,000 - $250,000</strong></li><li>Thời gian sau halving: <strong>450-500 ngày</strong></li></ul>
+                        </div>
+                    </section>
+
+                    <div class="tags">
+                        <span class="tag">#Bitcoin</span><span class="tag">#ATH</span><span class="tag">#Halving</span><span class="tag">#MarketCycle</span><span class="tag">#ETF</span>
                     </div>
+                    <a href="/learn/" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại Knowledge Base</a>
                 </div>
-
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">12.5x</div>
-                        <div class="stat-label"><i class="fas fa-rocket"></i> Tăng từ 2013-2017</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">3.5x</div>
-                        <div class="stat-label"><i class="fas fa-chart-line"></i> Tăng từ 2017-2021</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">1.8x</div>
-                        <div class="stat-label"><i class="fas fa-wave-square"></i> Tăng từ 2021-2025</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">481</div>
-                        <div class="stat-label"><i class="fas fa-clock"></i> Ngày TB sau halving</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Phân tích chi tiết -->
-            <section>
-                <h2>🔍 Phân Tích Chi Tiết</h2>
-                
-                <div class="insight-box">
-                    <h4><i class="fas fa-calendar-check"></i> Chu kỳ 2024 - Bước ngoặt lịch sử</h4>
-                    <ul>
-                        <li><strong>ATH trước halving lần đầu tiên:</strong> Tháng 3/2024 Bitcoin đạt $73,581 trước khi halving diễn ra, phá vỡ quy luật các chu kỳ trước</li>
-                        <li><strong>Nguyên nhân:</strong> Làn sóng ETF Bitcoin spot được phê duyệt tại Mỹ vào tháng 1/2024, thu hút dòng vốn tổ chức khổng lồ</li>
-                        <li><strong>Khác biệt:</strong> Thị trường đã "pump" trước sự kiện thay vì sau sự kiện như truyền thống</li>
-                    </ul>
-                </div>
-
-                <div class="insight-box" style="border-left-color: var(--wave-peak);">
-                    <h4><i class="fas fa-crown"></i> Chu kỳ 2025 - Kỷ nguyên 6 con số</h4>
-                    <ul>
-                        <li><strong>ATH đỉnh cao:</strong> $124,128 ngày 14/08/2025 - mốc 6 con số đầu tiên trong lịch sử</li>
-                        <li><strong>Thời gian sau halving:</strong> 481 ngày, ngắn hơn chu kỳ 2021 (549 ngày) nhưng dài hơn 2017 (525 ngày)</li>
-                        <li><strong>Động lực:</strong> ETF tiếp tục hút vốn, các quỹ hưu trí và định chế tài chính lớn tham gia, Bitcoin được coi là tài sản dự trữ</li>
-                        <li><strong>Đặc điểm:</strong> Thanh khoản sâu hơn, biến động giảm dần, thị trường trưởng thành hơn</li>
-                    </ul>
-                </div>
-
-                <h3>📊 So sánh tốc độ tăng trưởng</h3>
-                <ul style="margin-bottom: 30px;">
-                    <li><strong>2013 → 2017:</strong> Từ $1,127 lên $19,665 (tăng 1.745% - giai đoạn bùng nổ đầu tiên)</li>
-                    <li><strong>2017 → 2021:</strong> Từ $19,665 lên $69,000 (tăng 351% - dòng vốn tổ chức bắt đầu)</li>
-                    <li><strong>2021 → 2025:</strong> Từ $69,000 lên $124,128 (tăng 180% - thị trường trưởng thành)</li>
-                </ul>
-
-                <p>Nhận xét: <strong>Biên độ tăng trưởng giảm dần</strong> qua các chu kỳ, phản ánh sự trưởng thành của thị trường và quy mô vốn hóa ngày càng lớn. Tuy nhiên, giá trị tuyệt đối tăng vẫn rất ấn tượng (từ $19k lên $124k).</p>
-            </section>
-
-            <!-- Kết luận và dự báo -->
-            <section>
-                <h2>🔮 Kết Luận & Dự Báo</h2>
-                
-                <div style="background: rgba(0,0,0,0.5); padding: 25px; border-radius: 15px; margin: 30px 0;">
-                    <h4 style="color: var(--wave-trough); margin-bottom: 15px;"><i class="fas fa-chart-line"></i> Quy luật rút ra:</h4>
-                    <ul style="margin-bottom: 20px;">
-                        <li>Thời gian từ halving đến ATH dao động từ 368-549 ngày, trung bình ~480 ngày</li>
-                        <li>Chu kỳ 2024 phá vỡ quy luật với ATH trước halving do tác động của ETF</li>
-                        <li>Biên độ tăng trưởng giảm dần nhưng giá trị tuyệt đối vẫn tăng mạnh</li>
-                        <li>Thị trường ngày càng ít biến động hơn, thanh khoản sâu hơn</li>
-                    </ul>
-                    
-                    <h4 style="color: var(--wave-peak); margin: 20px 0 15px;"><i class="fas fa-binoculars"></i> Dự báo chu kỳ tiếp theo (2028-2029):</h4>
-                    <ul>
-                        <li>ATH dự kiến: <strong>$180,000 - $250,000</strong> (tăng 45-100% so với chu kỳ hiện tại)</li>
-                        <li>Thời gian sau halving: Khoảng <strong>450-500 ngày</strong></li>
-                        <li>Động lực chính: Tiếp tục dòng vốn ETF, các quốc gia đưa Bitcoin vào dự trữ chiến lược, sự phát triển của hệ sinh thái Lightning Network</li>
-                        <li>Rủi ro: Cạnh tranh từ CBDC, regulation chặt chẽ hơn, các cuộc khủng hoảng kinh tế vĩ mô</li>
-                    </ul>
-                </div>
-
-                <div class="insight-box" style="border-left-color: #4CAF50;">
-                    <h4><i class="fas fa-robot"></i> Góc nhìn từ Early Warning System</h4>
-                    <p>Hệ thống EWS của Bitcoin PeakDip đã phát hiện các tín hiệu tích lũy mạnh mẽ trước mỗi ATH. Các chỉ báo on-chain như SOPR, Reserve Risk, và MVRV đều cho thấy sự thay đổi cấu trúc thị trường qua từng chu kỳ. Đặc biệt, trong chu kỳ 2024-2025, các tín hiệu từ derivatives market (funding rates, open interest) đóng vai trò quan trọng trong việc xác định đỉnh.</p>
-                </div>
-            </section>
-        </div>
-
-        <!-- Footer -->
-        <footer class="article-footer">
-            <div class="tags">
-                <span class="tag">#Bitcoin</span>
-                <span class="tag">#ATH</span>
-                <span class="tag">#Halving</span>
-                <span class="tag">#MarketCycle</span>
-                <span class="tag">#ETF</span>
-                <span class="tag">#Crypto</span>
             </div>
-            <a href="/learn/" class="back-link">
-                <i class="fas fa-arrow-left"></i>
-                <span>Quay lại Knowledge Base</span>
-            </a>
-        </footer>
+        </main>
+
+        <!-- Sidebar TOC -->
+        <aside class="article-sidebar">
+            <div class="toc-container">
+                <div class="toc-header"><i class="fas fa-list-ul"></i><h3>Nội dung chính</h3></div>
+                <ul class="toc-list" id="tableOfContents">
+                    <li class="toc-item"><a href="#tong-quan" class="toc-link toc-h2">📌 Tổng Quan</a></li>
+                    <li class="toc-item"><a href="#cac-moc-ath" class="toc-link toc-h2">🏆 Các Mốc ATH</a></li>
+                    <li class="toc-item"><a href="#xu-huong" class="toc-link toc-h2">📈 Xu Hướng</a></li>
+                    <li class="toc-item"><a href="#thoi-gian-halving" class="toc-link toc-h3">⏱️ Thời Gian Halving</a></li>
+                    <li class="toc-item"><a href="#phan-tich-chi-tiet" class="toc-link toc-h2">🔍 Phân Tích Chi Tiết</a></li>
+                    <li class="toc-item"><a href="#so-sanh-toc-do" class="toc-link toc-h3">📊 So sánh tốc độ</a></li>
+                    <li class="toc-item"><a href="#ket-luan" class="toc-link toc-h2">🔮 Kết Luận</a></li>
+                </ul>
+                <div class="toc-progress">
+                    <div class="progress-text"><span>Đọc tiến độ</span><span id="progressPercentage">0%</span></div>
+                    <div class="progress-bar-container"><div class="progress-bar-fill" id="sidebarProgress"></div></div>
+                </div>
+            </div>
+        </aside>
     </div>
 
-    <!-- Script để xử lý responsive và tracking -->
     <script>
-        // Thêm reading progress bar
         (function() {
-            const progressBar = document.createElement('div');
-            progressBar.className = 'reading-progress';
-            progressBar.innerHTML = '<div class="progress-bar" id="readingProgress"></div>';
-            
-            // Style cho progress bar
-            const style = document.createElement('style');
-            style.textContent = `
-                .reading-progress {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 4px;
-                    background: rgba(255, 255, 255, 0.1);
-                    z-index: 10000;
-                }
-                .progress-bar {
-                    height: 100%;
-                    background: linear-gradient(to right, var(--wave-trough), var(--wave-peak));
-                    width: 0%;
-                    transition: width 0.2s ease;
-                }
-            `;
-            
-            document.head.appendChild(style);
-            document.body.appendChild(progressBar);
-            
-            window.addEventListener('scroll', function() {
+            function updateProgress() {
                 const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
                 const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-                const scrolled = (winScroll / height) * 100;
-                
+                const scrolled = (winScroll / height) * 100 || 0;
                 document.getElementById('readingProgress').style.width = scrolled + '%';
-            });
-            
-            // Google Analytics tracking
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'page_view', {
-                    page_title: 'Hành Trình Các ATH Của Bitcoin',
-                    page_location: window.location.href,
-                    send_to: 'G-HR78BDQYJJ'
+                document.getElementById('sidebarProgress').style.width = scrolled + '%';
+                document.getElementById('progressPercentage').textContent = Math.round(scrolled) + '%';
+
+                // active section
+                const sections = document.querySelectorAll('section[id]');
+                const tocLinks = document.querySelectorAll('.toc-link');
+                let currentSection = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - 120;
+                    if (winScroll >= sectionTop) currentSection = section.getAttribute('id');
+                });
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + currentSection) link.classList.add('active');
                 });
             }
+
+            window.addEventListener('scroll', updateProgress);
+            window.addEventListener('load', updateProgress);
+
+            // smooth scroll
+            document.querySelectorAll('.toc-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+
+            // fake reading list
+            window.saveToReadingList = function() {
+                alert('✅ Đã thêm vào reading list (mô phỏng)');
+            };
+            window.shareArticle = function() {
+                if (navigator.share) navigator.share({ title: 'Hành Trình Các ATH Bitcoin', url: window.location.href });
+                else {
+                    navigator.clipboard?.writeText(window.location.href);
+                    alert('📋 Đã copy link bài viết!');
+                }
+            };
         })();
     </script>
 </body>
