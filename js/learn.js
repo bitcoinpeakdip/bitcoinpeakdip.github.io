@@ -6,9 +6,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Highlight current page in navigation
     highlightCurrentPage();
     
-    // Load recent blog posts
-    loadRecentPosts();
-    
     // Add reading progress bar
     addReadingProgress();
     
@@ -33,49 +30,6 @@ function highlightCurrentPage() {
         }
     });
 }
-
-function loadRecentPosts() {
-    const postsContainer = document.getElementById('recentPosts');
-    if (!postsContainer) return;
-    
-    // Demo posts - có thể load từ file JSON sau
-    const posts = [
-        {
-            title: 'Bitcoin enters accumulation phase',
-            date: '2026-02-14',
-            excerpt: 'EWS signals show strong dip detection patterns...',
-            url: 'blog/bitcoin-accumulation.html'
-        },
-        {
-            title: 'Understanding the 8 strategies',
-            date: '2026-02-13',
-            excerpt: 'Deep dive into when to use each strategy...',
-            url: 'strategy-guide.html'
-        },
-        {
-            title: 'Multi-timeframe confluence examples',
-            date: '2026-02-12',
-            excerpt: 'Real examples of 5M, 15M, and 1H alignment...',
-            url: 'multi-tf-analysis.html'
-        }
-    ];
-    
-    let html = '';
-    posts.forEach(post => {
-        html += `
-            <div class="post-item">
-                <h4><a href="${post.url}">${post.title}</a></h4>
-                <div class="post-meta">
-                    <span><i class="fas fa-calendar"></i> ${post.date}</span>
-                </div>
-                <p>${post.excerpt}</p>
-            </div>
-        `;
-    });
-    
-    postsContainer.innerHTML = html;
-}
-
 function addReadingProgress() {
     // Tạo progress bar
     const progressBar = document.createElement('div');

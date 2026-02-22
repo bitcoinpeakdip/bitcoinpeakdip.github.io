@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}</title>
+    <meta name="description" content="{{ page.excerpt | default: site.description | strip_html | truncate: 160 }}">
+    
+    <!-- SEO Tag -->
+    {% seo %}
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+    
+    <!-- Custom CSS for this page -->
+    {% if page.custom_css %}
+        {% for stylesheet in page.custom_css %}
+        <link rel="stylesheet" href="{{ '/assets/css/' | append: stylesheet | append: '.css' | relative_url }}">
+        {% endfor %}
+    {% endif %}
+</head>
+<body>
+    {% include header.html %}
+    
+    <div class="content-container">
+        {{ content }}
+    </div>
+    
+    {% include footer.html %}
+    
+    <!-- Main JavaScript -->
+    <script src="{{ '/assets/js/main.js' | relative_url }}"></script>
+    
+    <!-- Custom JS for this page -->
+    {% if page.custom_js %}
+        {% for script in page.custom_js %}
+        <script src="{{ '/assets/js/' | append: script | append: '.js' | relative_url }}"></script>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>

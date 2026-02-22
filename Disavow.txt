@@ -1,4 +1,6 @@
 # Chặn các domain spam phát hiện từ Ahrefs
 domain:primeseo.xyz
 domain:seo-backlink.agency
+domain:grow-your.website
+domain:zoldexlinks.shop
 domain:backlinks-seorank.com

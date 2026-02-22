@@ -1,0 +1,39 @@
+# _config.yml
+title: Bitcoin PeakDip
+description: Master Bitcoin trading with Early Warning System
+baseurl: ""
+url: "https://bitcoinpeakdip.com"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+permalink: /learn/:year/:month/:day/:title/
+
+# Collections
+collections:
+  authors:
+    output: true
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+      author: "Bitcoin PeakDip Team"
+      reading_time: 5
+      category: "Market Analysis"
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Exclude
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor

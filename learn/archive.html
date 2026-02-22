@@ -1,0 +1,67 @@
+---
+layout: default
+title: All Articles - Bitcoin PeakDip Learn
+---
+
+<div class="archive-container">
+    <h1 class="archive-title">
+        <i class="fas fa-archive"></i> All Articles
+    </h1>
+    
+    <!-- Categories Filter -->
+    <div class="category-filter">
+        <button class="filter-btn active" data-category="all">All</button>
+        <button class="filter-btn" data-category="Market Analysis">Market Analysis</button>
+        <button class="filter-btn" data-category="Technical">Technical</button>
+        <button class="filter-btn" data-category="On-Chain">On-Chain</button>
+        <button class="filter-btn" data-category="Derivatives">Derivatives</button>
+    </div>
+    
+    <!-- Articles by Year -->
+    {% assign posts_by_year = site.posts | group_by_exp: "post", "post.date | date: '%Y'" %}
+    {% for year in posts_by_year %}
+    <div class="year-section">
+        <h2 class="year-title">{{ year.name }}</h2>
+        
+        <div class="archive-grid">
+            {% for post in year.items %}
+            <div class="archive-card" data-category="{{ post.category }}">
+                <div class="archive-date">{{ post.date | date: "%b %d" }}</div>
+                <h3><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
+                <p>{{ post.excerpt | strip_html | truncate: 120 }}</p>
+                <div class="archive-meta">
+                    <span><i class="fas fa-clock"></i> {{ post.reading_time }} min</span>
+                    <span><i class="fas fa-tag"></i> {{ post.category }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.archive-card');
+    
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Update active button
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const category = this.dataset.category;
+            
+            // Filter cards
+            cards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
