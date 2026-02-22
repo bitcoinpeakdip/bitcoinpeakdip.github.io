@@ -3,7 +3,7 @@
 
 const UPDATE_CONFIG = {
     version: '1.0.0',
-    checkInterval: 60 * 60 * 1000, // 1 giờ kiểm tra 1 lần
+    checkInterval: 3 * 60 * 1000, // 1 giờ kiểm tra 1 lần
     versionUrl: '/version.json',
     dismissedKey: 'update_dismissed_v',
     lastCheckKey: 'update_last_check'
