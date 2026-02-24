@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HR78BDQYJJ"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-HR78BDQYJJ');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Disclosure - Bitcoin PeakDip</title>
+    <meta name="description" content="Risk Disclosure for Bitcoin PeakDip Early Warning System - Important information about cryptocurrency trading risks">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/main.css?v=1.9.12">
+    <link rel="stylesheet" href="styles/about.css?v=1.9.12">
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#00d4ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bitcoin PeakDip">
+    <meta name="application-name" content="Bitcoin PeakDip">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-192x192.png">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        .legal-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .legal-header {
+            text-align: center;
+            margin: 100px 0 50px 0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .legal-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%,
+                var(--wave-trough) 20%, 
+                var(--wave-mid) 40%, 
+                var(--wave-peak) 60%, 
+                var(--wave-mid) 80%, 
+                var(--wave-trough) 100%,
+                transparent 100%);
+            opacity: 0.03;
+            animation: logoWaveMove 20s linear infinite;
+        }
+        
+        .legal-title {
+            font-size: 3em;
+            background: linear-gradient(to right, var(--wave-trough), var(--wave-peak));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .legal-subtitle {
+            font-size: 1.5em;
+            color: var(--text-glow);
+            margin-bottom: 25px;
+            font-weight: 300;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .legal-badge {
+            display: inline-block;
+            background: linear-gradient(to right, var(--wave-trough), var(--wave-mid));
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+            animation: badgePulse 3s infinite alternate;
+        }
+        
+        .legal-section {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.5s ease;
+        }
+        
+        .legal-section:hover {
+            border-color: var(--wave-mid);
+            box-shadow: 0 10px 30px rgba(247, 147, 26, 0.1);
+        }
+        
+        .legal-section h2 {
+            color: var(--wave-mid);
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+        }
+        
+        .legal-section h2 i {
+            color: var(--wave-trough);
+        }
+        
+        .legal-section h3 {
+            color: var(--wave-trough);
+            margin: 25px 0 15px;
+            font-size: 1.3em;
+        }
+        
+        .legal-section p {
+            color: var(--text-glow);
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-size: 1.05em;
+        }
+        
+        .legal-section ul, .legal-section ol {
+            color: var(--text-glow);
+            padding-left: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .legal-section li {
+            margin-bottom: 10px;
+            line-height: 1.7;
+        }
+        
+        .legal-section strong {
+            color: var(--wave-trough);
+        }
+        
+        .legal-section .highlight {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: var(--wave-trough);
+        }
+        
+        .legal-notice {
+            background: rgba(255, 46, 99, 0.1);
+            border-left: 4px solid var(--wave-peak);
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 30px 0;
+        }
+        
+        .legal-notice i {
+            color: var(--wave-peak);
+            margin-right: 10px;
+        }
+        
+        .legal-warning {
+            background: rgba(244, 67, 54, 0.1);
+            border: 2px solid #f44336;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(244, 67, 54, 0.3);
+        }
+        
+        .legal-warning i {
+            font-size: 4em;
+            color: #f44336;
+            margin-bottom: 20px;
+        }
+        
+        .legal-warning h3 {
+            color: #f44336;
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+        
+        .legal-warning p {
+            color: var(--text-glow);
+            font-size: 1.2em;
+            line-height: 1.8;
+        }
+        
+        .last-updated {
+            text-align: right;
+            color: var(--text-glow);
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-top: 20px;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .legal-title {
+                font-size: 2.2em;
+            }
+            
+            .legal-subtitle {
+                font-size: 1.2em;
+            }
+            
+            .legal-section {
+                padding: 20px;
+            }
+            
+            .legal-section h2 {
+                font-size: 1.5em;
+            }
+            
+            .legal-section p {
+                font-size: 0.95em;
+            }
+            
+            .legal-warning {
+                padding: 20px;
+            }
+            
+            .legal-warning i {
+                font-size: 3em;
+            }
+            
+            .legal-warning h3 {
+                font-size: 1.5em;
+            }
+            
+            .legal-warning p {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        (function() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            if (isMobile) {
+                window.IS_MOBILE = true;
+                document.body.classList.add('mobile-device');
+            } else {
+                window.IS_MOBILE = false;
+            }
+        })();
+    </script>
+    
+    <!-- Interactive Background -->
+    <div class="interactive-background" id="interactiveBackground"></div>
+    
+    <!-- Navigation Menu -->
+    <nav class="navigation" id="navigation">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <i class="fas fa-wave-square"></i>
+                Bitcoin PeakDip
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                <li class="nav-item"><a href="about.html" class="nav-link">About</a></li>
+                <li class="nav-item"><a href="product.html" class="nav-link">Product</a></li>
+                <li class="nav-item"><a href="signals.html" class="nav-link">EWS Signals</a></li>
+                <li class="nav-item"><a href="learn.html" class="nav-link"><i class="fas fa-graduation-cap"></i> Learn</a></li>
+                <li class="nav-item"><a href="reading-list.html" class="nav-link" id="readingListLink"><i class="fas fa-bookmark"></i> Reading List<span class="reading-list-badge" id="readingListBadge">0</span></a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- Sensor Network Background -->
+    <div class="sensor-network">
+        <div class="sensor-ring ring-1"></div>
+        <div class="sensor-ring ring-2"></div>
+        <div class="sensor-ring ring-3"></div>
+        <div class="sensor-ring ring-4"></div>
+        <div class="bitcoin-waves">
+            <div class="bitcoin-wave wave-1"></div>
+            <div class="bitcoin-wave wave-2"></div>
+            <div class="bitcoin-wave wave-3"></div>
+        </div>
+        <div class="energy-particles" id="energyParticles"></div>
+        <div class="bitcoin-visualization"><div class="bitcoin-wave"></div></div>
+    </div>
+    
+    <!-- Status Indicator -->
+    <div class="status-indicator" id="statusIndicator">
+        <div class="status-light status-peak" id="statusLight"></div>
+        <div class="status-text" id="statusText">RISK DISCLOSURE</div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="content-container">
+        <div class="legal-header">
+            <h1 class="legal-title">Risk Disclosure</h1>
+            <p class="legal-subtitle">Important information about the risks of cryptocurrency trading</p>
+            <div class="legal-badge">
+                <i class="fas fa-exclamation-triangle"></i> READ CAREFULLY
+            </div>
+        </div>
+        
+        <div class="legal-container">
+            <div class="legal-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>⚠️ HIGH RISK WARNING</h3>
+                <p>Trading cryptocurrencies carries a high level of risk and may not be suitable for all investors. You could lose some or all of your initial investment. Never invest money that you cannot afford to lose.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-info-circle"></i> 1. General Risk Warning</h2>
+                <p>The information provided by Bitcoin PeakDip's Early Warning System (EWS) is for informational and educational purposes only. It does not constitute financial advice, investment advice, or a recommendation to buy or sell any cryptocurrency. Cryptocurrency trading involves substantial risk of loss and is not suitable for every investor.</p>
+                <p>Before trading cryptocurrencies, you should carefully consider your investment objectives, level of experience, and risk appetite. The possibility exists that you could sustain a loss of some or all of your initial investment and therefore you should not invest money that you cannot afford to lose. You should be aware of all the risks associated with cryptocurrency trading and seek advice from an independent financial advisor if you have any doubts.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-wave-square"></i> 2. Volatility Risk</h2>
+                <p>Cryptocurrency markets are extremely volatile. Prices can fluctuate significantly in short periods, sometimes by 10% or more within hours. This volatility can result in rapid and substantial losses. Factors that can affect cryptocurrency prices include:</p>
+                <ul>
+                    <li>Market sentiment and news events</li>
+                    <li>Regulatory changes and government actions</li>
+                    <li>Technological developments and security breaches</li>
+                    <li>Market manipulation and whale activity</li>
+                    <li>Macroeconomic factors</li>
+                </ul>
+                <p>The Early Warning System attempts to detect potential local peaks and dips, but cannot predict or prevent losses from sudden market movements.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-robot"></i> 3. Signal Accuracy Risk</h2>
+                <p>While our AI-powered algorithms strive for high accuracy, no signal detection system is perfect. The Early Warning System may:</p>
+                <ul>
+                    <li><strong class="highlight">Generate false signals</strong> - Indicating a peak or dip that does not materialize</li>
+                    <li><strong class="highlight">Miss actual movements</strong> - Failing to detect genuine market turning points</li>
+                    <li><strong class="highlight">Provide delayed signals</strong> - Detecting movements after they have already occurred</li>
+                    <li><strong class="highlight">Be affected by data errors</strong> - Inaccurate or delayed data from exchanges</li>
+                </ul>
+                <p>You should never rely solely on our signals for trading decisions. Always use multiple sources of information and analysis.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-chart-line"></i> 4. Strategy Risk</h2>
+                <p>The 8 trading strategies described in our product documentation (RECLAIM_FAILURE, DISTRIBUTION_FADE, HEDGE_FLIP, CONTINUATION, MOMENTUM_BREAKDOWN, MULTI_TF_CONFLUENCE, VOLATILITY_EXPANSION, DERIVATIVES_DIVERGENCE) are for <strong>educational purposes only</strong>. Actual implementation of these strategies involves significant risk, including:</p>
+                <ul>
+                    <li>Strategies may perform differently in various market conditions</li>
+                    <li>Historical performance does not guarantee future results</li>
+                    <li>Execution risk (slippage, order delays)</li>
+                    <li>Leverage risk if trading with margin</li>
+                </ul>
+                <p>We strongly recommend paper trading any strategy before using real funds.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-balance-scale"></i> 5. Leverage and Margin Risk</h2>
+                <p>Some trading strategies involve the use of leverage or margin. While leverage can amplify profits, it also amplifies losses. Trading with leverage can result in losses exceeding your initial investment. Key risks include:</p>
+                <ul>
+                    <li><strong>Liquidation risk:</strong> Your positions may be forcibly closed if the market moves against you</li>
+                    <li><strong>Funding costs:</strong> Holding leveraged positions overnight may incur funding fees</li>
+                    <li><strong>Volatility risk:</strong> High leverage combined with volatility can lead to rapid liquidation</li>
+                </ul>
+                <p>The risk management parameters shown in our documentation (e.g., 1-2% risk per trade) are guidelines only. You should adjust based on your own risk tolerance.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-database"></i> 6. Data Risk</h2>
+                <p>The signals displayed on our website are loaded from CSV files. While we make reasonable efforts to ensure data accuracy, we cannot guarantee that:</p>
+                <ul>
+                    <li>The data is error-free or complete</li>
+                    <li>Real-time data is accurately reflected</li>
+                    <li>Historical data is properly maintained</li>
+                </ul>
+                <p>Data may be delayed, inaccurate, or unavailable due to technical issues with exchanges, our servers, or your internet connection.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-shield-alt"></i> 7. Technical and Security Risks</h2>
+                <p>Using online trading platforms and services involves technical and security risks, including:</p>
+                <ul>
+                    <li><strong>Exchange hacks:</strong> Cryptocurrency exchanges have been hacked, resulting in loss of funds</li>
+                    <li><strong>Phishing attacks:</strong> Scammers may attempt to steal your login credentials</li>
+                    <li><strong>Technical failures:</strong> Server outages, internet disruptions, or software bugs</li>
+                    <li><strong>Smart contract risks:</strong> If trading DeFi tokens, smart contract vulnerabilities</li>
+                </ul>
+                <p>We recommend using hardware wallets for long-term storage and enabling all available security features on exchanges (2FA, whitelisting, etc.).</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-gavel"></i> 8. Regulatory Risk</h2>
+                <p>The regulatory environment for cryptocurrencies is evolving and uncertain. Changes in laws or regulations could:</p>
+                <ul>
+                    <li>Affect the value or legality of cryptocurrencies</li>
+                    <li>Impact your ability to trade or access exchanges</li>
+                    <li>Result in taxes, fines, or other penalties</li>
+                </ul>
+                <p>You are responsible for understanding and complying with all applicable laws and regulations in your jurisdiction regarding cryptocurrency trading and taxation.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-hand-holding-usd"></i> 9. Liquidity Risk</h2>
+                <p>Some cryptocurrencies or trading pairs may have low liquidity, which can result in:</p>
+                <ul>
+                    <li>Difficulty entering or exiting positions at desired prices</li>
+                    <li>Significant slippage (difference between expected and actual execution price)</li>
+                    <li>Wider bid-ask spreads, increasing trading costs</li>
+                </ul>
+                <p>Low liquidity can amplify losses and make it difficult to manage risk effectively.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-clock"></i> 10. Psychological Risk</h2>
+                <p>Trading can be emotionally stressful and may lead to psychological challenges:</p>
+                <ul>
+                    <li><strong>Fear of missing out (FOMO):</strong> Entering trades impulsively</li>
+                    <li><strong>Panic selling:</strong> Exiting positions at the worst possible time</li>
+                    <li><strong>Revenge trading:</strong> Trying to recover losses with larger, riskier trades</li>
+                    <li><strong>Overconfidence:</strong> Taking excessive risks after a string of wins</li>
+                </ul>
+                <p>Maintain discipline, stick to your trading plan, and never trade when emotionally compromised.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-exclamation-circle"></i> 11. Important Distinction</h2>
+                <p><strong>Bitcoin PeakDip is NOT a financial advisor or trading signal service.</strong> Our Early Warning System is designed to detect <em>patterns</em> and provide <em>information</em> about potential market movements. Similar to how earthquake warnings inform you of seismic activity without telling you how to build your house, we provide market intelligence without giving financial advice.</p>
+                <p>All trading decisions remain the sole responsibility of the individual. Cryptocurrency markets are highly volatile and involve substantial risk of loss.</p>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-check-circle"></i> 12. Your Responsibility</h2>
+                <p>By using Bitcoin PeakDip, you acknowledge and agree that:</p>
+                <ul>
+                    <li>You are solely responsible for your trading decisions and outcomes</li>
+                    <li>You have sufficient knowledge and experience to understand the risks involved</li>
+                    <li>You will not hold Bitcoin PeakDip or its operators liable for any losses</li>
+                    <li>You will conduct your own research and due diligence</li>
+                    <li>You will only trade with capital you can afford to lose</li>
+                </ul>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-file-signature"></i> 13. Acknowledgement of Risk</h2>
+                <p>By continuing to use Bitcoin PeakDip, you confirm that you have read, understood, and accepted these risk disclosures. You acknowledge that cryptocurrency trading involves substantial risk and that you are using the Early Warning System at your own risk.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <div style="background: rgba(0, 212, 255, 0.1); padding: 20px; border-radius: 10px; display: inline-block;">
+                        <i class="fas fa-check-circle" style="color: #4CAF50; font-size: 2em; margin-right: 10px;"></i>
+                        <span style="color: var(--text-light); font-size: 1.2em;">I ACKNOWLEDGE AND ACCEPT THESE RISKS</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legal-section">
+                <h2><i class="fas fa-envelope"></i> 14. Contact for Questions</h2>
+                <p>If you have any questions about these risk disclosures, please contact us:</p>
+                <ul>
+                    <li><i class="fas fa-envelope" style="color: var(--wave-trough); width: 24px;"></i> Email: <a href="mailto:contact@bitcoinpeakdip.com" style="color: var(--wave-trough);">contact@bitcoinpeakdip.com</a></li>
+                    <li><i class="fab fa-telegram" style="color: var(--wave-trough); width: 24px;"></i> Telegram: <a href="https://t.me/bitcoinpeakdip" target="_blank" style="color: var(--wave-trough);">@bitcoinpeakdip</a></li>
+                </ul>
+            </div>
+            
+            <div class="last-updated">
+                <i class="fas fa-clock"></i> Last Updated: March 1, 2026
+            </div>
+            
+            <!-- Back to Home -->
+            <div style="text-align: center; margin: 50px 0;">
+                <a href="index.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back to Home
+                </a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer id="pageFooter">
+            <p>© 2021 - 2026 Nguyen Duc Hai Technologies. All rights reserved</p>
+            
+            <div class="footer-contact">
+                <div class="footer-contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <a href="mailto:contact@bitcoinpeakdip.com">contact@bitcoinpeakdip.com</a>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fab fa-linkedin"></i>
+                    <a href="https://www.linkedin.com/in/hai-nguyen-duc-1a6b5563" target="_blank">LinkedIn</a>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fab fa-telegram"></i>
+                    <a href="https://t.me/bitcoinpeakdip" target="_blank">Telegram</a>
+                </div>
+                <div class="footer-contact-item">
+                    <i class="fab fa-x-twitter"></i>
+                    <a href="https://x.com/bitcoinpeakdip" target="_blank">X.com</a>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                <a href="index.html" class="footer-link">Home</a>
+                <a href="about.html" class="footer-link">About</a>
+                <a href="product.html" class="footer-link">Product</a>
+                <a href="signals.html" class="footer-link">EWS Signals</a>
+                <a href="learn.html" class="footer-link">Learn</a>
+                <a href="#" class="footer-link">Contact</a>
+                <a href="privacy-policy.html" class="footer-link">Privacy Policy</a>
+                <a href="terms-of-service.html" class="footer-link">Terms of Service</a>
+                <a href="risk-disclosure.html" class="footer-link active">Risk Disclosure</a>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Active Menu Fix -->
+    <script>
+        (function() {
+            const currentPage = 'risk-disclosure.html';
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                }
+            });
+        })();
+    </script>
+    
+    <script src="js/main.js?v=1.9.12"></script>
+    <script src="js/notifications.js?v=1.9.12"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            const navMenu = document.getElementById('navMenu');
+            if (menuBtn && navMenu) {
+                menuBtn.classList.remove('active');
+                navMenu.classList.remove('active');
+                menuBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                };
+                const links = navMenu.querySelectorAll('.nav-link');
+                links.forEach(link => {
+                    link.onclick = function() {
+                        menuBtn.classList.remove('active');
+                        navMenu.classList.remove('active');
+                    };
+                });
+                document.onclick = function(e) {
+                    if (!menuBtn.contains(e.target) && !navMenu.contains(e.target)) {
+                        menuBtn.classList.remove('active');
+                        navMenu.classList.remove('active');
+                    }
+                };
+            }
+        });
+    </script>
+</body>
+</html>
