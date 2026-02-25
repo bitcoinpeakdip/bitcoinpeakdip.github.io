@@ -1,2 +1,19 @@
 User-agent: *
 Disallow: /cdn-cgi/
+Allow: /
+Disallow: /validate_csv.html
+Disallow: /offline.html
+Disallow: /reading-list.html
+
+Sitemap: https://bitcoinpeakdip.com/sitemap.xml
+
+# Crawl delay for politeness
+Crawl-delay: 10
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+Disallow: /validate_csv.html
+
+User-agent: Googlebot-Image
+Allow: /icons/

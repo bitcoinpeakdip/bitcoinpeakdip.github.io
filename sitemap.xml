@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+    
+    <!-- Trang chủ - Priority cao nhất -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+    
+    <!-- Trang About - Giới thiệu hệ thống -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/about.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    
+    <!-- Trang Product - Chiến lược giao dịch -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/product.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    
+    <!-- Trang Signals - Tín hiệu EWS -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/signals.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <!-- Trang Learn - Kiến thức -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/learn.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <!-- Trang Reading List -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/reading-list.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    
+    <!-- Trang Privacy Policy -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/privacy-policy.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    
+    <!-- Trang Terms of Service -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/terms-of-service.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    
+    <!-- Trang Risk Disclosure -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/risk-disclosure.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    
+    <!-- Trang Offline (PWA) -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/offline.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.2</priority>
+    </url>
+    
+    <!-- Trang Validate CSV (cho admin) - Có thể không index -->
+    <url>
+        <loc>https://bitcoinpeakdip.com/validate_csv.html</loc>
+        <lastmod>2026-03-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.1</priority>
+    </url>
+    
+</urlset>
