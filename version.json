@@ -1,11 +1,11 @@
 {
-  "version": "1.10.4",
+  "version": "1.11.0",
   "build_date": "2026-02-25",
   "changelog": [
     "Fixed: Mobile scroll functionality",
     "Fixed: Newest data sorting",
     "Improved: Table drag scrolling"
   ],
-  "build_time": "12:46:44",
-  "build_timestamp": 1771998404547
+  "build_time": "13:46:00",
+  "build_timestamp": 1772001960878
 }
