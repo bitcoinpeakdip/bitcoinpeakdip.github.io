@@ -2815,3 +2815,160 @@ body.mobile-device .product-card {
         transform: translate(-50%, 20px);
     }
 }
+
+/* Footer Brand Statement */
+.footer-brand {
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+.footer-brand::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--wave-trough), var(--wave-peak), var(--wave-trough), transparent);
+    border-radius: 2px;
+}
+
+.brand-name {
+    font-size: 1.8em;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--wave-trough), var(--wave-peak), #9c27b0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    position: relative;
+    display: inline-block;
+    padding: 0 20px;
+}
+
+.brand-name::before,
+.brand-name::after {
+    content: '⚡';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8em;
+    opacity: 0.7;
+    color: var(--wave-trough);
+}
+
+.brand-name::before {
+    left: -5px;
+}
+
+.brand-name::after {
+    right: -5px;
+}
+
+.brand-tagline {
+    color: var(--text-glow);
+    font-size: 0.95em;
+    font-weight: 400;
+    letter-spacing: 1px;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.5;
+    position: relative;
+    padding: 0 15px;
+}
+
+.brand-tagline::before {
+    content: '“';
+    position: absolute;
+    left: -5px;
+    top: -5px;
+    font-size: 1.5em;
+    color: var(--wave-trough);
+    opacity: 0.5;
+}
+
+.brand-tagline::after {
+    content: '”';
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    font-size: 1.5em;
+    color: var(--wave-peak);
+    opacity: 0.5;
+}
+
+/* Animation nhẹ cho brand */
+.footer-brand {
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hover effect */
+.footer-brand:hover .brand-name {
+    animation: glow 2s infinite;
+}
+
+@keyframes glow {
+    0%, 100% {
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+    }
+    50% {
+        text-shadow: 0 0 40px rgba(255, 46, 99, 0.5);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .brand-name {
+        font-size: 1.5em;
+    }
+    
+    .brand-tagline {
+        font-size: 0.85em;
+        padding: 0 10px;
+    }
+    
+    .brand-name::before,
+    .brand-name::after {
+        font-size: 0.7em;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-name {
+        font-size: 1.3em;
+        display: block;
+        padding: 0;
+    }
+    
+    .brand-name::before,
+    .brand-name::after {
+        display: none;
+    }
+    
+    .brand-tagline {
+        font-size: 0.8em;
+    }
+    
+    .brand-tagline::before,
+    .brand-tagline::after {
+        display: none;
+    }
+}
