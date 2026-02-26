@@ -12,7 +12,7 @@
     position: relative;
     overflow: hidden;
 }
-
+/*
 .about-header::before {
     content: '';
     position: absolute;
@@ -30,6 +30,18 @@
         transparent 100%);
     opacity: 0.03;
     animation: logoWaveMove 20s linear infinite;
+}*/
+
+/* Thêm hiệu ứng nhẹ cho header mà không ảnh hưởng đến sóng nền */
+.about-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--wave-trough), var(--wave-peak), var(--wave-trough), transparent);
+    opacity: 0.5;
 }
 
 .about-title {

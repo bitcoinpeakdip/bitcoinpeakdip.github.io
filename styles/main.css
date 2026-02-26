@@ -2972,3 +2972,21 @@ body.mobile-device .product-card {
         display: none;
     }
 }
+
+/* Mobile optimizations - giảm hiệu ứng sóng trên mobile */
+@media (max-width: 768px) {
+    .bitcoin-waves {
+        opacity: 0.2; /* Giảm độ mờ */
+    }
+    
+    .bitcoin-wave {
+        animation: none; /* Tắt animation trên mobile nếu cần */
+        opacity: 0.05;
+    }
+}
+
+/* Hoặc nếu muốn tắt hẳn trên mobile (tùy chọn) */
+body.mobile-device .bitcoin-waves .bitcoin-wave {
+    animation: none !important;
+    opacity: 0.03 !important;
+}

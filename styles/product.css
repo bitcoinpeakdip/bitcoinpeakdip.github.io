@@ -13,23 +13,16 @@
     overflow: hidden;
 }
 
-.product-header::before {
+/* Thêm hiệu ứng nhẹ cho header */
+.product-header::after {
     content: '';
     position: absolute;
-    top: 0;
+    bottom: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-        transparent 0%,
-        var(--wave-trough) 20%, 
-        var(--wave-mid) 40%, 
-        var(--wave-peak) 60%, 
-        var(--wave-mid) 80%, 
-        var(--wave-trough) 100%,
-        transparent 100%);
-    opacity: 0.03;
-    animation: logoWaveMove 20s linear infinite;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--wave-trough), var(--wave-peak), var(--wave-trough), transparent);
+    opacity: 0.5;
 }
 
 .product-title {
