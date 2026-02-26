@@ -450,3 +450,104 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 3000);
 });
+
+// interactions.js - Interactive effects for home page
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Only run on home page
+    if (!document.getElementById('peakMessage')) return;
+    
+    console.log('🔄 Interactive System Active');
+    
+    const interactiveBackground = document.getElementById('interactiveBackground');
+    const sensorAlert = document.getElementById('sensorAlert');
+    
+    // Kiểm tra mobile
+    const isMobile = window.IS_MOBILE || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
+    // Không chạy hiệu ứng tương tác trên mobile
+    if (isMobile || !interactiveBackground) return;
+    
+    let lastInteractionTime = 0;
+    
+    // THÊM: Xử lý click
+    interactiveBackground.addEventListener('click', function(e) {
+        handleInteraction(e.clientX, e.clientY, 1.0);
+    });
+    
+    // THÊM: Xử lý mousemove (nhẹ hơn)
+    let moveTimeout;
+    interactiveBackground.addEventListener('mousemove', function(e) {
+        clearTimeout(moveTimeout);
+        moveTimeout = setTimeout(() => {
+            handleInteraction(e.clientX, e.clientY, 0.2);
+        }, 50);
+    });
+    
+    function handleInteraction(x, y, intensity = 0.5) {
+        const currentTime = Date.now();
+        if (currentTime - lastInteractionTime < 100) return; // Throttle
+        
+        lastInteractionTime = currentTime;
+        
+        // Tạo hiệu ứng ring
+        createInteractionRing(x, y, intensity);
+        
+        // Tăng cường sóng
+        intensifyWaves(intensity);
+    }
+    
+    function createInteractionRing(x, y, intensity) {
+        if (!sensorAlert) return;
+        
+        const ringCount = 2;
+        const colors = [
+            'rgba(0, 212, 255, 0.6)',
+            'rgba(247, 147, 26, 0.6)'
+        ];
+        
+        for (let i = 0; i < ringCount; i++) {
+            const ring = document.createElement('div');
+            ring.className = 'alert-ring';
+            
+            ring.style.left = `${x}px`;
+            ring.style.top = `${y}px`;
+            ring.style.borderColor = colors[i % colors.length];
+            
+            const delay = i * 0.1;
+            const duration = 1.0 + intensity;
+            
+            ring.style.animation = `alertExpand ${duration}s ease-out ${delay}s forwards`;
+            
+            sensorAlert.appendChild(ring);
+            
+            setTimeout(() => {
+                if (ring.parentNode === sensorAlert) {
+                    sensorAlert.removeChild(ring);
+                }
+            }, (duration + delay) * 1000);
+        }
+    }
+});
+
+// THÊM MỚI: Hàm tăng cường sóng
+function intensifyWaves(intensity = 0.3) {
+    const waves = document.querySelectorAll('.bitcoin-wave');
+    if (!waves.length || window.IS_MOBILE) return;
+    
+    waves.forEach((wave, index) => {
+        const originalTransition = wave.style.transition;
+        wave.style.transition = 'all 0.3s ease';
+        wave.style.filter = `brightness(${1 + intensity * 0.5}) blur(${intensity}px)`;
+        
+        setTimeout(() => {
+            wave.style.filter = '';
+            setTimeout(() => {
+                wave.style.transition = originalTransition;
+            }, 200);
+        }, 400);
+    });
+}
+
+// Export global
+window.intensifyWaves = intensifyWaves;

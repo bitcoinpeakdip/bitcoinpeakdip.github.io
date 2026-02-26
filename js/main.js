@@ -202,8 +202,71 @@ function createEnergyParticles() {
             particleFloat ${duration}s infinite ${delay}s,
             particleFade ${duration}s infinite ${delay}s
         `;
-        
+        // THÊM: Màu sắc đa dạng
+        if (i % 3 === 0) {
+            particle.style.background = 'var(--wave-peak)';
+        } else if (i % 3 === 1) {
+            particle.style.background = 'var(--wave-trough)';
+        } else {
+            particle.style.background = 'var(--wave-mid)';
+        }
+                
         energyParticles.appendChild(particle);
+    }
+}
+
+// THÊM MỚI: Đồng bộ sóng với Peak/Dip
+function syncWavesWithDetection() {
+    const waves = document.querySelectorAll('.bitcoin-wave');
+    const peakMessage = document.getElementById('peakMessage');
+    const dipMessage = document.getElementById('dipMessage');
+    
+    if (!waves.length) return;
+    
+    function updateWaveColors() {
+        const isPeakActive = peakMessage && peakMessage.classList.contains('active');
+        const isDipActive = dipMessage && dipMessage.classList.contains('active');
+        
+        waves.forEach((wave, index) => {
+            const baseOpacity = 0.12 - (index * 0.04);
+            
+            if (isPeakActive) {
+                // Peak mode - màu đỏ
+                wave.style.background = `linear-gradient(90deg, 
+                    transparent 0%,
+                    rgba(255, 46, 99, ${baseOpacity}) 15%, 
+                    rgba(247, 147, 26, ${baseOpacity * 0.6}) 35%, 
+                    rgba(255, 46, 99, ${baseOpacity * 1.2}) 50%, 
+                    rgba(247, 147, 26, ${baseOpacity * 0.6}) 65%, 
+                    rgba(255, 46, 99, ${baseOpacity}) 85%,
+                    transparent 100%)`;
+                wave.style.filter = 'drop-shadow(0 0 5px rgba(255, 46, 99, 0.3))';
+            } else if (isDipActive) {
+                // Dip mode - màu xanh
+                wave.style.background = `linear-gradient(90deg, 
+                    transparent 0%,
+                    rgba(0, 212, 255, ${baseOpacity}) 15%, 
+                    rgba(247, 147, 26, ${baseOpacity * 0.4}) 35%, 
+                    rgba(0, 212, 255, ${baseOpacity * 1.2}) 50%, 
+                    rgba(247, 147, 26, ${baseOpacity * 0.4}) 65%, 
+                    rgba(0, 212, 255, ${baseOpacity}) 85%,
+                    transparent 100%)`;
+                wave.style.filter = 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.3))';
+            } else {
+                // Neutral mode
+                wave.style.background = '';
+                wave.style.filter = '';
+            }
+        });
+    }
+    
+    updateWaveColors();
+    
+    // Theo dõi thay đổi
+    if (peakMessage && dipMessage) {
+        const observer = new MutationObserver(updateWaveColors);
+        observer.observe(peakMessage, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(dipMessage, { attributes: true, attributeFilter: ['class'] });
     }
 }
 
@@ -246,9 +309,12 @@ document.addEventListener('DOMContentLoaded', function() {
         card.style.transition = 'opacity 1s ease, transform 1s ease';
         observer.observe(card);
     });
+    setTimeout(syncWavesWithDetection, 1000);
 });
 // Thêm vào main.js (nếu file tồn tại)
-
+// Export global functions
+window.syncWavesWithDetection = syncWavesWithDetection;
+window.intensifyWaves = intensifyWaves;
 // Global error handler for CSV loading
 window.addEventListener('error', function(e) {
     if (e.message.includes('CSV') || e.message.includes('signals')) {
