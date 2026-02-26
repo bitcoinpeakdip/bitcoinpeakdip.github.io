@@ -13,38 +13,213 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusText = document.getElementById('statusText');
     
     // Mobile menu toggle
+    // Mobile menu toggle - FIXED VERSION cho TẤT CẢ các trang
     if (mobileMenuBtn && navMenu) {
-        mobileMenuBtn.addEventListener('click', function() {
-            navMenu.classList.toggle('active');
+        console.log('📱 Initializing mobile menu for:', window.location.pathname);
+        
+        // Xóa tất cả event listeners cũ bằng cách clone và replace elements
+        // Điều này đảm bảo không còn xung đột với các script inline
+        const newMenuBtn = mobileMenuBtn.cloneNode(true);
+        mobileMenuBtn.parentNode.replaceChild(newMenuBtn, mobileMenuBtn);
+        
+        const newNavMenu = navMenu.cloneNode(true);
+        navMenu.parentNode.replaceChild(newNavMenu, navMenu);
+        
+        // Gán lại biến với elements mới
+        const updatedMenuBtn = document.getElementById('mobileMenuBtn');
+        const updatedNavMenu = document.getElementById('navMenu');
+        const updatedNavLinks = updatedNavMenu.querySelectorAll('.nav-link');
+        const updatedStatusIndicator = document.getElementById('statusIndicator');
+        
+        // Đảm bảo menu đóng khi load trang
+        updatedNavMenu.classList.remove('active');
+        if (updatedMenuBtn.querySelector('i')) {
+            updatedMenuBtn.querySelector('i').className = 'fas fa-bars';
+        }
+        
+        // Xử lý click menu button
+        updatedMenuBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('👆 Mobile menu clicked on:', window.location.pathname);
+            
+            // Toggle menu
+            this.classList.toggle('active');
+            updatedNavMenu.classList.toggle('active');
+            
+            // Đổi icon
             const icon = this.querySelector('i');
-            if (navMenu.classList.contains('active')) {
+            if (updatedNavMenu.classList.contains('active')) {
                 icon.classList.remove('fa-bars');
                 icon.classList.add('fa-times');
+                
+                // Chặn scroll khi menu mở (cải thiện UX)
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+                
+                // Ẩn status indicator khi menu mở để tránh che khuất
+                if (updatedStatusIndicator) {
+                    updatedStatusIndicator.style.opacity = '0';
+                    updatedStatusIndicator.style.pointerEvents = 'none';
+                }
             } else {
                 icon.classList.remove('fa-times');
                 icon.classList.add('fa-bars');
-            }
-        });
-    }
-    
-    // Close mobile menu when clicking a link
-    navLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            if (navMenu) {
-                navMenu.classList.remove('active');
-                if (mobileMenuBtn) {
-                    mobileMenuBtn.querySelector('i').classList.remove('fa-times');
-                    mobileMenuBtn.querySelector('i').classList.add('fa-bars');
+                
+                // Cho phép scroll lại
+                document.body.style.overflow = '';
+                document.documentElement.style.overflow = '';
+                
+                // Hiện lại status indicator
+                if (updatedStatusIndicator) {
+                    updatedStatusIndicator.style.opacity = '';
+                    updatedStatusIndicator.style.pointerEvents = '';
                 }
             }
-            
-            // Update active state
-            navLinks.forEach(navLink => navLink.classList.remove('active'));
-            this.classList.add('active');
         });
-    });
+        
+        // Đóng menu khi click vào link
+        updatedNavLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Cho phép link hoạt động bình thường
+                console.log('🔗 Nav link clicked:', this.getAttribute('href'));
+                
+                // Đóng menu
+                updatedNavMenu.classList.remove('active');
+                if (updatedMenuBtn) {
+                    const icon = updatedMenuBtn.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+                
+                // Cho phép scroll lại
+                document.body.style.overflow = '';
+                document.documentElement.style.overflow = '';
+                
+                // Hiện lại status indicator
+                if (updatedStatusIndicator) {
+                    updatedStatusIndicator.style.opacity = '';
+                    updatedStatusIndicator.style.pointerEvents = '';
+                }
+                
+                // Update active state cho navigation
+                updatedNavLinks.forEach(navLink => navLink.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Đóng menu khi click ra ngoài
+        document.addEventListener('click', function(e) {
+            // Kiểm tra nếu click không phải vào menu button và không phải vào menu
+            if (!updatedMenuBtn.contains(e.target) && !updatedNavMenu.contains(e.target)) {
+                if (updatedNavMenu.classList.contains('active')) {
+                    console.log('👆 Click outside - closing menu');
+                    
+                    updatedNavMenu.classList.remove('active');
+                    if (updatedMenuBtn) {
+                        const icon = updatedMenuBtn.querySelector('i');
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                    
+                    // Cho phép scroll lại
+                    document.body.style.overflow = '';
+                    document.documentElement.style.overflow = '';
+                    
+                    // Hiện lại status indicator
+                    if (updatedStatusIndicator) {
+                        updatedStatusIndicator.style.opacity = '';
+                        updatedStatusIndicator.style.pointerEvents = '';
+                    }
+                }
+            }
+        });
+        
+        // Xử lý resize window - tự động đóng menu khi chuyển sang desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && updatedNavMenu.classList.contains('active')) {
+                console.log('📱 Resize to desktop - closing menu');
+                
+                updatedNavMenu.classList.remove('active');
+                if (updatedMenuBtn) {
+                    const icon = updatedMenuBtn.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+                
+                // Cho phép scroll lại
+                document.body.style.overflow = '';
+                document.documentElement.style.overflow = '';
+                
+                // Hiện lại status indicator
+                if (updatedStatusIndicator) {
+                    updatedStatusIndicator.style.opacity = '';
+                    updatedStatusIndicator.style.pointerEvents = '';
+                }
+            }
+        });
+        
+        // Xử lý escape key để đóng menu
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && updatedNavMenu.classList.contains('active')) {
+                console.log('🔑 Escape key - closing menu');
+                
+                updatedNavMenu.classList.remove('active');
+                if (updatedMenuBtn) {
+                    const icon = updatedMenuBtn.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+                
+                // Cho phép scroll lại
+                document.body.style.overflow = '';
+                document.documentElement.style.overflow = '';
+                
+                // Hiện lại status indicator
+                if (updatedStatusIndicator) {
+                    updatedStatusIndicator.style.opacity = '';
+                    updatedStatusIndicator.style.pointerEvents = '';
+                }
+            }
+        });
+        
+        // Xử lý touch swipe để đóng menu trên mobile
+        let touchStartY = 0;
+        updatedNavMenu.addEventListener('touchstart', function(e) {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+        
+        updatedNavMenu.addEventListener('touchmove', function(e) {
+            if (!updatedNavMenu.classList.contains('active')) return;
+            
+            const touchY = e.touches[0].clientY;
+            const diff = touchY - touchStartY;
+            
+            // Nếu vuốt xuống từ đầu menu (khoảng 50px) thì đóng menu
+            if (diff > 50 && touchStartY < 100) {
+                console.log('👆 Swipe down - closing menu');
+                
+                updatedNavMenu.classList.remove('active');
+                if (updatedMenuBtn) {
+                    const icon = updatedMenuBtn.querySelector('i');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }
+                
+                // Cho phép scroll lại
+                document.body.style.overflow = '';
+                document.documentElement.style.overflow = '';
+            }
+        }, { passive: true });
+        
+        console.log('✅ Mobile menu initialized for:', window.location.pathname);
+    } else {
+        console.warn('⚠️ Mobile menu elements not found on:', window.location.pathname);
+    }
 
-   // ===== THÊM CODE XỬ LÝ DROPDOWN MOBILE TỪ ĐÂY =====
+
+    // ===== THÊM CODE XỬ LÝ DROPDOWN MOBILE TỪ ĐÂY =====
     // Handle dropdown for mobile
     const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
     
