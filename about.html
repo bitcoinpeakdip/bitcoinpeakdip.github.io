@@ -16,8 +16,8 @@
     <title>About Bitcoin PeakDip - Early Warning System</title>
     <meta name="description" content="Bitcoin PeakDip: A Specialized Bitcoin Quantitative Research & Early Warning System Provider by Nguyen Duc Hai Technologies. High-confidence signals since 2021.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/main.css?v=1.11.18">
-    <link rel="stylesheet" href="styles/about.css?v=1.11.18">
+    <link rel="stylesheet" href="styles/main.css?v=1.11.19">
+    <link rel="stylesheet" href="styles/about.css?v=1.11.19">
 	<!-- PWA Meta Tags -->
 	<meta name="theme-color" content="#00d4ff">
 	<meta name="apple-mobile-web-app-capable" content="yes">
@@ -941,8 +941,57 @@
 			console.log('Active menu set for:', currentPage);
 		})();
 	</script>	
-    <script src="js/main.js?v=1.11.18"></script>
-    <script src="js/interactions.js?v=1.11.18"></script>
-    <script src="js/notifications.js?v=1.11.18"></script>
+    <script src="js/main.js?v=1.11.19"></script>
+    <script src="js/interactions.js?v=1.11.19"></script>   
+    <script src="js/notifications.js?v=1.11.19"></script>
+    <!-- Active Menu Fix -->
+    <script>
+        (function() {
+            // FIX: Set active menu item based on current page
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            console.log('🔧 Setting active menu for:', currentPage);
+            
+            navLinks.forEach(link => {
+                // Remove active class from all
+                link.classList.remove('active');
+                
+                const href = link.getAttribute('href');
+                
+                // Check exact match
+                if (href === currentPage) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for index.html
+                if (currentPage === 'index.html' && href === 'index.html') {
+                    link.classList.add('active');
+                }
+                
+                // Special case for Learn page
+                if (currentPage.includes('learn') && href.includes('learn')) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for About page
+                if (currentPage.includes('about') && href.includes('about')) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for Product page
+                if (currentPage.includes('product') && href.includes('product')) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for Signals page
+                if (currentPage.includes('signals') && href.includes('signals')) {
+                    link.classList.add('active');
+                }
+            });
+            
+            console.log('✅ Active menu set for:', currentPage);
+        })();
+    </script>    
 </body>
 </html>

@@ -1564,14 +1564,16 @@ footer {
     color: #00d4ff !important;
 }
 
-/* ========== MOBILE MENU - UPDATED VERSION ========== */
+/* main.css - Phần sửa mobile menu */
+
+/* ========== MOBILE MENU - CẬP NHẬT CĂN PHẢI ========== */
 @media (max-width: 768px) {
-    /* Mobile menu button - cải thiện z-index và touch target */
+    /* Mobile menu button - căn phải */
     .mobile-menu-btn {
-        display: flex;
+        display: flex !important;
         align-items: center;
         justify-content: center;
-        width: 48px; /* Tăng kích thước để dễ bấm hơn */
+        width: 48px;
         height: 48px;
         background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(0, 212, 255, 0.1));
         border: 1px solid rgba(0, 212, 255, 0.3);
@@ -1579,73 +1581,64 @@ footer {
         color: var(--wave-trough);
         font-size: 1.4em;
         cursor: pointer;
-        z-index: 1002 !important; /* Cao hơn menu để luôn có thể bấm */
+        z-index: 1002 !important;
         position: relative;
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(0, 212, 255, 0.2);
+        
+        /* FIX: Căn phải */
+        margin-left: auto !important;
+        margin-right: 0 !important;
     }
     
-    /* Hiệu ứng khi nhấn nút */
-    .mobile-menu-btn:active {
-        transform: scale(0.95);
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(0, 212, 255, 0.2));
+    /* Nav container - đảm bảo layout flex */
+    .nav-container {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        padding: 0 20px !important;
     }
     
-    /* Khi menu đang mở, nút đổi màu */
-    .mobile-menu-btn.active {
-        background: linear-gradient(135deg, var(--wave-trough), var(--wave-mid));
-        color: white;
-        border-color: transparent;
-        box-shadow: 0 4px 20px rgba(0, 212, 255, 0.5);
+    /* Logo - giữ bên trái */
+    .nav-logo {
+        margin-right: auto !important;
+        font-size: 1.5em !important;
     }
     
-    /* Menu container - tối ưu cho mobile */
+    /* Menu container - căn phải khi mở */
     .nav-menu {
         position: fixed !important;
-        top: 80px !important; /* Tăng lên một chút để tránh bị che bởi safe area */
-        left: 10px !important;
-        right: 10px !important;
-        width: auto !important; /* Thay đổi từ 100% sang auto */
+        top: 80px !important;
+        right: 10px !important;  /* FIX: Căn phải thay vì left */
+        left: auto !important;     /* FIX: Bỏ left */
+        width: auto !important;
+        min-width: 250px !important;
         max-width: calc(100% - 20px) !important;
         transform: translateY(-150%) !important;
         opacity: 0 !important;
         visibility: hidden !important;
         background: rgba(10, 14, 23, 0.98) !important;
         backdrop-filter: blur(20px) !important;
-        border: 1px solid rgba(0, 212, 255, 0.3) !important; /* Thêm border bao quanh */
-        border-radius: 20px !important; /* Bo góc đều 4 cạnh */
+        border: 1px solid rgba(0, 212, 255, 0.3) !important;
+        border-radius: 20px !important;
         padding: 16px !important;
         flex-direction: column !important;
         gap: 8px !important;
-        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important; /* Easing đẹp hơn */
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 212, 255, 0.3) !important;
         z-index: 1001 !important;
         pointer-events: none !important;
-        max-height: calc(100vh - 120px) !important; /* Giới hạn chiều cao */
-        overflow-y: auto !important; /* Cho phép scroll nếu menu quá dài */
+        max-height: calc(100vh - 120px) !important;
+        overflow-y: auto !important;
     }
     
-    /* Khi active */
+    /* Khi active - trượt xuống từ trên */
     .nav-menu.active {
         transform: translateY(0) !important;
         opacity: 1 !important;
         visibility: visible !important;
         pointer-events: all !important;
-    }
-    
-    /* Custom scrollbar cho menu */
-    .nav-menu::-webkit-scrollbar {
-        width: 4px;
-    }
-    
-    .nav-menu::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 4px;
-    }
-    
-    .nav-menu::-webkit-scrollbar-thumb {
-        background: var(--wave-trough);
-        border-radius: 4px;
     }
     
     /* Menu items */
@@ -1658,9 +1651,9 @@ footer {
     .nav-menu .nav-link {
         display: flex !important;
         align-items: center !important;
-        padding: 14px 18px !important; /* Tăng padding để dễ bấm */
+        padding: 14px 18px !important;
         border-radius: 14px !important;
-        font-size: 1.1em !important; /* Tăng font size */
+        font-size: 1.1em !important;
         color: rgba(255, 255, 255, 0.9) !important;
         background: rgba(255, 255, 255, 0.03) !important;
         width: 100% !important;
@@ -1668,22 +1661,23 @@ footer {
         transition: all 0.3s ease !important;
         font-weight: 500 !important;
         letter-spacing: 0.3px !important;
+        text-decoration: none !important;
     }
     
     /* Icon trong menu items */
     .nav-menu .nav-link i {
-        width: 28px !important; /* Tăng kích thước icon */
+        width: 28px !important;
         margin-right: 14px !important;
         color: var(--wave-trough) !important;
-        font-size: 1.3em !important; /* Tăng font size icon */
+        font-size: 1.3em !important;
         flex-shrink: 0 !important;
         text-align: center !important;
         transition: all 0.3s ease !important;
     }
     
-    /* Hover/Active state - cải thiện touch feedback */
-    .nav-menu .nav-link:hover,
-    .nav-menu .nav-link.active {
+    /* ===== FIX: XỬ LÝ ACTIVE STATE ===== */
+    /* Hover state */
+    .nav-menu .nav-link:hover {
         background: rgba(0, 212, 255, 0.2) !important;
         color: white !important;
         border-color: var(--wave-trough) !important;
@@ -1691,22 +1685,37 @@ footer {
         box-shadow: 0 5px 15px rgba(0, 212, 255, 0.2) !important;
     }
     
-    .nav-menu .nav-link:hover i,
+    /* Active state - KHÔNG hover */
+    .nav-menu .nav-link.active {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(0, 212, 255, 0.15)) !important;
+        color: white !important;
+        border-left: 4px solid var(--wave-trough) !important;
+        border-color: var(--wave-trough) !important;
+        box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3) !important;
+        transform: translateX(0) !important; /* FIX: Không dịch chuyển khi active */
+    }
+    
+    /* Icon trong active state */
     .nav-menu .nav-link.active i {
         color: white !important;
         transform: scale(1.1) !important;
     }
     
-    /* Active state không hover */
-    .nav-menu .nav-link.active {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(0, 212, 255, 0.15)) !important;
-        border-left: 4px solid var(--wave-trough) !important;
+    /* Hover trên active state - giữ nguyên màu active */
+    .nav-menu .nav-link.active:hover {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.35), rgba(0, 212, 255, 0.25)) !important;
+        transform: translateX(0) !important; /* Không dịch chuyển */
+    }
+    
+    /* FIX: Xóa hiệu ứng chồng chéo */
+    .nav-menu .nav-link.active::after {
+        display: none !important; /* Xóa underline nếu có */
     }
     
     /* Badge cho reading list */
     .reading-list-badge {
         margin-left: auto !important;
-        padding: 4px 10px !important; /* Tăng padding */
+        padding: 4px 10px !important;
         font-size: 0.85em !important;
         min-width: 26px !important;
         height: 26px !important;
@@ -1719,60 +1728,43 @@ footer {
         border: 2px solid rgba(255, 255, 255, 0.4) !important;
         box-shadow: 0 0 15px rgba(255, 107, 0, 0.5) !important;
         font-weight: bold !important;
-        animation: badgePulse 2s infinite !important;
     }
     
-    /* Animation cho badge */
-    @keyframes badgePulse {
-        0%, 100% {
-            transform: scale(1);
-            box-shadow: 0 0 15px rgba(255, 107, 0, 0.5);
-        }
-        50% {
-            transform: scale(1.1);
-            box-shadow: 0 0 25px rgba(255, 107, 0, 0.8);
-        }
-    }
-    
-    /* Xóa mũi tên của dropdown cũ */
-    .nav-menu::before {
-        display: none !important;
-    }
-    
-    /* ===== THÊM: XỬ LÝ KHI MENU MỞ ===== */
-    body.menu-open {
-        overflow: hidden !important;
-        position: fixed !important;
-        width: 100% !important;
-        height: 100% !important;
-        touch-action: none !important; /* Ngăn scroll bằng touch */
-    }
-    
-    /* Ẩn status indicator khi menu mở */
-    body.menu-open .status-indicator {
-        opacity: 0 !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
-        transition: opacity 0.3s ease, visibility 0.3s ease !important;
-    }
-    
-    /* ===== THÊM: SAFE AREA SUPPORT CHO IPHONE X+ ===== */
+    /* ===== FIX: SAFE AREA SUPPORT ===== */
     @supports (padding-top: env(safe-area-inset-top)) {
         .nav-menu {
             top: calc(80px + env(safe-area-inset-top)) !important;
+            right: calc(10px + env(safe-area-inset-right)) !important;
             max-height: calc(100vh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-            padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
-        }
-        
-        .mobile-menu-btn {
-            margin-right: env(safe-area-inset-right);
         }
     }
     
-    /* ===== THÊM: TỐI ƯU CHO MÀN HÌNH RẤT NHỎ ===== */
-    @media (max-width: 380px) {
+    /* ===== ANIMATION CHO MENU ITEMS ===== */
+    .nav-menu.active .nav-item {
+        animation: slideInMenuItem 0.3s ease forwards;
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    
+    .nav-menu.active .nav-item:nth-child(1) { animation-delay: 0.05s; }
+    .nav-menu.active .nav-item:nth-child(2) { animation-delay: 0.1s; }
+    .nav-menu.active .nav-item:nth-child(3) { animation-delay: 0.15s; }
+    .nav-menu.active .nav-item:nth-child(4) { animation-delay: 0.2s; }
+    .nav-menu.active .nav-item:nth-child(5) { animation-delay: 0.25s; }
+    .nav-menu.active .nav-item:nth-child(6) { animation-delay: 0.3s; }
+    
+    @keyframes slideInMenuItem {
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* ===== FIX: MÀN HÌNH RẤT NHỎ ===== */
+    @media (max-width: 480px) {
         .nav-menu {
-            top: 70px !important;
+            right: 5px !important;
+            min-width: 220px !important;
             padding: 12px !important;
         }
         
@@ -1789,6 +1781,21 @@ footer {
     }
 }
 
+/* ===== BODY KHI MENU MỞ ===== */
+body.menu-open {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: none !important;
+}
+
+body.menu-open .status-indicator {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.3s ease, visibility 0.3s ease !important;
+}
 /* ===== THÊM: ANIMATION CHO MENU ITEMS KHI MỞ ===== */
 @media (max-width: 768px) {
     .nav-menu.active .nav-item {

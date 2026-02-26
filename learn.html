@@ -55,7 +55,7 @@
             
             <ul class="nav-menu" id="navMenu">
                 <li class="nav-item">
-                    <a href="index.html" class="nav-link active">
+                    <a href="index.html" class="nav-link">
                         <i class="fas fa-house"></i> Home
                     </a>
                 </li>
@@ -75,7 +75,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="learn.html" class="nav-link">
+                    <a href="learn.html" class="nav-link active">
                         <i class="fas fa-graduation-cap"></i> Learn
                     </a>
                 </li>
@@ -260,7 +260,56 @@
     
     <script src="js/main.js?v=1.4.32"></script>
     <script src="js/interactions.js?v=1.4.32"></script>
-    <script src="js/learn.js?v=1.4.32"></script>
+    <script src="js/learn.js?v=1.4.32"></script>   
     <script src="js/notifications.js?v=2.0.0"></script>
+    <!-- Active Menu Fix -->
+    <script>
+        (function() {
+            // FIX: Set active menu item based on current page
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            console.log('🔧 Setting active menu for:', currentPage);
+            
+            navLinks.forEach(link => {
+                // Remove active class from all
+                link.classList.remove('active');
+                
+                const href = link.getAttribute('href');
+                
+                // Check exact match
+                if (href === currentPage) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for index.html
+                if (currentPage === 'index.html' && href === 'index.html') {
+                    link.classList.add('active');
+                }
+                
+                // Special case for Learn page
+                if (currentPage.includes('learn') && href.includes('learn')) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for About page
+                if (currentPage.includes('about') && href.includes('about')) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for Product page
+                if (currentPage.includes('product') && href.includes('product')) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for Signals page
+                if (currentPage.includes('signals') && href.includes('signals')) {
+                    link.classList.add('active');
+                }
+            });
+            
+            console.log('✅ Active menu set for:', currentPage);
+        })();
+    </script>    
 </body>
 </html>

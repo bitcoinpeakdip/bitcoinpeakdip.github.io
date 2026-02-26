@@ -16,9 +16,9 @@
     
     <!-- CSS với version parameter -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/main.css?v=1.11.18">
-    <link rel="stylesheet" href="styles/signals.css?v=1.11.18">
-    <link rel="stylesheet" href="styles/zoom.css?v=1.11.18">
+    <link rel="stylesheet" href="styles/main.css?v=1.11.19">
+    <link rel="stylesheet" href="styles/signals.css?v=1.11.19">
+    <link rel="stylesheet" href="styles/zoom.css?v=1.11.19">
     
     <!-- JS với version parameter -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -211,7 +211,7 @@
             
             <ul class="nav-menu" id="navMenu">
                 <li class="nav-item">
-                    <a href="index.html" class="nav-link active">
+                    <a href="index.html" class="nav-link">
                         <i class="fas fa-house"></i> Home
                     </a>
                 </li>
@@ -226,7 +226,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="signals.html" class="nav-link">
+                    <a href="signals.html" class="nav-link active">
                         <i class="fas fa-chart-line"></i> EWS Signals
                     </a>
                 </li>
@@ -733,8 +733,57 @@
 			console.log('Active menu set for:', currentPage);
 		})();
 	</script>	
-    <script src="js/main.js?v=1.11.18"></script>
-    <script src="js/signals.js?v=1.11.18"></script> <!-- Đổi số này mỗi lần update -->	 
-    <script src="js/notifications.js?v=1.11.18"></script>   
+    <script src="js/main.js?v=1.11.19"></script>
+    <script src="js/signals.js?v=1.11.19"></script> <!-- Đổi số này mỗi lần update -->	 
+    <script src="js/notifications.js?v=1.11.19"></script>   
+    <!-- Active Menu Fix -->
+    <script>
+        (function() {
+            // FIX: Set active menu item based on current page
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            console.log('🔧 Setting active menu for:', currentPage);
+            
+            navLinks.forEach(link => {
+                // Remove active class from all
+                link.classList.remove('active');
+                
+                const href = link.getAttribute('href');
+                
+                // Check exact match
+                if (href === currentPage) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for index.html
+                if (currentPage === 'index.html' && href === 'index.html') {
+                    link.classList.add('active');
+                }
+                
+                // Special case for Learn page
+                if (currentPage.includes('learn') && href.includes('learn')) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for About page
+                if (currentPage.includes('about') && href.includes('about')) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for Product page
+                if (currentPage.includes('product') && href.includes('product')) {
+                    link.classList.add('active');
+                }
+                
+                // Special case for Signals page
+                if (currentPage.includes('signals') && href.includes('signals')) {
+                    link.classList.add('active');
+                }
+            });
+            
+            console.log('✅ Active menu set for:', currentPage);
+        })();
+    </script>    
 </body>
 </html>

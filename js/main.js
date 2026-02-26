@@ -12,12 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusIndicator = document.getElementById('statusIndicator');
     const statusText = document.getElementById('statusText');
     
-    // Mobile menu toggle
-    // Mobile menu toggle - FIXED VERSION cho TẤT CẢ các trang
+    // ===== FIX: MOBILE MENU - CĂN PHẢI VÀ XỬ LÝ ACTIVE STATE =====
     if (mobileMenuBtn && navMenu) {
         console.log('📱 Initializing mobile menu for:', window.location.pathname);
         
-        // Xóa tất cả event listeners cũ bằng cách clone và replace elements
+        // Xóa tất cả event listeners cũ
         const newMenuBtn = mobileMenuBtn.cloneNode(true);
         mobileMenuBtn.parentNode.replaceChild(newMenuBtn, mobileMenuBtn);
         
@@ -29,14 +28,57 @@ document.addEventListener('DOMContentLoaded', function() {
         const updatedNavMenu = document.getElementById('navMenu');
         const updatedNavLinks = updatedNavMenu.querySelectorAll('.nav-link');
         
-        // KHÔNG cần statusIndicator - nó chỉ có ở trang chủ
-        // Nên bỏ qua hoặc kiểm tra an toàn
-        
         // Đảm bảo menu đóng khi load trang
         updatedNavMenu.classList.remove('active');
         if (updatedMenuBtn.querySelector('i')) {
             updatedMenuBtn.querySelector('i').className = 'fas fa-bars';
         }
+        
+        // ===== FIX: Set active class đúng cho menu items =====
+        function setActiveMenuItem() {
+            const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+            
+            updatedNavLinks.forEach(link => {
+                // Xóa tất cả active classes
+                link.classList.remove('active');
+                
+                // Lấy href của link
+                const href = link.getAttribute('href');
+                
+                // Kiểm tra match
+                if (href === currentPath) {
+                    link.classList.add('active');
+                }
+                
+                // Special case cho index.html
+                if (currentPath === 'index.html' || currentPath === '') {
+                    if (href === 'index.html') {
+                        link.classList.add('active');
+                    }
+                }
+                
+                // FIX: Đặc biệt cho Learn page
+                if (currentPath.includes('learn') && href.includes('learn')) {
+                    link.classList.add('active');
+                }
+                
+                // FIX: Đặc biệt cho các page khác
+                if (currentPath.includes('about') && href.includes('about')) {
+                    link.classList.add('active');
+                }
+                if (currentPath.includes('product') && href.includes('product')) {
+                    link.classList.add('active');
+                }
+                if (currentPath.includes('signals') && href.includes('signals')) {
+                    link.classList.add('active');
+                }
+            });
+            
+            console.log('✅ Active menu set for:', currentPath);
+        }
+        
+        // Gọi hàm set active
+        setActiveMenuItem();
         
         // Xử lý click menu button
         updatedMenuBtn.addEventListener('click', function(e) {
@@ -71,11 +113,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Đóng menu khi click vào link
+        // Xử lý click vào menu items
         updatedNavLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 console.log('🔗 Nav link clicked:', this.getAttribute('href'));
                 
+                // Đóng menu
                 updatedNavMenu.classList.remove('active');
                 if (updatedMenuBtn) {
                     const icon = updatedMenuBtn.querySelector('i');
@@ -88,9 +131,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.documentElement.style.overflow = '';
                 document.body.classList.remove('menu-open');
                 
-                // Update active state
-                updatedNavLinks.forEach(navLink => navLink.classList.remove('active'));
-                this.classList.add('active');
+                // KHÔNG set active ở đây vì sẽ reload trang
+                // Để trang mới tự set active
             });
         });
         
@@ -161,8 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ===== THÊM CODE XỬ LÝ DROPDOWN MOBILE TỪ ĐÂY =====
-    // Handle dropdown for mobile
+    // ===== XỬ LÝ DROPDOWN MOBILE =====
     const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
     
     dropdownToggles.forEach(toggle => {
@@ -175,11 +216,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.querySelectorAll('.dropdown').forEach(d => {
                     if (d !== dropdown) {
                         d.classList.remove('active');
-                        // Reset arrow for other dropdowns
                         const otherArrow = d.querySelector('.dropdown-arrow');
-                        if (otherArrow) {
-                            otherArrow.style.transform = '';
-                        }
+                        if (otherArrow) otherArrow.style.transform = '';
                     }
                 });
                 
