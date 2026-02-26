@@ -2775,3 +2775,185 @@
         font-size: 0.95em;
     }
 }
+/* ===== EXPERT VALIDATION SECTION ===== */
+.validation-section {
+    margin-top: 3rem;
+}
+
+.validation-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.validation-highlight {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    background: rgba(0, 212, 255, 0.03);
+    padding: 1.2rem;
+    border-radius: 12px;
+    border-left: 3px solid var(--primary-cyan, #00d4ff);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.validation-highlight:hover {
+    background: rgba(0, 212, 255, 0.08);
+    transform: translateX(5px);
+}
+
+.validation-highlight i {
+    font-size: 1.8rem;
+    color: var(--primary-cyan, #00d4ff);
+    min-width: 2rem;
+    text-align: center;
+    margin-top: 0.2rem;
+}
+
+.validation-highlight strong {
+    color: var(--primary-cyan, #00d4ff);
+    font-weight: 600;
+}
+
+.validation-highlight .highlight {
+    color: #ffd966;
+    font-weight: 500;
+}
+
+.validation-highlight .emphasis {
+    color: var(--primary-cyan, #00d4ff);
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+/* Quote block */
+.validation-quote {
+    background: rgba(0, 212, 255, 0.05);
+    border-radius: 16px;
+    padding: 2rem 2rem 1.5rem;
+    margin: 1rem 0;
+    position: relative;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.validation-quote i.fa-quote-left {
+    font-size: 2.5rem;
+    color: var(--primary-cyan, #00d4ff);
+    opacity: 0.3;
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem;
+}
+
+.validation-quote blockquote {
+    font-size: 1.3rem;
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.6;
+    color: #fff;
+    margin: 0 0 1rem 2rem;
+    padding-left: 1rem;
+    border-left: 3px solid var(--primary-cyan, #00d4ff);
+}
+
+.validation-quote .quote-author {
+    text-align: right;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    padding-right: 1rem;
+    border-top: 1px dashed rgba(0, 212, 255, 0.3);
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+/* Conclusion paragraph */
+.validation-conclusion {
+    background: linear-gradient(145deg, rgba(10, 20, 30, 0.7), rgba(0, 20, 30, 0.9));
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    margin: 0.5rem 0;
+}
+
+.validation-conclusion p {
+    margin-bottom: 0.8rem;
+}
+
+.validation-conclusion p:last-child {
+    margin-bottom: 0;
+}
+
+.validation-conclusion strong {
+    color: #ffd966;
+}
+
+/* CTA Button */
+.validation-cta {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0 1rem;
+}
+
+.report-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: linear-gradient(135deg, #00d4ff, #0066ff);
+    color: #000;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    letter-spacing: 0.5px;
+}
+
+.report-btn i {
+    font-size: 1.3rem;
+}
+
+.report-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.8);
+    background: linear-gradient(135deg, #00e5ff, #0077ff);
+    color: #000;
+}
+
+.report-btn:active {
+    transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .validation-highlight {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+    
+    .validation-highlight i {
+        font-size: 1.5rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .validation-quote blockquote {
+        font-size: 1.1rem;
+        margin-left: 0.5rem;
+    }
+    
+    .report-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 0.9rem 1.5rem;
+        font-size: 1rem;
+    }
+}
+
+/* Dark mode variables fallback */
+:root {
+    --primary-cyan: #00d4ff;
+}
