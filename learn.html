@@ -261,42 +261,6 @@
     <script src="js/main.js?v=1.4.32"></script>
     <script src="js/interactions.js?v=1.4.32"></script>
     <script src="js/learn.js?v=1.4.32"></script>
-    <!-- Simple Mobile Menu Fix -->
-    <script>
-    (function() {
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuBtn = document.getElementById('mobileMenuBtn');
-            const navMenu = document.getElementById('navMenu');
-            
-            if (menuBtn && navMenu) {
-                menuBtn.classList.remove('active');
-                navMenu.classList.remove('active');
-                
-                menuBtn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.classList.toggle('active');
-                    navMenu.classList.toggle('active');
-                };
-                
-                const links = navMenu.querySelectorAll('.nav-link');
-                links.forEach(link => {
-                    link.onclick = function() {
-                        menuBtn.classList.remove('active');
-                        navMenu.classList.remove('active');
-                    };
-                });
-                
-                document.onclick = function(e) {
-                    if (!menuBtn.contains(e.target) && !navMenu.contains(e.target)) {
-                        menuBtn.classList.remove('active');
-                        navMenu.classList.remove('active');
-                    }
-                };
-            }
-        });
-    })();
-    </script>    
     <script src="js/notifications.js?v=2.0.0"></script>
 </body>
 </html>
