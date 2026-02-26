@@ -1,7 +1,7 @@
 
-# Bitcoin PeakDip v1.9.11
-**Build Date:** 2026-02-22
-**Build Time:** 20:40:47
+# Bitcoin PeakDip v1.11.10
+**Build Date:** 2026-02-26
+**Build Time:** 15:11:25
 
 ## Deployment Checklist:
 - [ ] Test trên desktop (Chrome, Firefox)
@@ -28,7 +28,7 @@
 - CHANGELOG.md
 
 ## Next Steps:
-1. Commit changes: `git add . && git commit -m "Release v1.9.11"`
+1. Commit changes: `git add . && git commit -m "Release v1.11.10"`
 2. Push to repository: `git push`
 3. Deploy to server
 4. Verify production build

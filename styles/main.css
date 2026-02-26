@@ -1585,12 +1585,13 @@ footer {
         z-index: 1001;
     }
     
-    /* Menu container - QUAN TRỌNG: chỉ style khi active */
+    /* Menu container - SỬA Ở ĐÂY */
     .nav-menu {
         position: absolute !important;
         top: calc(100% + 10px) !important;
-        left: 50% !important;
-        transform: translateX(-50%) translateY(-10px) !important;
+        /* Xóa left: 50% !important; */
+        right: 0 !important; /* Thêm dòng này: căn lề phải */
+        transform: translateY(-10px) !important; /* Xóa translateX(-50%) */
         width: auto !important;
         min-width: 200px !important;
         max-width: 90vw !important;
@@ -1609,14 +1610,14 @@ footer {
         pointer-events: none !important;
     }
     
-    /* Khi active */
+    
+    /* Khi active - SỬA Ở ĐÂY */
     .nav-menu.active {
         opacity: 1 !important;
         visibility: visible !important;
-        transform: translateX(-50%) translateY(0) !important;
+        transform: translateY(0) !important; /* Xóa translateX(-50%) */
         pointer-events: all !important;
     }
-    
     /* Menu items */
     .nav-menu .nav-item {
         width: 100% !important;
