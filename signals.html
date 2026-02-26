@@ -15,9 +15,9 @@
     
     <!-- CSS với version parameter -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles/main.css?v=1.11.8">
-    <link rel="stylesheet" href="styles/signals.css?v=1.11.8">
-    <link rel="stylesheet" href="styles/zoom.css?v=1.11.8">
+    <link rel="stylesheet" href="styles/main.css?v=1.11.9">
+    <link rel="stylesheet" href="styles/signals.css?v=1.11.9">
+    <link rel="stylesheet" href="styles/zoom.css?v=1.11.9">
     
     <!-- JS với version parameter -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -196,6 +196,7 @@
     <div class="sensor-alert" id="sensorAlert"></div>
     
     <!-- Navigation Menu -->
+    <!-- Navigation Menu - Cập nhật cho tất cả các trang -->
     <nav class="navigation" id="navigation">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
@@ -209,33 +210,40 @@
             
             <ul class="nav-menu" id="navMenu">
                 <li class="nav-item">
-                    <a href="index.html" class="nav-link active">Home</a>
+                    <a href="index.html" class="nav-link active">
+                        <i class="fas fa-house"></i> Home
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a href="about.html" class="nav-link">About</a>
+                    <a href="about.html" class="nav-link">
+                        <i class="fas fa-circle-info"></i> About
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a href="product.html" class="nav-link">Product</a>
+                    <a href="product.html" class="nav-link">
+                        <i class="fas fa-cube"></i> Product
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a href="signals.html" class="nav-link">EWS Signals</a>
+                    <a href="signals.html" class="nav-link">
+                        <i class="fas fa-chart-line"></i> EWS Signals
+                    </a>
                 </li>
                 <li class="nav-item">
                     <a href="learn.html" class="nav-link">
                         <i class="fas fa-graduation-cap"></i> Learn
                     </a>
                 </li>
-				<li class="nav-item">
-					<a href="reading-list.html" class="nav-link" id="readingListLink">
-						<i class="fas fa-bookmark"></i>
-						Reading List
-						<span class="reading-list-badge" id="readingListBadge">0</span>
-					</a>
-				</li>
+                <li class="nav-item">
+                    <a href="reading-list.html" class="nav-link" id="readingListLink">
+                        <i class="fas fa-bookmark"></i>
+                        Reading List
+                        <span class="reading-list-badge" id="readingListBadge">0</span>
+                    </a>
+                </li>
             </ul>
         </div>
     </nav>
-     
     <!-- Sensor Network Background -->
     <div class="sensor-network">
         <!-- Sensor Rings -->
@@ -724,8 +732,8 @@
 			console.log('Active menu set for:', currentPage);
 		})();
 	</script>	
-    <script src="js/main.js?v=1.11.8"></script>
-    <script src="js/signals.js?v=1.11.8"></script> <!-- Đổi số này mỗi lần update -->	
+    <script src="js/main.js?v=1.11.9"></script>
+    <script src="js/signals.js?v=1.11.9"></script> <!-- Đổi số này mỗi lần update -->	
     <!-- Simple Mobile Menu Fix -->
     <script>
     (function() {
@@ -775,6 +783,6 @@
         });
     })();
     </script>   
-    <script src="js/notifications.js?v=1.11.8"></script>   
+    <script src="js/notifications.js?v=1.11.9"></script>   
 </body>
 </html>
