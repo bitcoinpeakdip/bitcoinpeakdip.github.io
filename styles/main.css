@@ -1568,8 +1568,9 @@ footer {
 }
 
 /* ========== MOBILE MENU - CLEAN VERSION ========== */
+/* ========== MOBILE MENU - CLEAN VERSION ========== */
 @media (max-width: 768px) {
-    /* Mobile menu button */
+    /* Mobile menu button - giữ nguyên */
     .mobile-menu-btn {
         display: flex;
         align-items: center;
@@ -1585,39 +1586,39 @@ footer {
         z-index: 1001;
     }
     
-    /* Menu container - SỬA Ở ĐÂY */
+    /* Menu container - ĐÃ SỬA HOÀN TOÀN */
     .nav-menu {
         position: absolute !important;
         top: calc(100% + 10px) !important;
-        /* Xóa left: 50% !important; */
-        right: 0 !important; /* Thêm dòng này: căn lề phải */
-        transform: translateY(-10px) !important; /* Xóa translateX(-50%) */
+        right: 0 !important;
+        /* Xóa transform: translateY(-10px) !important; - đã chuyển xuống dưới */
         width: auto !important;
-        min-width: 200px !important;
-        max-width: 90vw !important;
+        min-width: 160px !important; /* GIẢM: từ 200px xuống 160px */
+        max-width: 280px !important; /* GIỚI HẠN: thay vì 90vw */
         background: rgba(10, 14, 23, 0.98) !important;
         backdrop-filter: blur(20px) !important;
         border: 1px solid rgba(0, 212, 255, 0.2) !important;
-        border-radius: 24px !important;
-        padding: 12px !important;
+        border-radius: 16px !important; /* GIẢM: từ 24px xuống 16px */
+        padding: 6px !important; /* GIẢM: từ 12px xuống 6px */
         flex-direction: column !important;
-        gap: 4px !important;
+        gap: 2px !important; /* GIẢM: từ 4px xuống 2px */
         opacity: 0 !important;
         visibility: hidden !important;
         transition: all 0.3s ease !important;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
         z-index: 1000 !important;
         pointer-events: none !important;
+        transform: translateY(-10px) !important; /* CHUYỂN transform xuống đây */
     }
     
-    
-    /* Khi active - SỬA Ở ĐÂY */
+    /* Khi active */
     .nav-menu.active {
         opacity: 1 !important;
         visibility: visible !important;
-        transform: translateY(0) !important; /* Xóa translateX(-50%) */
+        transform: translateY(0) !important;
         pointer-events: all !important;
     }
+    
     /* Menu items */
     .nav-menu .nav-item {
         width: 100% !important;
@@ -1627,20 +1628,35 @@ footer {
     .nav-menu .nav-link {
         display: flex !important;
         align-items: center !important;
-        padding: 12px 20px !important;
-        border-radius: 16px !important;
-        font-size: 1em !important;
+        padding: 8px 12px !important; /* GIẢM: từ 12px 20px xuống 8px 12px */
+        border-radius: 12px !important; /* GIẢM: từ 16px xuống 12px */
+        font-size: 0.9em !important; /* GIẢM: từ 1em xuống 0.9em */
         color: var(--text-glow) !important;
         background: rgba(255, 255, 255, 0.02) !important;
-        white-space: nowrap !important;
+        white-space: normal !important; /* SỬA: từ nowrap thành normal - cho xuống dòng */
         width: 100% !important;
         border: none !important;
+        word-break: break-word !important; /* THÊM: ngắt từ khi cần */
+        line-height: 1.3 !important; /* THÊM: điều chỉnh line-height */
     }
     
     .nav-menu .nav-link i {
-        width: 24px !important;
-        margin-right: 12px !important;
+        width: 20px !important; /* GIẢM: từ 24px xuống 20px */
+        margin-right: 8px !important; /* GIẢM: từ 12px xuống 8px */
         color: var(--wave-mid) !important;
+        font-size: 1em !important; /* THÊM: giới hạn kích thước icon */
+        flex-shrink: 0 !important; /* THÊM: không cho icon co lại */
+    }
+    
+    /* Badge cho reading list */
+    .reading-list-badge {
+        margin-left: 6px !important; /* THÊM: khoảng cách cho badge */
+        padding: 2px 5px !important; /* GIẢM: kích thước badge */
+        font-size: 0.7em !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
     }
     
     /* Active state */
@@ -1653,19 +1669,19 @@ footer {
         color: var(--wave-trough) !important;
     }
     
-    /* Mũi tên nhỏ */
+    /* Mũi tên nhỏ - điều chỉnh vị trí */
     .nav-menu::before {
         content: '' !important;
         position: absolute !important;
-        top: -8px !important;
-        right: 20px !important;
-        width: 16px !important;
-        height: 16px !important;
+        top: -6px !important; /* GIẢM: từ -8px xuống -6px */
+        right: 12px !important; /* GIẢM: từ 20px xuống 12px */
+        width: 12px !important; /* GIẢM: từ 16px xuống 12px */
+        height: 12px !important; /* GIẢM: từ 16px xuống 12px */
         background: rgba(10, 14, 23, 0.98) !important;
         border-left: 1px solid rgba(0, 212, 255, 0.2) !important;
         border-top: 1px solid rgba(0, 212, 255, 0.2) !important;
         transform: rotate(45deg) !important;
-        border-radius: 4px 0 0 0 !important;
+        border-radius: 3px 0 0 0 !important;
     }
     
     /* Reset mọi style cũ */
@@ -1674,6 +1690,25 @@ footer {
         position: absolute !important;
         list-style: none !important;
         margin: 0 !important;
+    }
+}
+
+/* Responsive cho màn hình rất nhỏ */
+@media (max-width: 380px) {
+    .nav-menu {
+        min-width: 140px !important; /* GIẢM THÊM cho màn hình nhỏ */
+        max-width: 240px !important;
+        right: 5px !important; /* Dịch vào một chút */
+    }
+    
+    .nav-menu .nav-link {
+        padding: 6px 10px !important;
+        font-size: 0.85em !important;
+    }
+    
+    .nav-menu .nav-link i {
+        width: 18px !important;
+        margin-right: 6px !important;
     }
 }
 /* ========== FOOTER CHUYÊN NGHIỆP ========== */
