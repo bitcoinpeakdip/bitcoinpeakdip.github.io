@@ -3425,26 +3425,77 @@ body.mobile-device .product-card {
     text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
 }
 
-/* Tối ưu SEO - tagline nhỏ hơn */
-.logo .tagline-seo {
-    font-size: 0.35em !important;  /* Chỉ bằng 35% của logo chính */
-    font-weight: 300 !important;    /* Chữ mảnh hơn */
-    color: var(--text-glow) !important;
-    display: inline-block !important;
-    margin-left: 10px !important;
-    letter-spacing: normal !important;
-    text-transform: none !important;
-    vertical-align: middle !important;
-    white-space: normal !important;
-    line-height: 1.4 !important;
+/* Logo H1 container */
+.logo {
+    font-size: 3.5em;
+    margin-bottom: 5px;
+    line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
 }
 
-/* Responsive cho mobile */
+/* Phần chính của logo */
+.logo-main {
+    font-size: 1em;
+    font-weight: 900;
+    background: linear-gradient(to right, var(--wave-trough), var(--wave-peak));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Tagline SEO - vẫn nằm trong H1 */
+.tagline-seo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.35em !important;  /* Rất nhỏ so với logo chính */
+    font-weight: 300 !important;
+    color: var(--text-glow) !important;
+    letter-spacing: 0.3px !important;
+    text-transform: none !important;
+    line-height: 1.4 !important;
+    opacity: 0.9 !important;
+    width: 100%;
+    max-width: 900px;
+}
+
+/* Dòng 1 và 2 của tagline */
+.tagline-line1,
+.tagline-line2 {
+    display: block;
+    text-align: center;
+    white-space: nowrap; /* Giữ trên 1 dòng */
+}
+
+.tagline-line1 {
+    margin-bottom: 2px;
+}
+
+/* Responsive: khi màn hình nhỏ thì cho xuống dòng tự nhiên */
 @media (max-width: 768px) {
-    .logo .tagline-seo {
-        font-size: 0.25em !important;
-        display: block !important;  /* Xuống dòng trên mobile */
-        margin-left: 0 !important;
-        margin-top: 8px !important;
+    .logo {
+        font-size: 2.5em;
+    }
+    
+    .tagline-seo {
+        font-size: 0.3em !important;
+    }
+    
+    .tagline-line1,
+    .tagline-line2 {
+        white-space: normal; /* Cho phép xuống dòng trên mobile */
+    }
+}
+
+@media (max-width: 480px) {
+    .logo {
+        font-size: 2em;
+    }
+    
+    .tagline-seo {
+        font-size: 0.28em !important;
     }
 }
