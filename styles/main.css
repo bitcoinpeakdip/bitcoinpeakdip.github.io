@@ -3121,3 +3121,101 @@ body.mobile-device .product-card {
     }
 }
 
+/* Dual insight styles */
+.dual-insight {
+    margin: 25px 0;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    padding: 15px;
+}
+
+.insight-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+.insight-truth {
+    background: rgba(0, 212, 255, 0.05);
+    border-left: 3px solid #00d4ff;
+}
+
+.insight-mastery {
+    background: linear-gradient(145deg, rgba(255, 77, 77, 0.1), rgba(255, 215, 0, 0.05));
+    border-left: 3px solid #ffd700;
+}
+
+.insight-icon {
+    font-size: 1.5em;
+    min-width: 40px;
+    text-align: center;
+}
+
+.insight-truth .insight-icon i {
+    color: #00d4ff;
+}
+
+.insight-mastery .insight-icon i {
+    color: #ffd700;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+}
+
+.insight-content {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95em;
+    line-height: 1.6;
+    flex: 1;
+}
+
+.insight-label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.insight-truth .insight-label {
+    color: #00d4ff;
+}
+
+.insight-mastery .insight-label {
+    color: #ffd700;
+}
+
+.insight-content ul {
+    margin: 8px 0 0 0;
+    padding-left: 0;
+}
+
+.insight-content ul li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 0.95em;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.insight-content ul li i {
+    font-size: 0.9em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .insight-item {
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+    }
+    
+    .insight-icon {
+        text-align: left;
+    }
+}
+
