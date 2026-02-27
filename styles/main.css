@@ -3158,28 +3158,66 @@ body.mobile-device .product-card {
     100% { transform: translateX(100%); }
 }
 
+/* Radar Icon với hiệu ứng đặc biệt */
 .problem-icon {
-    width: 70px;
-    height: 70px;
-    margin: 0 auto 20px;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 25px;
     background: rgba(0, 212, 255, 0.1);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 2px solid rgba(0, 212, 255, 0.3);
+    position: relative;
+    animation: radarPulse 2s ease infinite;
+}
+
+.problem-icon::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 212, 255, 0.5);
+    animation: radarRing 2s ease-out infinite;
+}
+
+.problem-icon::after {
+    content: '';
+    position: absolute;
+    width: 150%;
+    height: 150%;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 77, 77, 0.3);
+    animation: radarRing 3s ease-out infinite;
 }
 
 .problem-icon i {
-    font-size: 2em;
-    color: #ff4d4d;
-    animation: pulse 2s ease infinite;
+    font-size: 2.5em;
+    color: #00d4ff;
+    filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.7));
+    transform: rotate(-45deg);
+    animation: radarSweep 4s linear infinite;
 }
 
-@keyframes pulse {
-    0% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.1); }
-    100% { opacity: 1; transform: scale(1); }
+@keyframes radarPulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+    70% { box-shadow: 0 0 0 20px rgba(0, 212, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
+}
+
+@keyframes radarRing {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes radarSweep {
+    0% { transform: rotate(-45deg); }
+    25% { transform: rotate(45deg); }
+    50% { transform: rotate(135deg); }
+    75% { transform: rotate(225deg); }
+    100% { transform: rotate(315deg); }
 }
 
 .problem-title {
@@ -3341,5 +3379,13 @@ body.mobile-device .product-card {
     .problem-desc {
         font-size: 1em;
     }
+    
+    .problem-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .problem-icon i {
+        font-size: 2em;
+    }
 }
-
