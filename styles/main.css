@@ -3389,3 +3389,20 @@ body.mobile-device .product-card {
         font-size: 2em;
     }
 }
+
+.problem-desc.second {
+    margin-top: 10px;
+    color: rgba(255, 255, 255, 0.9);
+    font-style: italic;
+    border-left: 3px solid #ff4d4d;
+    padding-left: 15px;
+    text-align: left;
+    background: rgba(255, 77, 77, 0.05);
+    border-radius: 0 8px 8px 0;
+}
+
+.problem-desc .highlight-text {
+    color: #ff4d4d;
+    font-weight: 600;
+    text-shadow: 0 0 8px rgba(255, 77, 77, 0.3);
+}
