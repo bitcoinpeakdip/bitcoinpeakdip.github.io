@@ -3424,3 +3424,27 @@ body.mobile-device .product-card {
     font-weight: 600;
     text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
 }
+
+/* Tối ưu SEO - tagline nhỏ hơn */
+.logo .tagline-seo {
+    font-size: 0.35em !important;  /* Chỉ bằng 35% của logo chính */
+    font-weight: 300 !important;    /* Chữ mảnh hơn */
+    color: var(--text-glow) !important;
+    display: inline-block !important;
+    margin-left: 10px !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    vertical-align: middle !important;
+    white-space: normal !important;
+    line-height: 1.4 !important;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+    .logo .tagline-seo {
+        font-size: 0.25em !important;
+        display: block !important;  /* Xuống dòng trên mobile */
+        margin-left: 0 !important;
+        margin-top: 8px !important;
+    }
+}
